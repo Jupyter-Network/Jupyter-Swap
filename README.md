@@ -1,13 +1,22 @@
 # Jupyter-Swap
 These are the official contracts that will be used for [Jupyter Swap](https://jupyter.tech])
 
+
+
 The Jupyter-Swap contracts can be used to setup AMM swaps and corresponding liquidity pools.
+
+🤌🏼 Inexpensive <br/>
+🛡 Safe<br/>
+🚀 Fast <br/>
+
+
+
+## Installation
+
+##### The Contracts Folder contains a [truffle](https://trufflesuite.com/docs/truffle/) project:
 
 Download: `git clone https://github.com/Jupyter-Network/Jupyter-Swap`
 
-
-
-##### The Contracts Folder contains a [truffle](https://trufflesuite.com/docs/truffle/) project:
 
 Install truffle:
 
@@ -16,6 +25,8 @@ Install truffle:
 Install node modules:
 
 	npm install
+	
+## Usage
 
 Start development blockchain:
 
@@ -29,6 +40,12 @@ Run tests:
 
 	truffle test
 
+## Documantation
+
+Coming soon...
+
+
+## License
 
 All our contracts are published under MIT License
 
