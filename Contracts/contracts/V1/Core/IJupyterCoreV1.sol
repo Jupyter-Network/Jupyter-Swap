@@ -2,6 +2,7 @@
 pragma solidity ^0.8.7;
 
 interface IJupyterCoreV1 {
+
     function initialDeposit(
         uint256 _token0Amount,
         uint256 _token1Amount,
@@ -28,21 +29,5 @@ interface IJupyterCoreV1 {
         address from
     ) external;
 
-    function getToken1AmountFromToken0Amount(uint256 tokenAmount)
-        external
-        view
-        returns (uint256);
 
-    function getToken0AmountFromToken1Amount(uint256 tokenAmount)
-        external
-        view
-        returns (uint256);
-
-    function rate() external view returns (uint256);
-
-    function getBalances(address from)
-        external
-        view
-        override
-        returns (uint256, uint256)
 }

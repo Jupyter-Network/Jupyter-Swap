@@ -138,9 +138,8 @@ contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTo
     }
 
     function getToken1AmountFromToken0Amount(uint256 tokenAmount)
-        external
+        public
         view
-        override
         calledByRouter
         returns (uint256)
     {
@@ -153,7 +152,6 @@ contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTo
     function getToken0AmountFromToken1Amount(uint256 tokenAmount)
         public
         view
-        override
         calledByRouter
         returns (uint256)
     {
@@ -180,7 +178,7 @@ contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTo
         }
     }
 
-    function rate() external view override calledByRouter returns (uint256) {
+    function rate() public view calledByRouter returns (uint256) {
         return _scaleUp(token0Balance) / token1Balance;
     }
 
@@ -199,9 +197,8 @@ contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTo
     }
 
     function getBalances(address from)
-        external
+        public
         view
-        override
         calledByRouter
         returns (uint256, uint256)
     {
