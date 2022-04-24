@@ -3,8 +3,9 @@ pragma solidity ^0.8.7;
 
 import "./JupyterLiquidityTokenV1.sol";
 import "./JupyterCoreHelperV1.sol";
+import "./IJupyterCoreV1.sol";
 
-contract JupyterCoreV1 is JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
+contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
     using SafeERC20 for IERC20;
     address Router;
     modifier minValue(uint256 _amount) {
@@ -48,7 +49,7 @@ contract JupyterCoreV1 is JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
         uint256 _token0Amount,
         uint256 _token1Amount,
         address from
-    ) external calledByRouter minValue(_token0Amount) minValue(_token1Amount) {
+    ) external override calledByRouter minValue(_token0Amount) minValue(_token1Amount) {
         //Checks
         require(!initialDepositDone, "already done use deposit()");
         //Effects
@@ -64,7 +65,7 @@ contract JupyterCoreV1 is JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
         uint256 _token0Amount,
         uint256 _token1Amount,
         address from
-    ) external calledByRouter minValue(_token0Amount) minValue(_token1Amount) {
+    ) external override calledByRouter minValue(_token0Amount) minValue(_token1Amount) {
         //Checks
         require(
             _token1Amount == _scaleUp(_token0Amount) / rate(),
@@ -77,7 +78,7 @@ contract JupyterCoreV1 is JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
         _rcvTokens(token0, _token0Amount, from);
     }
 
-    function withdraw(address from) external calledByRouter {
+    function withdraw(address from) external override calledByRouter {
         //Check
         uint256 userTokenBalance = balanceOf[from];
         require(userTokenBalance > 0, "Nothing to withdraw");
@@ -100,7 +101,7 @@ contract JupyterCoreV1 is JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
         uint256 _token0Amount,
         uint256 _token1AmountMin,
         address from
-    ) external calledByRouter minValue(_token0Amount) {
+    ) external override calledByRouter minValue(_token0Amount) {
         //Checks
         uint256 token1Withdrawal = getToken1AmountFromToken0Amount(
             _token0Amount
@@ -120,7 +121,7 @@ contract JupyterCoreV1 is JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
         uint256 _token1Amount,
         uint256 _token0AmountMin,
         address from
-    ) external calledByRouter minValue(_token1Amount) {
+    ) external override calledByRouter minValue(_token1Amount) {
         //Checks
         uint256 tokenWithdrawal = getToken0AmountFromToken1Amount(
             _token1Amount
@@ -137,8 +138,9 @@ contract JupyterCoreV1 is JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
     }
 
     function getToken1AmountFromToken0Amount(uint256 tokenAmount)
-        public
+        external
         view
+        override
         calledByRouter
         returns (uint256)
     {
@@ -151,6 +153,7 @@ contract JupyterCoreV1 is JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
     function getToken0AmountFromToken1Amount(uint256 tokenAmount)
         public
         view
+        override
         calledByRouter
         returns (uint256)
     {
@@ -177,7 +180,7 @@ contract JupyterCoreV1 is JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
         }
     }
 
-    function rate() public view calledByRouter returns (uint256) {
+    function rate() external view override calledByRouter returns (uint256) {
         return _scaleUp(token0Balance) / token1Balance;
     }
 
@@ -196,8 +199,9 @@ contract JupyterCoreV1 is JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
     }
 
     function getBalances(address from)
-        public
+        external
         view
+        override
         calledByRouter
         returns (uint256, uint256)
     {
