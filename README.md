@@ -40,7 +40,7 @@ Run tests:
 
 	truffle test
 
-## Documantation
+## Documentation
 
 Coming soon...
 
