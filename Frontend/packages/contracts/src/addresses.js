@@ -1,8 +1,8 @@
 // This address points to a dummy ERC-20 contract. Replace it with your own smart contracts.
 const addresses = {
   ceaErc20: "0xa6dF0C88916f3e2831A329CE46566dDfBe9E74b7",
-  routerAddress:"0x1DcF04766345A9d990574D57fE67c9FcCE678A54",
-  token0Address:"0x2f686a8B490C1d6Cf75F3f7c1d85A42Bf07610cd",
-  token1Address:"0x291e0FE9Bf060528a2771088e60eA12B6D339E1A"
+  routerAddress:"0x60730F3F572065ac886776f29032c9f6B71485b8",
+  token0Address:"0x30AE3DB88aC4B0E6D9C8C7dFb2B600e23BDB5285",
+  token1Address:"0x8042C291353AF5476d34136e3a13316F7352f923"
 };
 export default addresses;

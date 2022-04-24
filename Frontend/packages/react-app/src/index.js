@@ -14,7 +14,8 @@ const config = {
     //[Mainnet.chainId]: "https://mainnet.infura.io/v3/" + INFURA_PROJECT_ID,
     [TestChain.chainId]:"http://127.0.0.1:9545"
   },
-  networks:[...DEFAULT_SUPPORTED_CHAINS,TestChain]
+
+  networks:[TestChain]
 }
 
 // You should replace this url with your own and put it into a .env file

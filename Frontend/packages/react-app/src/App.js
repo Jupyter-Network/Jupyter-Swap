@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client";
 import { Contract } from "@ethersproject/contracts";
-import { shortenAddress, useCall, useEthers, useLookupAddress } from "@usedapp/core";
+import { shortenAddress, useEthers, useLookupAddress } from "@usedapp/core";
 import React, { useEffect, useState } from "react";
 
 import { Body, Button, Container, Header } from "./components";

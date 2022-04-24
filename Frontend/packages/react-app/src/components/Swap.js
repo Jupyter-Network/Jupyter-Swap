@@ -38,6 +38,7 @@ function Buy() {
     impact: new BN(0),
     allowanceCheck: new BN(0),
   });
+  console.log(addresses.routerAddress)
   let router = new Contract(addresses.routerAddress, abis.router);
   let token = new Contract(tokenAddresses[1], abis.erc20);
   let token0 = new Contract(tokenAddresses[0], abis.erc20);

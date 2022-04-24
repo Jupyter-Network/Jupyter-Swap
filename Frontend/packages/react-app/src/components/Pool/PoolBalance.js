@@ -1,10 +1,6 @@
 
 import {
-  useCalls,
-  useContractFunction,
-  useEthers,
-  useSendTransaction,
-  useCall
+   useCall
 } from "@usedapp/core";
 import { Contract } from "@ethersproject/contracts";
 import { abis, addresses } from "@my-app/contracts";

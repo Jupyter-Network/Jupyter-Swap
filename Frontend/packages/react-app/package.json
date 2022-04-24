@@ -24,13 +24,13 @@
     "@testing-library/react": "^12.1.4",
     "@testing-library/user-event": "^13.5.0",
     "@types/react": "^17.0.40",
-    "@usedapp/core": "^0.12.1",
+    "@usedapp/core": "^1.0.0",
     "bignumber.js": "^9.0.2",
     "graphql": "^16.3.0",
-    "ipfs-deploy": "^11.2.0",
+    "ipfs-deploy": "^8.0.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "react-scripts": "4.0.3",
+    "react-scripts": "^5.0.1",
     "styled-components": "^5.3.3"
   },
   "eslintConfig": {
