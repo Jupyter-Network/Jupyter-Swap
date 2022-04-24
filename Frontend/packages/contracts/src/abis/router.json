@@ -1,0 +1,496 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_protocolAddress",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "token0Amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "token1Amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "liquidityIncreased",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "token0Amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "token1Amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "liquidityRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token0Amount",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token1Amount",
+        "type": "address"
+      }
+    ],
+    "name": "newPair",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rate",
+        "type": "uint256"
+      }
+    ],
+    "name": "rateChanged",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "pairs",
+    "outputs": [
+      {
+        "internalType": "contract Swap",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_token0Amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_token1Amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "createLiquidityPool",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_token0Amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_token1Amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "addLiquidity",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      }
+    ],
+    "name": "removeLiquidity",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_token0Amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_token1AmountMin",
+        "type": "uint256"
+      }
+    ],
+    "name": "swapToken0ToToken1",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_token1Amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_token0AmountMin",
+        "type": "uint256"
+      }
+    ],
+    "name": "swapToken1ToToken0",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "getToken1AmountFromToken0Amount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "getToken0AmountFromToken1Amount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "token1Address",
+        "type": "address"
+      }
+    ],
+    "name": "getRate",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "token1Address",
+        "type": "address"
+      }
+    ],
+    "name": "getBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDepositAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      }
+    ],
+    "name": "getSwapTokenTotalSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenBalances",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      }
+    ],
+    "name": "getPoolBalances",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token0Address",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_token1Address",
+        "type": "address"
+      }
+    ],
+    "name": "getAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
