@@ -5,13 +5,18 @@ import "./JupyterLiquidityTokenV1.sol";
 import "./JupyterCoreHelperV1.sol";
 import "./IJupyterCoreV1.sol";
 
-contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTokenV1 {
+contract JupyterCoreV1 is
+    IJupyterCoreV1,
+    JupyterCoreHelperV1,
+    JupyterLiquidityTokenV1
+{
     using SafeERC20 for IERC20;
     address Router;
     modifier minValue(uint256 _amount) {
         require(_amount > _minAmount, "amount lower than min. amount!");
         _;
     }
+    
 
     modifier calledByRouter() {
         require(msg.sender == Router, "Denied can only be accessed by router");
@@ -49,14 +54,20 @@ contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTo
         uint256 _token0Amount,
         uint256 _token1Amount,
         address from
-    ) external override calledByRouter minValue(_token0Amount) minValue(_token1Amount) {
+    )
+        external
+        override
+        calledByRouter
+        minValue(_token0Amount)
+        minValue(_token1Amount)
+    {
         //Checks
         require(!initialDepositDone, "already done use deposit()");
         //Effects
         mint(_token0Amount * _token1Amount, from);
         initialDepositDone = true;
         //Interactions
-        _rcvTokens(token0, _token0Amount, from);
+        _rcvTokens(token0, _token0Amount, Router);
         _rcvTokens(token1, _token1Amount, from);
     }
 
@@ -65,7 +76,13 @@ contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTo
         uint256 _token0Amount,
         uint256 _token1Amount,
         address from
-    ) external override calledByRouter minValue(_token0Amount) minValue(_token1Amount) {
+    )
+        external
+        override
+        calledByRouter
+        minValue(_token0Amount)
+        minValue(_token1Amount)
+    {
         //Checks
         require(
             _token1Amount == _scaleUp(_token0Amount) / rate(),
@@ -78,7 +95,12 @@ contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTo
         _rcvTokens(token0, _token0Amount, from);
     }
 
-    function withdraw(address from) external override calledByRouter {
+    function withdraw(address from)
+        external
+        override
+        calledByRouter
+        returns (uint256)
+    {
         //Check
         uint256 userTokenBalance = balanceOf[from];
         require(userTokenBalance > 0, "Nothing to withdraw");
@@ -92,9 +114,12 @@ contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTo
         token1Balance -= token1Withdrawal;
 
         //Interactions
-        token0.safeTransfer(from, token0Withdrawal);
+        token0.safeTransfer(Router, token0Withdrawal);
         token1.safeTransfer(from, token1Withdrawal);
+        return token0Withdrawal;
     }
+
+    //---Trade
 
     //---Trade
     function swapToken0ToToken1(
@@ -121,20 +146,27 @@ contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTo
         uint256 _token1Amount,
         uint256 _token0AmountMin,
         address from
-    ) external override calledByRouter minValue(_token1Amount) {
+    )
+        external
+        override
+        calledByRouter
+        minValue(_token1Amount)
+        returns (uint256)
+    {
         //Checks
         uint256 tokenWithdrawal = getToken0AmountFromToken1Amount(
             _token1Amount
         );
         require(tokenWithdrawal >= _token0AmountMin, "Price changed");
-
-        //Effects
+        //
+        ////Effects
         token0Balance -= tokenWithdrawal;
         _sendProtocolFeeToken0(tokenWithdrawal);
-
-        //Interactions
+        //
+        ////Interactions
         _rcvTokens(token1, _token1Amount, from);
-        token0.safeTransfer(from, tokenWithdrawal);
+        token0.transfer(Router, tokenWithdrawal);
+        return tokenWithdrawal;
     }
 
     function getToken1AmountFromToken0Amount(uint256 tokenAmount)
@@ -168,7 +200,7 @@ contract JupyterCoreV1 is IJupyterCoreV1, JupyterCoreHelperV1,JupyterLiquidityTo
         address from
     ) private {
         //Checks
-        require(token.balanceOf(from) >= amount, "Your balance is too too low");
+        // require(token.balanceOf(from) >= amount, "Your balance is too too low");
         require(_minAmount <= amount, "Sent amount too low");
         //Effects
         if (address(token) == address(token0)) {

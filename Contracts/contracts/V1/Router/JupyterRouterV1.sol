@@ -3,6 +3,10 @@ pragma solidity ^0.8.7;
 
 import "../Core/JupyterCoreV1.sol";
 import "./IJupyterRouterV1.sol";
+import "../../TestTokens/WBNB.sol";
+import "../../TestTokens/IWETH.sol";
+
+library JupyterHelper {}
 
 contract JupyterRouterV1 is IJupyterRouterV1 {
     using SafeERC20 for IERC20;
@@ -13,14 +17,18 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         );
         _;
     }
+    modifier selfCall{
+        require(address(this) == msg.sender);
+        _;
+    }
 
     event newPair(address token0Amount, address token1Amount);
-    event liquidityIncreased(
+    event addLiquidityEvent(
         address pool,
         uint256 token0Amount,
         uint256 token1Amount
     );
-    event liquidityRemoved(
+    event removeLiquidityEvent(
         address pool,
         uint256 token0Amount,
         uint256 token1Amount
@@ -30,224 +38,229 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
 
     mapping(address => mapping(address => JupyterCoreV1)) public pairs;
     address vaultAddress;
+    address wbnb;
 
-    constructor(address _protocolAddress) {
+    constructor(address _protocolAddress, address _wbnb) {
         require(_protocolAddress != address(0), "Zero address not allowed");
         vaultAddress = _protocolAddress;
+        wbnb = _wbnb;
     }
 
-    function createLiquidityPool(
-        address _token0Address,
-        address _token1Address,
-        uint256 _token0Amount,
-        uint256 _token1Amount
-    ) external override {
+    receive() external payable {
+        require (msg.sender == wbnb);
+    }
+
+
+    function withdrawAndTransferETH(uint256 _amount) private{
+        //WBNB handling
+        IWETH(wbnb).withdraw(_amount);
+        payable(msg.sender).transfer(_amount);
+    }
+
+    function depositAndTransferWETH(address pair,uint256 value)private{
+        IWETH(wbnb).deposit{value: value}();
+        IERC20(wbnb).transfer(pair, value);
+    }
+
+    function createLiquidityPool(address _token1Address, uint256 _token1Amount)
+        external
+        payable
+        override
+    {
         require(
-            address(pairs[_token0Address][_token1Address]) == address(0),
+            address(pairs[wbnb][_token1Address]) == address(0),
             "Pair exists"
         );
-        (address token0, address token1) = _token0Address < _token1Address
-            ? (_token0Address, _token1Address)
-            : (_token1Address, _token0Address);
 
-        JupyterCoreV1 newSwap = new JupyterCoreV1(token0, token1, vaultAddress);
-        pairs[_token0Address][_token1Address] = newSwap;
-        pairs[_token1Address][_token0Address] = newSwap;
-
-        newSwap.initialDeposit(_token0Amount, _token1Amount, msg.sender);
-
-        IERC20(_token0Address).safeTransferFrom(
-            msg.sender,
-            address(newSwap),
-            _token0Amount
+        JupyterCoreV1 newSwap = new JupyterCoreV1(
+            wbnb,
+            _token1Address,
+            vaultAddress
         );
+        pairs[address(wbnb)][_token1Address] = newSwap;
+        pairs[_token1Address][address(wbnb)] = newSwap;
+
+        newSwap.initialDeposit(msg.value, _token1Amount, msg.sender);
         IERC20(_token1Address).safeTransferFrom(
             msg.sender,
             address(newSwap),
-            _token0Amount
+            _token1Amount
         );
 
-        emit newPair(_token0Address, _token1Address);
+        depositAndTransferWETH(address(newSwap), msg.value);
+
+        emit newPair(address(wbnb), _token1Address);
     }
 
-    function addLiquidity(
-        address _token0Address,
-        address _token1Address,
-        uint256 _token0Amount,
-        uint256 _token1Amount
-    ) external override {
-        JupyterCoreV1 pair = _orderInputAddress(_token0Address, _token1Address);
-        pair.deposit(_token0Amount, _token1Amount, msg.sender);
-        IERC20(pair.token0()).safeTransferFrom(
-            msg.sender,
-            address(pair),
-            _token0Amount
-        );
+    function addLiquidity(address _token1Address, uint256 _token1Amount)
+        external
+        payable
+        override
+    {
+        JupyterCoreV1 pair = pairs[wbnb][_token1Address];
+        pair.deposit(msg.value, _token1Amount, msg.sender);
+        depositAndTransferWETH(address(pair), msg.value);
         IERC20(pair.token1()).safeTransferFrom(
             msg.sender,
             address(pair),
             _token1Amount
         );
 
-        emit liquidityIncreased(
+        emit addLiquidityEvent(
             address(pair),
             pair.token0Balance(),
             pair.token1Balance()
         );
     }
 
-    function removeLiquidity(address _token0Address, address _token1Address)
+    function removeLiquidity(address _token1Address)
         external
         override
-        existingPair(_token0Address, _token1Address)
+        existingPair(wbnb, _token1Address)
     {
-        JupyterCoreV1 pair = _orderInputAddress(_token0Address, _token1Address);
-        pair.withdraw(msg.sender);
+        JupyterCoreV1 pair = _existingPair(_token1Address);
+        uint256 bnbToWithdraw = pair.withdraw(msg.sender);
+        withdrawAndTransferETH(bnbToWithdraw);
 
-        emit liquidityRemoved(
+        emit removeLiquidityEvent(
             address(pair),
             pair.token0Balance(),
             pair.token1Balance()
         );
     }
 
-    function swapToken0ToToken1(
-        address _token0Address,
-        address _token1Address,
-        uint256 _token0Amount,
-        uint256 _token1AmountMin
-    ) external override {
-        JupyterCoreV1 pair = _orderInputAddress(_token0Address, _token1Address);
-        pair.swapToken0ToToken1(_token0Amount, _token1AmountMin, msg.sender);
 
-        IERC20(pair.token0()).safeTransferFrom(
-            msg.sender,
-            address(pair),
-            _token0Amount
-        );
-
+    function swapETHToToken(
+        address _tokenAddress,
+        uint256 _tokenAmountMin
+    ) external payable override {
+        JupyterCoreV1 pair = _existingPair(_tokenAddress);
+        pair.swapToken0ToToken1(msg.value, _tokenAmountMin, msg.sender);
+        depositAndTransferWETH(address(pair),msg.value);
         emit rateChanged(address(pair), pair.rate());
     }
-  
 
-    function swapToken1ToToken0(
-        address _token0Address,
-        address _token1Address,
-        uint256 _token1Amount,
-        uint256 _token0AmountMin
-    ) external override {
-        JupyterCoreV1 pair = _orderInputAddress(_token0Address, _token1Address);
-        pair.swapToken1ToToken0(_token1Amount, _token0AmountMin, msg.sender);
+    function swapTokenToETH(
+        address _tokenAddress,
+        uint256 _tokenAmount,
+        uint256 _ethAmountMin
+    ) external payable override {
+        JupyterCoreV1 pair = _existingPair(_tokenAddress);
+        uint256 withdrawalAmount = pair.swapToken1ToToken0(
+            _tokenAmount,
+            _ethAmountMin,
+            msg.sender
+        );
+
         IERC20(pair.token1()).safeTransferFrom(
             msg.sender,
             address(pair),
-            _token1Amount
+            _tokenAmount
         );
+        withdrawAndTransferETH(withdrawalAmount);
 
         emit rateChanged(address(pair), pair.rate());
     }
-    
+
 
     function getToken1AmountFromToken0Amount(
-        address _token0Address,
         address _token1Address,
         uint256 amount
     ) external view override returns (uint256) {
-        JupyterCoreV1 pair = _orderInputAddress(_token0Address, _token1Address);
+        JupyterCoreV1 pair = _existingPair(_token1Address);
         return pair.getToken1AmountFromToken0Amount(amount);
     }
 
     function getToken0AmountFromToken1Amount(
-        address _token0Address,
         address _token1Address,
         uint256 amount
     ) external view override returns (uint256) {
-        JupyterCoreV1 pair = _orderInputAddress(_token0Address, _token1Address);
+        JupyterCoreV1 pair = _existingPair(_token1Address);
         return pair.getToken0AmountFromToken1Amount(amount);
     }
 
-    function getRate(address token0Address, address token1Address)
+    function getRate(address token1Address)
         external
         view
-        existingPair(token0Address, token1Address)
+        existingPair(wbnb, token1Address)
         returns (uint256)
     {
-        return pairs[token0Address][token1Address].rate();
+        return pairs[wbnb][token1Address].rate();
     }
 
-    function getBalance(address token0Address, address token1Address)
+    function getBalance(address token1Address)
         external
         view
-        existingPair(token0Address, token1Address)
+        existingPair(wbnb, token1Address)
         returns (uint256)
     {
-        return pairs[token0Address][token1Address].balanceOf(msg.sender);
+        return pairs[wbnb][token1Address].balanceOf(msg.sender);
     }
 
-    function _orderInputAddress(address _token0Address, address _token1Address)
+    function _existingPair(address _token1Address)
         internal
         view
         returns (JupyterCoreV1)
     {
-        (address token0, address token1) = _token0Address < _token1Address
-            ? (_token0Address, _token1Address)
-            : (_token1Address, _token0Address);
         require(
-            address(pairs[token0][token1]) != address(0),
+            address(pairs[wbnb][_token1Address]) != address(0),
             "Pair does not exist"
         );
-        return pairs[token0][token1];
+        return pairs[wbnb][_token1Address];
     }
 
-    function getDepositAmount(
-        address _token0Address,
-        address _token1Address,
-        uint256 _amount
-    ) external view override returns (uint256) {
-        JupyterCoreV1 pair = _orderInputAddress(_token0Address, _token1Address);
+    function getDepositAmount(address _token1Address, uint256 _amount)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        JupyterCoreV1 pair = _existingPair(_token1Address);
         return (_amount * 10**18) / pair.rate();
     }
 
-    function getSwapTokenTotalSupply(
-        address _token0Address,
-        address _token1Address
-    ) external view override returns (uint256) {
-        JupyterCoreV1 pair = _orderInputAddress(_token0Address, _token1Address);
+    function getSwapTokenTotalSupply(address _token1Address)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        JupyterCoreV1 pair = _existingPair(_token1Address);
         return pair.totalSupply();
     }
 
-    function getTokenBalances(address _token0Address, address _token1Address)
+    function getTokenBalances(address _token1Address)
         external
         view
         override
         returns (uint256, uint256)
     {
         return (
-            IERC20(_token0Address).balanceOf(msg.sender),
+            IERC20(wbnb).balanceOf(msg.sender),
             IERC20(_token1Address).balanceOf(msg.sender)
         );
     }
-    function getPoolBalances(address _token0Address, address _token1Address)
+
+    function getPoolBalances(address _token1Address)
         external
         view
         returns (uint256, uint256)
     {
-        JupyterCoreV1 pair = _orderInputAddress(_token0Address, _token1Address);
+        JupyterCoreV1 pair = _existingPair(_token1Address);
         return (
-            IERC20(_token0Address).balanceOf(address(pair)),
+            IERC20(wbnb).balanceOf(address(pair)),
             IERC20(_token1Address).balanceOf(address(pair))
         );
     }
 
-
     //---------------TESTING REMOVE BEFORE DEPLOY
 
-    function getAddress(address _token0Address, address _token1Address)
+    function getAddress(address _token1Address)
         external
         view
         returns (address)
     {
-        JupyterCoreV1 pair = _orderInputAddress(_token0Address, _token1Address);
+        JupyterCoreV1 pair = _existingPair(_token1Address);
         return address(pair);
     }
 }

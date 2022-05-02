@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "../elements";
 import BN from "bignumber.js"
 export default function AllowanceSetter({setMaxSlippage,allowance,tokenName}) {
-  const [selections, setSelections] = useState(["Increase", "Decrease"]);
+  const [selections, setSelections] = useState(["Approve", "Revoke Approval"]);
   const [selection, setSelection] = useState(1);
   const [open, setOpen] = useState(false);
   return (
@@ -21,7 +21,7 @@ export default function AllowanceSetter({setMaxSlippage,allowance,tokenName}) {
         <div style={{ display: "flex", flexWrap: "wrap" }}>
           {selections.map((item,index) => (
             <Button onClick={()=>{
-                setMaxSlippage(item.split(" ")[1].slice(0,-1))
+                setMaxSlippage(index === 0)
                 setSelection(index)
             }} style={{padding:8,marginRight:2}}>{item}</Button>
           ))}

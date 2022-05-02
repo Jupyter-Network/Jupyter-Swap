@@ -17,7 +17,7 @@ export const Button = styled.button`
   color: #282c34;
   cursor: pointer;
   font-size: 16px;
-  margin: 0px 20px;
+  margin: 7px 5px;
   padding: 12px 24px;
   text-align: center;
   text-decoration: none;
@@ -34,10 +34,7 @@ export const Header = styled.header`
   align-items: center;
   background-color: #282c34;
   color: white;
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  min-height: 70px;
+  min-height: 20px;
 `;
 
 export const Image = styled.img`

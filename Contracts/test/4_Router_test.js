@@ -3,215 +3,227 @@ const BN = require("bn.js");
 const { NAME, SYMBOL, TOTALSUPPLY, DECIMALS } = require("../CONSTANT");
 const Router = artifacts.require("JupyterRouterV1");
 const Token = artifacts.require("Token");
-
-const decimals = "".padStart(7, "0");
+const WBNB = artifacts.require("WBNB");
+const decimals = "".padStart(10, "0");
 const amount = "1" + decimals;
 
 let router;
 let token0;
 let token1;
+let wbnb;
 beforeEach("should setup the contract instance", async () => {
   token0 = await Token.new();
   token1 = await Token.new();
+  wbnb = await WBNB.new();
 });
 
 contract("Router", ([owner, testAddress, testAddress2]) => {
-  
   it("Create Pool", async () => {
-    router = await Router.new(testAddress2);    await token0.transfer(testAddress, amount * 10);
-    await token1.transfer(testAddress, amount * 10);
-    await token0.increaseAllowance(router.address, amount * 10);
-    await token1.increaseAllowance(router.address, amount * 10);
-    await token0.increaseAllowance(router.address, amount * 10, {
-      from: testAddress,
-    });
-    await token1.increaseAllowance(router.address, amount * 10, {
+    router = await Router.new(testAddress2, wbnb.address);
+    await token1.transfer(testAddress, amount + "0");
+    await token1.increaseAllowance(router.address, amount + "0");
+    await token1.increaseAllowance(router.address, amount + "0", {
       from: testAddress,
     });
 
-    await router.createLiquidityPool(
-      token0.address,
-      token1.address,
-      amount,
-      amount
-    );
+    await router.createLiquidityPool(token1.address, amount, { value: amount });
     assert(
-      parseInt(await router.getBalance(token0.address, token1.address)) ===
+      parseInt(await router.getBalance(token1.address)) ===
         parseInt(amount) * parseInt(amount),
       "Mint failed"
     );
   });
+
   it("Add Liquidity", async () => {
-    await token0.transfer(testAddress, amount * 10);
     await token1.transfer(testAddress, amount * 10);
-    await token0.increaseAllowance(router.address, amount * 10);
     await token1.increaseAllowance(router.address, amount * 10);
-    await token0.increaseAllowance(router.address, amount * 10, {
-      from: testAddress,
-    });
     await token1.increaseAllowance(router.address, amount * 10, {
       from: testAddress,
     });
 
-    await router.createLiquidityPool(
-      token0.address,
-      token1.address,
-      amount,
-      amount
-    );
-
-    await router.addLiquidity(token0.address, token1.address, amount, amount);
+    await router.createLiquidityPool(token1.address, amount, { value: amount });
     assert(
-      parseInt(await router.getBalance(token0.address, token1.address)) ===
-        2 * parseInt(amount) * parseInt(amount),
+      (await router.getBalance(token1.address)).eq(
+        new BN(amount).mul(new BN(amount))
+      ),
+      "Mint failed"
+    );
+    await router.addLiquidity(token1.address, amount, { value: amount });
+    assert(
+      (await router.getBalance(token1.address)).eq(
+        new BN(amount).mul(new BN(amount)).mul(new BN(2))
+      ),
       "Mint failed"
     );
   });
+
   it("Remove Liquidity", async () => {
-    await token0.transfer(testAddress, amount * 10);
     await token1.transfer(testAddress, amount * 10);
-    await token0.increaseAllowance(router.address, amount * 10);
     await token1.increaseAllowance(router.address, amount * 10);
-    await token0.increaseAllowance(router.address, amount * 10, {
-      from: testAddress,
-    });
+
     await token1.increaseAllowance(router.address, amount * 10, {
       from: testAddress,
     });
 
-    await router.createLiquidityPool(
-      token0.address,
-      token1.address,
-      amount,
-      amount
-    );
+    await router.createLiquidityPool(token1.address, amount, { value: amount });
 
-    await router.addLiquidity(token0.address, token1.address, amount, amount);
-
-    await router.addLiquidity(token0.address, token1.address, amount, amount, {
+    await router.addLiquidity(token1.address, amount, { value: amount });
+    await router.addLiquidity(token1.address, amount, {
+      value: amount,
       from: testAddress,
     });
 
-    await router.removeLiquidity(token0.address, token1.address);
+    await router.removeLiquidity(token1.address);
     //assert(parseInt(await router.getBalance(token0.address,token1.address)) ===  0,"Burn failed");
     assert(
-      parseInt(await router.getBalance(token0.address, token1.address)) === 0,
+      (await router.getBalance(token1.address)).eq(new BN(0)),
       "Burn failed"
     );
 
     assert(
-      parseInt(
-        await router.getBalance(token0.address, token1.address, {
+      (
+        await router.getBalance(token1.address, {
           from: testAddress,
         })
-      ) ===
-        parseInt(amount) * parseInt(amount),
+      ).eq(new BN(amount).mul(new BN(amount))),
       "Burn failed"
     );
 
-    await router.removeLiquidity(token0.address, token1.address, {
+    await router.removeLiquidity(token1.address, {
       from: testAddress,
     });
     assert(
-      parseInt(
-        await router.getBalance(token0.address, token1.address, {
+      (
+        await router.getBalance(token1.address, {
           from: testAddress,
         })
-      ) === 0,
+      ).eq(new BN(0)),
       "Burn failed"
     );
   });
+
   it("Swap", async () => {
-    await token0.transfer(testAddress, amount * 10);
+    router = await Router.new(testAddress2, wbnb.address);
+
     await token1.transfer(testAddress, amount * 10);
-    await token0.increaseAllowance(router.address, amount * 10);
-    await token1.increaseAllowance(router.address, amount * 10);
-    await token0.increaseAllowance(router.address, amount * 10, {
-      from: testAddress,
-    });
-    await token1.increaseAllowance(router.address, amount * 10, {
+    await token1.increaseAllowance(router.address, amount * 20);
+    await token1.increaseAllowance(router.address, amount * 20, {
       from: testAddress,
     });
 
-    await router.createLiquidityPool(
-      token0.address,
+    await router.createLiquidityPool(token1.address, amount, { value: amount });
+
+    await router.addLiquidity(token1.address, amount, { value: amount });
+    await router.addLiquidity(token1.address, amount, { value: amount });
+    await router.addLiquidity(token1.address, amount, { value: amount });
+    await router.addLiquidity(token1.address, amount, { value: amount });
+
+    await router.addLiquidity(token1.address, amount, {
+      value: amount,
+      from: testAddress,
+    });
+
+    let changeAmount = await router.getToken1AmountFromToken0Amount(
       token1.address,
-      amount,
       amount
     );
 
-    await router.addLiquidity(token0.address, token1.address, amount, amount);
-    await router.addLiquidity(token0.address, token1.address, amount, amount);
-    await router.addLiquidity(token0.address, token1.address, amount, amount);
-    await router.addLiquidity(token0.address, token1.address, amount, amount);
-
-    await router.addLiquidity(token0.address, token1.address, amount, amount, {
-      from: testAddress,
+    await router.swapETHToToken(token1.address, changeAmount, {
+      value: amount,
     });
 
-    const tok =
-      token0.address < token1.address ? [token0, token1] : [token1, token0];
-
-    let token0Wallet = await tok[0].balanceOf(owner);
-    let token1Wallet = await tok[1].balanceOf(owner);
-
-    let changeAmount = parseInt(
-      await router.getToken1AmountFromToken0Amount(
-        token0.address,
-        token1.address,
-        amount
-      )
-    );
-
-    await router.swapToken0ToToken1(
-      token0.address,
+    changeAmount = await router.getToken0AmountFromToken1Amount(
       token1.address,
-      amount,
-      changeAmount
+      amount
     );
+    await token1.increaseAllowance(router.address, "10000000000000000");
+
+    await router.swapTokenToETH(
+      token1.address,
+      "10000000000000000",
+      changeAmount,{from:owner}
+    );
+    //await router.swapETHToToken(token1.address, "4000000000000000", {
+    //  value: "10000000000000000",
+    //});
+
+    let token0Wallet = await web3.eth.getBalance(owner);
+    let token1Wallet = await token1.balanceOf(owner);
+
+    changeAmount = await router.getToken1AmountFromToken0Amount(
+      token1.address,
+      amount
+    );
+    console.log(changeAmount.toString());
+    await router.swapETHToToken(token1.address, changeAmount, {
+      value: amount,
+    });
+     console.log(
+       (await web3.eth.getBalance(owner)).toString(),
+       new BN(token0Wallet).sub(new BN(amount)).toString()
+     );
 
     assert(
-      (await tok[0].balanceOf(owner)).eq(token0Wallet.sub(new BN(amount))),
+      new BN(await web3.eth.getBalance(owner)).lte(
+        new BN(token0Wallet).sub(new BN(amount))
+      ),
       "Swap error: token 0 not sent"
     );
-
+    
     assert(
-      (await tok[1].balanceOf(owner)).eq(
+      (await token1.balanceOf(owner)).gte(
         token1Wallet.add(new BN(changeAmount))
       ),
       "Swap error: token 1 not received"
     );
+    
+    //-----
+     token0Wallet = await web3.eth.getBalance(owner);
+     token1Wallet = await token1.balanceOf(owner);
 
-    token0Wallet = await tok[0].balanceOf(owner);
-    token1Wallet = await tok[1].balanceOf(owner);
-
-    changeAmount = parseInt(
-      await router.getToken0AmountFromToken1Amount(
-        token0.address,
-        token1.address,
-        amount
-      )
-    );
-
-    await router.swapToken1ToToken0(
-      token0.address,
+    changeAmount = await router.getToken0AmountFromToken1Amount(
       token1.address,
-      amount,
-      changeAmount
+      amount
+    );
+    console.log(
+      (await web3.eth.getBalance(owner)).toString(),
+      new BN(token0Wallet).toString()
     );
 
+    router.swapTokenToETH(token1.address,amount*10, changeAmount)
+     console.log(
+       (await web3.eth.getBalance(owner)).toString(),
+       new BN(token0Wallet).toString()
+     );
+      
     assert(
-      (await tok[0].balanceOf(owner)).eq(
-        token0Wallet.add(new BN(changeAmount))
+      new BN(await web3.eth.getBalance(owner)).gt(
+        new BN(token0Wallet)
       ),
-      "Swap error: token 0 not received"
+      "Swap error: ETH not received"
     );
-
+    
     assert(
-      (await tok[1].balanceOf(owner)).eq(token1Wallet.sub(new BN(amount))),
-      "Swap error: token 1 not sent"
+      (await token1.balanceOf(owner)).gte(
+        token1Wallet.add(new BN(changeAmount))
+      ),
+      "Swap error: token 1 not received"
     );
+    //
+    //   assert(
+    //     (await tok[0].balanceOf(owner)).eq(
+    //       token0Wallet.add(new BN(changeAmount))
+    //     ),
+    //     "Swap error: token 0 not received"
+    //   );
+    //
+    //   assert(
+    //     (await tok[1].balanceOf(owner)).eq(token1Wallet.sub(new BN(amount))),
+    //     "Swap error: token 1 not sent"
+    //   );
+    
   });
+  /*
   it("Protocol Fees", async () => {
     router = await Router.new(testAddress2);    await token0.transfer(testAddress, amount * 100);
     await token1.transfer(testAddress, amount * 100);
@@ -416,5 +428,47 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
       "Possible Force Feed Vulnerability"
     );
   });
+  */
+  /*
+  it("Swap BNB To Token", async () => {
+    router = await Router.new(
+      testAddress2,
+      "0x49cf12D0De61a1633FF8660b800d5F10d2A8f580"
+    );
 
+    await token1.transfer(testAddress, amount * 100);
+    await token1.increaseAllowance(router.address, amount * 10000000);
+    await token1.increaseAllowance(router.address, amount * 100000, {
+      from: testAddress,
+    });
+
+    await router.createLiquidityPool(
+      token1.address,
+      new BN(amount).mul(new BN(1)),
+      { value: new BN(amount).mul(new BN(100)) }
+    );
+
+    await router.addLiquidity(token1.address, new BN(amount).mul(new BN(1)), {
+      value: new BN(amount).mul(new BN(100)),
+    });
+
+    changeAmount = parseInt(
+      await router.getToken1AmountFromToken0Amount(
+        token0.address,
+        token1.address,
+        amount,
+        { from: testAddress }
+      )
+    );
+
+    await router.swapBNBToToken0(
+      token0.address,
+      token1.address,
+      amount,
+      changeAmount,
+      { from: testAddress }
+    );
+  
+  });
+    */
 });

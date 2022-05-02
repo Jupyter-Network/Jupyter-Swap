@@ -14,8 +14,8 @@ export default function Frame({ children }) {
           height: "100vh",
         }}
       >
-
         <MainComponent page={page} />
+
       </div>
     </div>
   );

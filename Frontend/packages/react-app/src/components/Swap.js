@@ -22,14 +22,15 @@ const tokenAddresses =
     ? [addresses.token0Address, addresses.token1Address]
     : [addresses.token1Address, addresses.token0Address];
 
-    BN.config({ DECIMAL_PLACES:18 })
+BN.config({ DECIMAL_PLACES: 18 });
 
-function Buy() {
-  const { account } = useEthers();
+export default function Swap({account}) {
+
+  const [openWindow, setOpenWindow] = useState("Swap");
+
   const [tradeType, setTradeType] = useState("buy");
 
   const [maxSlippage, setMaxSlippage] = useState(new BN(0.5));
-
 
   const [state, setState] = useState({
     token0Amount: new BN(0),
@@ -38,22 +39,23 @@ function Buy() {
     impact: new BN(0),
     allowanceCheck: new BN(0),
   });
-  console.log(addresses.routerAddress)
+
+
   let router = new Contract(addresses.routerAddress, abis.router);
   let token = new Contract(tokenAddresses[1], abis.erc20);
   let token0 = new Contract(tokenAddresses[0], abis.erc20);
 
-  let increaseTokenAllowance = useContractFunction(token, "increaseAllowance", {
-    transactionName: "increaseAllowance",
+  let increaseTokenAllowance = useContractFunction(token, "approve", {
+    transactionName: "approve",
   });
 
-  let increaseToken0Allowance = useContractFunction(
-    token0,
-    "increaseAllowance",
-    {
-      transactionName: "increase0Allowance",
-    }
-  );
+  let increaseToken0Allowance = useContractFunction(token0, "approve", {
+    transactionName: "approve0",
+  });
+
+  let addLiquidity = useContractFunction(router, "addLiquidity", {
+    transactionName: "addLiquidity",
+  });
 
   //Buy
   const swap0To1 = useContractFunction(router, "swapToken0ToToken1", {
@@ -105,6 +107,11 @@ function Buy() {
       method: "allowance",
       args: [account, addresses.routerAddress],
     },
+    {
+      contract: router,
+      method: "getBalance",
+      args: [addresses.token0Address, addresses.token1Address],
+    },
   ]);
 
   useEffect(() => {
@@ -116,25 +123,31 @@ function Buy() {
     handleToken1AmountChange(state.token1Amount);
   }, [maxSlippage]);
 
-  function handleAllowanceClick() {
-    console.log("inrease allowance");
+  function handleAllowanceClick(increase = true) {
+    console.log("increase allowance");
     if (tradeType === "buy") {
       increaseTokenAllowance.send(
         addresses.routerAddress,
-        new BN(state.token0Amount)
-          .multipliedBy(new BN(10).pow(18))
-          .toFixed(0)
-          .toString()
-      );
+        increase
+          ? new BN(state.token0Amount)
+              .multipliedBy(new BN(10).pow(18))
+              .toFixed(0)
+              .toString()
+          : 0
+          )
     } else {
       increaseToken0Allowance.send(
         addresses.routerAddress,
-        new BN(state.token0Amount)
-          .multipliedBy(new BN(10).pow(18))
-          .toFixed(0)
-          .toString()
+        increase
+          ? new BN(state.token0Amount)
+              .multipliedBy(new BN(10).pow(18))
+              .toFixed(0)
+              .toString()
+          : 0
       );
+      
     }
+    
   }
 
   function subtractSlippage(amountBeforeSlippage) {
@@ -203,7 +216,6 @@ function Buy() {
           .multipliedBy(0.997)
           .dividedBy(rate)
           .dividedBy(new BN(10).pow(18));
-
       } else {
         rateWithoutSlippage = amount
           .dividedBy(rateWithoutSlippage)
@@ -305,126 +317,208 @@ function Buy() {
 
   console.log(swap1To0.state);
   console.log(swap0To1.state);
+  console.log(increaseTokenAllowance.state)
+  console.log(increaseToken0Allowance.state)
   console.log(increaseTokenAllowance.state);
-
+  console.log(addLiquidity.state);
+  let inactive = {
+    color: "dodgerblue",
+    marginBottom: -1,
+    border: "solid",
+    padding: 7,
+    borderWidth: 2,
+  };
+  let active = {
+    backgroundColor: "dodgerblue",
+    padding: 9,
+    minWidth: "120px",
+  };
   return (
-    <InteractionContainer
-      style={{ margin: "0 auto", width: 400, maxWidth: "90%" }}
-    >
-      {results[3] ? (
-        <div>
-          <h3 style={{ textDecoration: "underline", marginTop: 0 }}>
-            {tradeType === "buy" ? "Buy" : "Sell"} {results[4].value.toString()}
-          </h3>
-
-          <p style={{ fontSize: "medium" }}>
-            Price:{" "}
-            {new BN(1)
-              .dividedBy(new BN(results[0].value).dividedBy(new BN(10).pow(18)))
-              .toFixed(8)
-              .toString()}
-          </p>
-          <div style={{ display: "flex", borderBottom: "solid" }}>
-            <span>
-              {tradeType === "buy"
-                ? results[5].value.toString()
-                : results[6].value.toString()}
-            </span>
-            <Input
-              onChange={(e) => handleToken0AmountChange(e.target.value)}
-              value={state.token0Amount.toString()}
-            ></Input>
-          </div>
-
-          <Button style={{ padding: 5, backgroundColor: "white" }}>
-            <img
-              style={{
-                backgroundColor: "white",
-                padding: 5,
-                borderRadius: "50%",
-              }}
-              width={30}
-              onClick={() =>{
-                setTradeType(tradeType === "sell" ? "buy" : "sell")
-                handleToken0AmountChange(state.token0Amount);  
-              }
-              }
-              src="/switch.svg"
-            ></img>
-          </Button>
-          <br />
-          <p style={{ fontSize: "medium", margin: 0 }}>You will get approx.</p>
-          <div style={{ display: "flex", borderBottom: "solid" }}>
-            <span>
-              {tradeType === "buy"
-                ? results[6].value.toString()
-                : results[5].value.toString()}
-            </span>
-
-            <Input
-              value={state.token1Amount.toString()}
-              onChange={(e) => handleToken1AmountChange(e.target.value)}
-            ></Input>
-          </div>
-          {state.allowanceCheck ? (
-            <Button onClick={handleClick}>
-              {tradeType === "buy" ? "Buy" : "Sell"}{" "}
-              {results[4].value.toString()}
-            </Button>
+    <EasyContainer style={{ backgroundColor: "white" }}>
+      <span
+        style={{
+          display: "flex",
+          width: "fit-content",
+          margin: "0 auto",
+          padding: 0,
+          justifyContent: "center",
+          color: "white",
+          marginBottom: -2,
+        }}
+      >
+        <span
+          style={openWindow === "Swap" ? active : inactive}
+          onClick={() => {
+            setOpenWindow("Swap");
+          }}
+        >
+          Swap
+        </span>
+        <span
+          onClick={() => {
+            setOpenWindow("Liquidity");
+          }}
+          style={openWindow === "Liquidity" ? active : inactive}
+        >
+          Liquidity
+        </span>
+      </span>
+      {openWindow === "Liquidity" ? (
+        <InteractionContainer
+          style={{ margin: "0 auto", maxWidth: "90%", display: "block" }}
+        >
+          <h2>Todo: Add liquidity interface</h2>
+          {results[8].value ? (
+            <p>Current liquidity tokens {results[8].value.toString()}</p>
           ) : (
-            <Button onClick={handleAllowanceClick}>
-              Increase{" "}
-              {tradeType === "buy"
-                ? results[3].value.toString()
-                : results[4].value.toString()}{" "}
-              Allowance
-            </Button>
+            <p></p>
           )}
+          <Button
+            onClick={() => {
+              new BN(results[0].value)
+                .dividedBy(new BN(10).pow(18))
+                .multipliedBy(10000000);
+              console.log(
+                new BN(1000000000).toString(),
 
-          <p style={{ fontSize: "medium" }}>
-            You will get min.{" "}
-            {state.token1AmountMin.dividedBy(new BN(10).pow(18)).toString()}{" "}
-            {tradeType === "buy"
-              ? results[4].value.toString()
-              : results[3].value.toString()}
-          </p>
+                results[0].value
+              );
+              addLiquidity.send(
+                token0.address,
+                token.address,
+                new BN(1000000000),
 
-          <div style={{ width: "100%", color: "dodgerblue" }}>
-            <FeesAndImpact expectedImpact={state.impact}></FeesAndImpact>
+                new BN(1000000000).dividedBy(
+                  new BN(results[0].value).dividedBy(new BN(10).pow(18))
+                )
+              );
+            }}
+          >
+            Add Liquidity
+          </Button>
+        </InteractionContainer>
+      ) : (
+        <InteractionContainer style={{ margin: "0 auto", maxWidth: "90%" }}>
+          {results[3] ? (
+            <div>
+              <h3 style={{ textDecoration: "underline", marginTop: 0 }}>
+                {tradeType === "buy" ? "Buy" : "Sell"}{" "}
+                {results[4].value.toString()}
+              </h3>
 
-            <div style={{ paddingTop: 10 }}>
-              {tradeType === "buy" ? (
-                <AllowanceSetter
-                  allowance={new BN(results[2].value).dividedBy(
-                    new BN(10).pow(18)
-                  )}
-                  tokenName={results[3].value}
-                ></AllowanceSetter>
+              <p style={{ fontSize: "medium" }}>
+                Price:{" "}
+                {new BN(1)
+                  .dividedBy(
+                    new BN(results[0].value).dividedBy(new BN(10).pow(18))
+                  )
+                  .toFixed(8)
+                  .toString()}
+              </p>
+              <div style={{ display: "flex", borderBottom: "solid" }}>
+                <span>
+                  {tradeType === "buy"
+                    ? results[5].value.toString()
+                    : results[6].value.toString()}
+                </span>
+                <Input
+                  onChange={(e) => handleToken0AmountChange(e.target.value)}
+                  value={state.token0Amount.toString()}
+                ></Input>
+              </div>
+
+              <Button style={{ padding: 5, backgroundColor: "white" }}>
+                <img
+                  style={{
+                    backgroundColor: "white",
+                    padding: 5,
+                    borderRadius: "50%",
+                  }}
+                  width={30}
+                  onClick={() => {
+                    setTradeType(tradeType === "sell" ? "buy" : "sell");
+                    handleToken0AmountChange(state.token0Amount);
+                  }}
+                  src="/switch.svg"
+                ></img>
+              </Button>
+              <br />
+              <p style={{ fontSize: "medium", margin: 0 }}>
+                You will get approx.
+              </p>
+              <div style={{ display: "flex", borderBottom: "solid" }}>
+                <span>
+                  {tradeType === "buy"
+                    ? results[6].value.toString()
+                    : results[5].value.toString()}
+                </span>
+
+                <Input
+                  value={state.token1Amount.toString()}
+                  onChange={(e) => handleToken1AmountChange(e.target.value)}
+                ></Input>
+              </div>
+              {state.allowanceCheck ? (
+                <Button onClick={handleClick}>
+                  {tradeType === "buy" ? "Buy" : "Sell"}{" "}
+                  {results[4].value.toString()}
+                </Button>
               ) : (
-                <AllowanceSetter
-                  allowance={new BN(results[7].value).dividedBy(
-                    new BN(10).pow(18)
-                  )}
-                  tokenName={results[4].value}
-                ></AllowanceSetter>
+                <Button onClick={handleAllowanceClick}>
+                  Increase{" "}
+                  {tradeType === "buy"
+                    ? results[3].value.toString()
+                    : results[4].value.toString()}{" "}
+                  Allowance
+                </Button>
               )}
 
-              <MaxSlippageSelector
-                setMaxSlippage={setMaxSlippage}
-              ></MaxSlippageSelector>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <p>Loading ...</p>
-      )}
-    </InteractionContainer>
-  );
-}
+              <p style={{ fontSize: "medium" }}>
+                You will get min.{" "}
+                {state.token1AmountMin.dividedBy(new BN(10).pow(18)).toString()}{" "}
+                {tradeType === "buy"
+                  ? results[4].value.toString()
+                  : results[3].value.toString()}
+              </p>
 
-export default function Swap() {
-  return (
-    <EasyContainer style={{ backgroundColor: "white" }}>{Buy()}</EasyContainer>
+              <div style={{ width: "100%", color: "dodgerblue" }}>
+                <FeesAndImpact expectedImpact={state.impact}></FeesAndImpact>
+
+                <div style={{ paddingTop: 10 }}>
+                  {tradeType === "buy" ? (
+                    <AllowanceSetter
+                      allowance={new BN(results[2].value).dividedBy(
+                        new BN(10).pow(18)
+                      )}
+                      tokenName={results[3].value}
+                      setMaxSlippage={(increase) =>
+                        handleAllowanceClick(increase)
+                      }
+                    ></AllowanceSetter>
+                  ) : (
+                    <AllowanceSetter
+                      allowance={new BN(results[7].value).dividedBy(
+                        new BN(10).pow(18)
+                      )}
+                      setMaxSlippage={(increase) =>
+                        handleAllowanceClick(increase)
+                      }
+                      tokenName={results[4].value}
+                    ></AllowanceSetter>
+                  )}
+
+                  <MaxSlippageSelector
+                    setMaxSlippage={setMaxSlippage}
+                  ></MaxSlippageSelector>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p>Loading ...</p>
+          )}
+        </InteractionContainer>
+      )}
+    </EasyContainer>
   );
 }
 
