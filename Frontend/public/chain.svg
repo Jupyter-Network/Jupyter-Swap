@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="210mm"
+   viewBox="0 0 210 210"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.1 (1:1.1+202109281946+c3084ef5ed)"
+   sodipodi:docname="chain.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.80087682"
+     inkscape:cx="396.44049"
+     inkscape:cy="561.25984"
+     inkscape:window-width="2492"
+     inkscape:window-height="1376"
+     inkscape:window-x="1988"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       fill="none"
+       fill-rule="evenodd"
+       stroke="currentColor"
+       stroke-linecap="round"
+       stroke-linejoin="round"
+       transform="matrix(15.141989,0,0,15.141989,5.7737416,-0.76202767)"
+       id="g828"
+       style="fill:none;fill-opacity:1;stroke:#e3b23c;stroke-opacity:1">
+      <path
+         d="m 5.5,7.5 c 0.9694098,1.367188 3.0111157,1.1272701 4.0111157,0 L 11.5,5.5 c 1.124349,-1.2280797 1.164128,-2.8138837 0,-4 -1.135619,-1.15706921 -2.864381,-1.15706947 -4,0 l -2,2"
+         id="path824"
+         style="fill:none;fill-opacity:1;stroke:#e3b23c;stroke-opacity:1" />
+      <path
+         d="M 7.5,6.5697732 C 6.5305902,5.2025852 4.5,5.3727299 3.5,6.5 l -2,1.9748737 C 0.37565137,9.7029534 0.33587242,11.313884 1.5,12.5 c 1.135619,1.157069 2.864381,1.15707 4,0 l 2,-2"
+         id="path826"
+         style="fill:none;fill-opacity:1;stroke:#e3b23c;stroke-opacity:1" />
+    </g>
+  </g>
+</svg>

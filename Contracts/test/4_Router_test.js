@@ -73,7 +73,7 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
       from: testAddress,
     });
 
-    await router.removeLiquidity(token1.address);
+    await router.removeLiquidity(token1.address, amount);
     //assert(parseInt(await router.getBalance(token0.address,token1.address)) ===  0,"Burn failed");
     assert(
       (await router.getBalance(token1.address)).eq(new BN(0)),
@@ -89,7 +89,7 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
       "Burn failed"
     );
 
-    await router.removeLiquidity(token1.address, {
+    await router.removeLiquidity(token1.address, amount, {
       from: testAddress,
     });
     assert(
@@ -107,11 +107,15 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
 
     await token1.transfer(testAddress, amount * 10);
     await token1.increaseAllowance(router.address, amount * 20);
+    await token1.increaseAllowance(router.address, amount * 20);
+    await token0.increaseAllowance(router.address, amount * 20);
+
     await token1.increaseAllowance(router.address, amount * 20, {
       from: testAddress,
     });
 
     await router.createLiquidityPool(token1.address, amount, { value: amount });
+    await router.createLiquidityPool(token0.address, amount, { value: amount });
 
     await router.addLiquidity(token1.address, amount, { value: amount });
     await router.addLiquidity(token1.address, amount, { value: amount });
@@ -141,7 +145,8 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
     await router.swapTokenToETH(
       token1.address,
       "10000000000000000",
-      changeAmount,{from:owner}
+      changeAmount,
+      { from: owner }
     );
     //await router.swapETHToToken(token1.address, "4000000000000000", {
     //  value: "10000000000000000",
@@ -158,10 +163,10 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
     await router.swapETHToToken(token1.address, changeAmount, {
       value: amount,
     });
-     console.log(
-       (await web3.eth.getBalance(owner)).toString(),
-       new BN(token0Wallet).sub(new BN(amount)).toString()
-     );
+    console.log(
+      (await web3.eth.getBalance(owner)).toString(),
+      new BN(token0Wallet).sub(new BN(amount)).toString()
+    );
 
     assert(
       new BN(await web3.eth.getBalance(owner)).lte(
@@ -169,17 +174,17 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
       ),
       "Swap error: token 0 not sent"
     );
-    
+
     assert(
       (await token1.balanceOf(owner)).gte(
         token1Wallet.add(new BN(changeAmount))
       ),
       "Swap error: token 1 not received"
     );
-    
+
     //-----
-     token0Wallet = await web3.eth.getBalance(owner);
-     token1Wallet = await token1.balanceOf(owner);
+    token0Wallet = await web3.eth.getBalance(owner);
+    token1Wallet = await token1.balanceOf(owner);
 
     changeAmount = await router.getToken0AmountFromToken1Amount(
       token1.address,
@@ -190,25 +195,31 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
       new BN(token0Wallet).toString()
     );
 
-    router.swapTokenToETH(token1.address,amount*10, changeAmount)
-     console.log(
-       (await web3.eth.getBalance(owner)).toString(),
-       new BN(token0Wallet).toString()
-     );
-      
-    assert(
-      new BN(await web3.eth.getBalance(owner)).gt(
-        new BN(token0Wallet)
-      ),
-      "Swap error: ETH not received"
+    await router.swapTokenToETH(token1.address, amount, changeAmount);
+    await token0.balanceOf(owner);
+    console.log(
+      (await web3.eth.getBalance(owner)).toString(),
+      new BN(token0Wallet).toString()
     );
-    
-    assert(
-      (await token1.balanceOf(owner)).gte(
-        token1Wallet.add(new BN(changeAmount))
-      ),
-      "Swap error: token 1 not received"
+    console.log(
+      new BN(await web3.eth.getBalance(owner)).toString(),
+      new BN(token0Wallet).toString()
     );
+    await router.swapTokens(token1.address,token0.address, amount, 0);
+
+    //assert(
+    //  new BN(await web3.eth.getBalance(owner)).gt(
+    //    new BN(token0Wallet)
+    //  ),
+    //  "Swap error: ETH not received"
+    //);
+
+    //assert(
+    //  (await token1.balanceOf(owner)).gte(
+    //    token1Wallet.add(new BN(changeAmount))
+    //  ),
+    //  "Swap error: token 1 not received"
+    //);
     //
     //   assert(
     //     (await tok[0].balanceOf(owner)).eq(
@@ -221,8 +232,8 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
     //     (await tok[1].balanceOf(owner)).eq(token1Wallet.sub(new BN(amount))),
     //     "Swap error: token 1 not sent"
     //   );
-    
   });
+
   /*
   it("Protocol Fees", async () => {
     router = await Router.new(testAddress2);    await token0.transfer(testAddress, amount * 100);

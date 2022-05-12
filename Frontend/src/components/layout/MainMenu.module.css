@@ -1,0 +1,23 @@
+.menuButton{
+    background-color: darkgray;
+    padding: 5px 30px;
+    color: lightgray;
+    border-bottom: solid;
+    cursor: pointer;
+    transition: color 0.5s;
+
+    
+}
+.menuButton:hover{
+    background-color: lightgray;
+    color:limegreen
+}
+
+
+.menuButtonActive{
+    background-color: lightgray;
+    color:limegreen;
+    padding: 5px 30px;
+    border-bottom: solid;
+    cursor: pointer;
+}

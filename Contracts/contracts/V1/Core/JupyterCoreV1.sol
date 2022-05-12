@@ -17,7 +17,6 @@ contract JupyterCoreV1 is
         _;
     }
     
-
     modifier calledByRouter() {
         require(msg.sender == Router, "Denied can only be accessed by router");
         _;
@@ -32,6 +31,8 @@ contract JupyterCoreV1 is
 
     IERC20 public token0;
     IERC20 public token1;
+
+    event PoolClosed(address poolAddress,address tokenAddress);
 
     constructor(
         address _token0,
@@ -85,37 +86,41 @@ contract JupyterCoreV1 is
     {
         //Checks
         require(
-            _token1Amount == _scaleUp(_token0Amount) / rate(),
+            _token1Amount <= _scaleUp(_token0Amount+1000) / rate() && _token1Amount >= _scaleUp(_token0Amount-1000) / rate(),
             "Wrong amount of tokens sent"
         );
         //Effects
-        mint((totalSupply * _token0Amount) / token1Balance, from);
+        mint((totalSupply() * _token0Amount) / token1Balance, from);
         //Interactions
         _rcvTokens(token1, _scaleUp(_token0Amount) / rate(), from);
         _rcvTokens(token0, _token0Amount, from);
     }
 
-    function withdraw(address from)
+    function withdraw(address from,uint256 _withdrawalAmount)
         external
         override
         calledByRouter
         returns (uint256)
     {
         //Check
-        uint256 userTokenBalance = balanceOf[from];
-        require(userTokenBalance > 0, "Nothing to withdraw");
+        uint256 userTokenBalance = balanceOf(from);
+        require(userTokenBalance >= _withdrawalAmount, "Balance too low");
         //Effects
-        (uint256 token0Withdrawal, uint256 token1Withdrawal) = getBalances(
-            from
-        );
+        uint256 partOfPool = totalSupply() / _withdrawalAmount;
+        uint256 token0Withdrawal = token0Balance / partOfPool;
+        uint256 token1Withdrawal = token1Balance / partOfPool;
 
-        burn(userTokenBalance, from);
+        burn(_withdrawalAmount, from);
         token0Balance -= token0Withdrawal;
         token1Balance -= token1Withdrawal;
 
         //Interactions
         token0.safeTransfer(Router, token0Withdrawal);
         token1.safeTransfer(from, token1Withdrawal);
+        if(totalSupply() <= 10000){
+            emit PoolClosed(address(this), address(token1));
+            selfdestruct(payable(vaultAddress));
+        }
         return token0Withdrawal;
     }
 
@@ -126,7 +131,7 @@ contract JupyterCoreV1 is
         uint256 _token0Amount,
         uint256 _token1AmountMin,
         address from
-    ) external override calledByRouter minValue(_token0Amount) {
+    ) external override calledByRouter minValue(_token0Amount) returns(uint256) {
         //Checks
         uint256 token1Withdrawal = getToken1AmountFromToken0Amount(
             _token0Amount
@@ -140,6 +145,7 @@ contract JupyterCoreV1 is
         //Interactions
         _rcvTokens(token0, _token0Amount, from);
         token1.safeTransfer(from, token1Withdrawal);
+        return token1Withdrawal;
     }
 
     function swapToken1ToToken0(
@@ -165,7 +171,7 @@ contract JupyterCoreV1 is
         //
         ////Interactions
         _rcvTokens(token1, _token1Amount, from);
-        token0.transfer(Router, tokenWithdrawal);
+        token0.safeTransfer(Router, tokenWithdrawal);
         return tokenWithdrawal;
     }
 
@@ -220,12 +226,12 @@ contract JupyterCoreV1 is
 
     function _sendProtocolFeeToken0(uint256 value) private {
         uint256 amount = _scaleDown(value * _protocolFee);
-        mint((totalSupply / (2 * token1Balance)) * amount, vaultAddress);
+        mint((totalSupply() / (2 * token1Balance)) * amount, vaultAddress);
     }
 
     function _sendProtocolFeeToken1(uint256 value) private {
         uint256 amount = _scaleDown(value * _protocolFee);
-        mint((totalSupply / (2 * token0Balance)) * amount, vaultAddress);
+        mint((totalSupply() / (2 * token0Balance)) * amount, vaultAddress);
     }
 
     function getBalances(address from)
@@ -234,8 +240,8 @@ contract JupyterCoreV1 is
         calledByRouter
         returns (uint256, uint256)
     {
-        uint256 userTokenBalance = balanceOf[from];
-        uint256 partOfPool = totalSupply / userTokenBalance;
+        uint256 userTokenBalance = balanceOf(from);
+        uint256 partOfPool = totalSupply() / userTokenBalance;
         uint256 token0Withdrawal = token0Balance / partOfPool;
         uint256 token1Withdrawal = token1Balance / partOfPool;
         return (token0Withdrawal, token1Withdrawal);

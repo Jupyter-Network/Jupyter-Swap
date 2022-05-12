@@ -1,27 +1,67 @@
 {
-  "name": "@my-app/monorepo",
-  "version": "1.0.0",
-  "keywords": [
-    "ethereum",
-    "react",
-    "workspaces",
-    "yarn"
-  ],
+  "name": "my-app",
+  "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "subgraph:auth": "yarn workspace @my-app/subgraph auth",
-    "subgraph:codegen": "yarn workspace @my-app/subgraph codegen",
-    "subgraph:build": "yarn workspace @my-app/subgraph build",
-    "subgraph:deploy": "yarn workspace @my-app/subgraph deploy",
-    "react-app:build": "yarn workspace @my-app/react-app build",
-    "react-app:eject": "yarn workspace @my-app/react-app eject",
-    "react-app:ipfs": "yarn workspace @my-app/react-app ipfs",
-    "react-app:start": "yarn workspace @my-app/react-app start",
-    "react-app:test": "yarn workspace @my-app/react-app test"
+  "dependencies": {
+    "@shapeshiftoss/proto-tx-builder": "^0.2.0",
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^12.0.0",
+    "@testing-library/user-event": "^12.0.0",
+    "@web3-onboard/fortmatic": "^2.0.2",
+    "@web3-onboard/injected-wallets": "^2.0.5",
+    "@web3-onboard/keepkey": "^2.0.1",
+    "@web3-onboard/ledger": "^2.0.3",
+    "@web3-onboard/portis": "^2.0.0",
+    "@web3-onboard/react": "^2.1.4",
+    "@web3-onboard/torus": "^2.0.1",
+    "@web3-onboard/trezor": "^2.0.4",
+    "@web3-onboard/walletconnect": "^2.0.1",
+    "@web3-onboard/walletlink": "^2.0.1",
+    "assert": "^2.0.0",
+    "axios": "^0.27.2",
+    "bignumber.js": "^9.0.2",
+    "buffer": "^6.0.3",
+    "chart.js": "^3.7.1",
+    "crypto-browserify": "^3.12.0",
+    "ethers": "^5.6.4",
+    "https-browserify": "^1.0.0",
+    "i": "^0.3.7",
+    "npm": "^8.7.0",
+    "os-browserify": "^0.3.0",
+    "react": "^18.0.0",
+    "react-chartjs-2": "^4.1.0",
+    "react-dom": "^18.0.0",
+    "react-scripts": "5.0.1",
+    "react-useinterval": "^1.0.2",
+    "stream": "^0.0.2",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "styled-components": "^5.3.5",
+    "sweetalert2": "^11.4.13",
+    "web-vitals": "^2.1.4"
   },
-  "workspaces": {
-    "packages": [
-      "packages/*"
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
     ]
   }
 }

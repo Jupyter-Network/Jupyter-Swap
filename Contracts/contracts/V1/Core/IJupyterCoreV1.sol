@@ -14,13 +14,13 @@ interface IJupyterCoreV1 {
         address from
     ) external;
 
-    function withdraw(address from) external returns(uint256);
+    function withdraw(address from,uint256 _withdrawalAmount) external returns(uint256);
 
     function swapToken0ToToken1(
         uint256 _token0Amount,
         uint256 _token1AmountMin,
         address from
-    ) external;
+    ) external returns(uint256);
 
     function swapToken1ToToken0(
         uint256 _token1Amount,

@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@fastify/cors": "^7.0.0",
+    "ethers": "^5.6.5",
+    "fastify": "^3.29.0"
+  }
+}
