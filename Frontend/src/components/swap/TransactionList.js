@@ -1,17 +1,14 @@
 import BN from "bignumber.js";
 import { Table } from "../../theme";
-import { background } from "../../theme/theme";
+import { background, tintedBackground } from "../../theme/theme";
 import { numericFormat } from "../../utils/inputValidations";
 
 export default function TransactionList({ transactions }) {
-  console.log(transactions);
   if (transactions) {
     return (
       <Table
         style={{
           padding: 5,
-          height: 500,
-          overflowY: "scroll",
           width: "100%",
           textAlign: "left",
           border: "none",
@@ -34,6 +31,9 @@ export default function TransactionList({ transactions }) {
               <th style={{textAlign:"right"}}>
               To Amount
               </th>
+              <th style={{textAlign:"center"}}>
+              Rate
+              </th>
               <th style={{textAlign:"right"}}>Scan</th>
 
               <th style={{textAlign:"right"}}>
@@ -55,7 +55,7 @@ function ListItem({ transaction, index }) {
     <tr
       style={{
           fontSize:"0.7em",
-        backgroundColor: index % 2 === 0 ? "#5e513a" : background,
+        backgroundColor: index % 2 === 0 ? tintedBackground : background,
 
       }}
     >
@@ -76,11 +76,15 @@ function ListItem({ transaction, index }) {
         {numericFormat(BN(transaction.to_amount).dividedBy(BN(10).pow(18)).toFixed(18))} &nbsp;
         {transaction.to_symbol}
       </td>
+      <td style={{textAlign:"right"}}>
+        {numericFormat(BN(transaction.to_amount).dividedBy(transaction.from_amount).toFixed(18))} &nbsp;
+      </td>
       <td style={{textAlign:"right"}}><a target="_blank" href={"http://bscscan.com/tx/"+transaction.transaction_hash}><img style={{height:21,paddingRight:5}} src="/chain.svg"></img></a></td>
 
       <td style={{ textAlign: "right", padding: 8 }}>
         {new Date(transaction.time).toLocaleString()}
       </td>
+
     </tr>
   );
 }

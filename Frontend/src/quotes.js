@@ -66,9 +66,9 @@ export function token1ToToken0(blockData, maxSlippage, value) {
     .multipliedBy(rate)
     .dividedBy(BN(10).pow(18));
 
-  rateWithoutSlippage = b00.dividedBy(b01).multipliedBy(amount);
+  rateWithoutSlippage = b10.dividedBy(b11).multipliedBy(amount);
   rateWithoutSlippage = rateWithoutSlippage.multipliedBy(1000).dividedBy(997);
-  rateWithoutSlippage = b10.dividedBy(b11).multipliedBy(rateWithoutSlippage);
+  rateWithoutSlippage = b01.dividedBy(b00).multipliedBy(rateWithoutSlippage);
 
   rateWithoutSlippage = rateWithoutSlippage.dividedBy(new BN(10).pow(18));
 
@@ -91,11 +91,12 @@ export function token1ToToken0(blockData, maxSlippage, value) {
 }
 
 export function ETHToToken(blockData, maxSlippage, value) {
+  console.log("PoolBalances: ",blockData)
   let amount = new BN(value).multipliedBy(new BN(10).pow(18));
   let rate = new BN(0);
   rate = new BN(blockData.poolBalances[0].toString());
   let rateWithoutSlippage = new BN(0);
-  console.log("buy calcETHTOTOKEN");
+  console.log("buy ETH TO Token");
   //(value * blockData.poolBalances[0]) / (blockData.poolBalances[1] + value)
   rate = new BN(blockData.poolBalances[1].toString())
     .dividedBy(new BN(blockData.poolBalances[0].toString()).plus(amount))
@@ -115,10 +116,13 @@ export function ETHToToken(blockData, maxSlippage, value) {
   rateWithoutSlippage = new BN(blockData.poolBalances[1].toString())
     .dividedBy(new BN(blockData.poolBalances[0].toString()))
     .multipliedBy(amount)
-    //.dividedBy(new BN(blockData.poolBalances[0].toString()).multipliedBy(amount))
+    .dividedBy(
+      new BN(blockData.poolBalances[0].toString()).multipliedBy(amount)
+    )
     .dividedBy(new BN(10).pow(18))
     .multipliedBy(0.997);
-  if (rateWithoutSlippage.eq(0)) {
+
+  if (new BN(blockData.poolBalances[1].toString()).eq(0)) {
     rateWithoutSlippage = new BN(blockData.pool1Balances[0].toString())
       .dividedBy(new BN(blockData.pool1Balances[1].toString()))
       .multipliedBy(amount)
@@ -129,7 +133,7 @@ export function ETHToToken(blockData, maxSlippage, value) {
   // rateWithoutSlippage = new BN(blockData.poolBalances[1].toString()).dividedBy(
   //   new BN(blockData.poolBalances[0].toString())
   // );
-  console.log(rate, rateWithoutSlippage);
+  console.log(rate.toString(), rateWithoutSlippage.toString());
   amount
     .multipliedBy(new BN(blockData.poolBalances[0].toString()))
     .dividedBy(new BN(blockData.poolBalances[1].toString()).plus(amount))
@@ -180,8 +184,10 @@ export function TokenToETH(blockData, maxSlippage, value) {
 
     rateWithoutSlippage = b1
       .dividedBy(b0)
-      .multipliedBy(amount)
+      .multipliedBy(amount.multipliedBy(0.997))
       .dividedBy(new BN(10).pow(18));
+
+    console.log("TokentoETH ", rateWithoutSlippage);
 
     return {
       poolHop: false,

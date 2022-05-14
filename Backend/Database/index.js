@@ -9,7 +9,7 @@ async function initDB() {
   await query.createPoolsTable();
   await query.createSwapsTable();
   //Add wbnb
-  await query.createPool(wbnb, "WBNB", "Wrapped BNB", "0x0");
+  await query.createPool(wbnb, "BNB", "BNB", "0x0");
 
 /*
   await query.createPool("0x0", "IOM", "Jupyter", "0x02");

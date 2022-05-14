@@ -41,20 +41,20 @@
     <g
        fill="none"
        fill-rule="evenodd"
-       stroke="currentColor"
+       stroke="#25ced1"
        stroke-linecap="round"
        stroke-linejoin="round"
        transform="matrix(15.141989,0,0,15.141989,5.7737416,-0.76202767)"
        id="g828"
-       style="fill:none;fill-opacity:1;stroke:#e3b23c;stroke-opacity:1">
+       style="fill:none;fill-opacity:1;stroke:#25ced1;stroke-opacity:1">
       <path
          d="m 5.5,7.5 c 0.9694098,1.367188 3.0111157,1.1272701 4.0111157,0 L 11.5,5.5 c 1.124349,-1.2280797 1.164128,-2.8138837 0,-4 -1.135619,-1.15706921 -2.864381,-1.15706947 -4,0 l -2,2"
          id="path824"
-         style="fill:none;fill-opacity:1;stroke:#e3b23c;stroke-opacity:1" />
+         style="fill:none;fill-opacity:1;stroke:#25ced1;stroke-opacity:1" />
       <path
          d="M 7.5,6.5697732 C 6.5305902,5.2025852 4.5,5.3727299 3.5,6.5 l -2,1.9748737 C 0.37565137,9.7029534 0.33587242,11.313884 1.5,12.5 c 1.135619,1.157069 2.864381,1.15707 4,0 l 2,-2"
          id="path826"
-         style="fill:none;fill-opacity:1;stroke:#e3b23c;stroke-opacity:1" />
+         style="fill:none;fill-opacity:1;stroke:#25ced1;stroke-opacity:1" />
     </g>
   </g>
 </svg>

@@ -14,14 +14,7 @@ export default function ContractWrapper() {
   let ethersProvider;
   let tokenContract;
 
-  //Contract Functions
-  //BEP-20
-  async function getTokenBalance(tokenAddress, walletAddress) {
-    if (ethersProvider) {
-      let token = new ethers.Contract(tokenAddress, erc20Abi, ethersProvider);
-      console.log(await token.balanceOf(walletAddress));
-    }
-  }
+
 
   if (!tokenContract && connectedWallets.length > 0) {
     //Setup provider
@@ -30,7 +23,6 @@ export default function ContractWrapper() {
     );
 
     //Add all contracts
-    tokenContract = new ethers.Contract(token0, erc20Abi, ethersProvider);
   }
 
   //Check if new block is out
@@ -49,19 +41,15 @@ export default function ContractWrapper() {
 
   return (
     <div>
-      {connectedWallets.length > 0 ? (
+
         <div>
           <Frame block={block}></Frame>
+          <button onClick={() => connect()}>Connect</button>
           //Work here bring all contracts to this wrapper and make them usable
           in the child components also create a state here with the balances
           allowances similar to
         </div>
-      ) : (
-        <div>
-          <p>ContractWrapper</p>
-          <button onClick={() => connect()}>Connect</button>
-        </div>
-      )}
+      
     </div>
   );
 }

@@ -13,7 +13,6 @@ font-size:medium;
   transition: 0.4s;
   &:focus{
     color:${highlight};
-    background-color:${background};
   }
 
   margin:5px;

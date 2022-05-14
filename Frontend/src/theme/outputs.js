@@ -1,10 +1,10 @@
 import styled from 'styled-components';
-import { primary,background, secondary } from './theme';
+import { primary,background, secondary, highlight } from './theme';
 export const P = styled.span`
 font-size:medium;
   background-color:${background};
   border-bottom:solid;
-  color:${primary};
+  color:${highlight};
   padding:5px 3px;
   text-align:center;
   outline:none;

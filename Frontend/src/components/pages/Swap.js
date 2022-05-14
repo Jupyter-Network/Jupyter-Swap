@@ -2,22 +2,35 @@ import { useConnectWallet, useWallets } from "@web3-onboard/react";
 import { ethers, utils } from "ethers";
 import { useEffect, useState } from "react";
 import { token0, router, token1, wbnb } from "../../contracts/addresses";
-import erc20Abi from "../..//contracts/build/IERC20Metadata.json";
-import routerAbi from "../../contracts/build/JupyterRouterV1.json";
+import erc20 from "../..//contracts/build/IERC20.json";
+import routerMeta from "../../contracts/build/JupyterRouterV1.json";
 import BN from "bignumber.js";
 import CurrencySelector from "../swap/CurrencySelector";
 import * as quotes from "../../quotes.js";
 import { numericFormat, validate } from "../../utils/inputValidations";
-import { Container, ContainerTitle } from "../../theme";
+import { Container, ContainerInverted, ContainerTitle, GradientDiv } from "../../theme";
 import { Input } from "../../theme/inputs";
-import { LargeButton, MediumButton, SmallButton } from "../../theme/buttons";
+import {
+  LargeButton,
+  MediumButton,
+  MediumButtonInverted,
+  SmallButton,
+} from "../../theme/buttons";
 import { Label, P } from "../../theme/outputs";
 import { transaction } from "../../utils/alerts";
 import "chart.js/auto";
 import { Line } from "react-chartjs-2";
-import { background, highlight, primary, secondary } from "../../theme/theme";
+import {
+  background,
+  backgroundGradient,
+  highlight,
+  primary,
+  secondary,
+} from "../../theme/theme";
 import { getHistory, getTransanctionHistory } from "../../utils/requests";
 import TransactionList from "../swap/TransactionList";
+const routerAbi = routerMeta.abi;
+const erc20Abi = erc20.abi;
 BN.config({ DECIMAL_PLACES: 18 });
 //Add this to a Math file later
 function _scaleDown(value) {
@@ -25,7 +38,6 @@ function _scaleDown(value) {
 }
 
 export default function Swap({ block }) {
-  const connectedWallets = useWallets();
   const [state, setState] = useState({
     token0Amount: new BN(0),
     token1Amount: new BN(0),
@@ -34,6 +46,15 @@ export default function Swap({ block }) {
     allowanceCheck: new BN(0),
     poolHop: false,
   });
+
+  const [
+    {
+      wallet, // the wallet that has been connected or null if not yet connected
+      connecting, // boolean indicating if connection is in progress
+    },
+    connect, // function to call to initiate user to connect wallet
+    disconnect, // function to call to with wallet<DisconnectOptions> to disconnect wallet
+  ] = useConnectWallet();
 
   const [maxSlippage, setMaxSlippage] = useState(new BN(0.5));
 
@@ -44,34 +65,29 @@ export default function Swap({ block }) {
   let ethersProvider;
   let routerContract;
   //Init contracts
-  if (connectedWallets.length > 0) {
-    ethersProvider = new ethers.providers.Web3Provider(
-      connectedWallets[0].provider
-    );
+  if (wallet) {
+    ethersProvider = new ethers.providers.Web3Provider(wallet.provider);
 
     routerContract = new ethers.Contract(
       router,
       routerAbi,
       ethersProvider.getSigner()
     );
+  } else {
+    ethersProvider = new ethers.providers.JsonRpcProvider(
+      "http://127.0.0.1:8545"
+    );
+    routerContract = new ethers.Contract(router, routerAbi, ethersProvider);
   }
 
   const [tokens, setTokens] = useState({
     token0: {
       symbol: "MRC",
-      contract: new ethers.Contract(
-        token0,
-        erc20Abi,
-        ethersProvider.getSigner()
-      ),
+      contract: new ethers.Contract(token0, erc20Abi, ethersProvider),
     },
     token1: {
-      symbol: "ARM",
-      contract: new ethers.Contract(
-        token1,
-        erc20Abi,
-        ethersProvider.getSigner()
-      ),
+      symbol: "WBNB",
+      contract: new ethers.Contract(wbnb, erc20Abi, ethersProvider),
     },
   });
 
@@ -111,7 +127,10 @@ export default function Swap({ block }) {
     }
     asyncRun();
   }, [block, tokens]);
-
+  //newBlockData
+  useEffect(() => {
+    handleToken0AmountChange(state.token0Amount);
+  }, [blockData]);
   //Router
   async function addLiquidity(token0Amount) {
     await routerContract.addLiquidity(
@@ -208,13 +227,11 @@ export default function Swap({ block }) {
 
   async function getBlockData() {
     let p0Rate = BN(10).pow(18);
-
     let t0Balance = 0;
-
     if (tokens["token0"].contract.address === wbnb) {
-      t0Balance = await ethersProvider.getBalance(
-        connectedWallets[0].accounts[0].address
-      );
+      t0Balance = wallet
+        ? await ethersProvider.getBalance(wallet.accounts[0].address)
+        : 0;
       p0Rate = p0Rate.dividedBy(
         BN(
           (
@@ -223,9 +240,9 @@ export default function Swap({ block }) {
         )
       );
     } else {
-      t0Balance = await tokens["token0"].contract.balanceOf(
-        connectedWallets[0].accounts[0].address
-      );
+      t0Balance = wallet
+        ? await tokens["token0"].contract.balanceOf(wallet.accounts[0].address)
+        : 0;
       p0Rate = BN(
         (
           await routerContract.getRate(tokens["token0"].contract.address)
@@ -237,13 +254,13 @@ export default function Swap({ block }) {
     let p1Rate = BN(BN(10).pow(18));
 
     if (tokens["token1"].contract.address === wbnb) {
-      t1Balance = await ethersProvider.getBalance(
-        connectedWallets[0].accounts[0].address
-      );
+      t1Balance = wallet
+        ? await ethersProvider.getBalance(wallet.accounts[0].address)
+        : 0;
     } else {
-      t1Balance = await tokens["token1"].contract.balanceOf(
-        connectedWallets[0].accounts[0].address
-      );
+      t1Balance = wallet
+        ? await tokens["token1"].contract.balanceOf(wallet.accounts[0].address)
+        : 0;
       p1Rate = BN(
         (
           await routerContract.getRate(tokens["token1"].contract.address)
@@ -262,7 +279,7 @@ export default function Swap({ block }) {
         await getTransanctionHistory(tokens["token1"].contract.address)
       ).data;
     } else {
-      poolBalances = [0, 0];
+      poolBalances = [BN(0), BN(0)];
       priceHistory = (
         await getHistory(tokens["token0"].contract.address)
       ).data.map((item, index) => {
@@ -285,7 +302,7 @@ export default function Swap({ block }) {
           .data,
       ];
     } else {
-      pool1Balances = [0, 0];
+      pool1Balances = [new BN(0), new BN(0)];
       priceHistory = (
         await getHistory(tokens["token1"].contract.address)
       ).data.map((item, index) => {
@@ -311,16 +328,19 @@ export default function Swap({ block }) {
       });
     }
 
-    const token0Allowance = await tokens["token0"].contract.allowance(
-      connectedWallets[0].accounts[0].address,
-      router
-    );
+    const token0Allowance = wallet
+      ? await tokens["token0"].contract.allowance(
+          wallet.accounts[0].address,
+          router
+        )
+      : 0;
 
-    const token1Allowance = await tokens["token1"].contract.allowance(
-      connectedWallets[0].accounts[0].address,
-      router
-    );
-    console.log(transactions);
+    const token1Allowance = wallet
+      ? await tokens["token1"].contract.allowance(
+          wallet.accounts[0].address,
+          router
+        )
+      : 0;
     setBlockData({
       token0Balance: _scaleDown(t0Balance),
       token1Balance: _scaleDown(t1Balance),
@@ -333,6 +353,7 @@ export default function Swap({ block }) {
       priceHistory: priceHistory.reverse(),
       transactionHistory: transactions,
     });
+    handleToken0AmountChange(state.token0Amount);
   }
 
   let d = [];
@@ -340,7 +361,6 @@ export default function Swap({ block }) {
   let data = [];
   if (blockData.priceHistory) {
     d = blockData.priceHistory;
-    console.log(blockData.priceHistory);
     labels = blockData.priceHistory.map((item) => {
       const date = new Date(item.bucket);
       return `${date.getHours()}`;
@@ -359,8 +379,24 @@ export default function Swap({ block }) {
             <Line
               height={200}
               options={{
-                //Boolean - Whether the line is curved between points
                 tension: 0.3,
+                scales: {
+                  x: {
+                    ticks: {
+                      color: primary,
+                    },
+                  },
+                  y: {
+                    ticks: {
+                      color: primary,
+                    },
+                  },
+                },
+                plugins: {
+                  legend: {
+                    display: false,
+                  },
+                },
               }}
               data={{
                 labels: blockData.priceHistory.map((item) => {
@@ -388,6 +424,7 @@ export default function Swap({ block }) {
         )}
       </Container>
       <Container>
+        <div style={{borderRadius:7,overflow:"hidden"}}>
         <ContainerTitle>
           {tokens["token0"].symbol} / {tokens["token1"].symbol}
         </ContainerTitle>
@@ -403,6 +440,8 @@ export default function Swap({ block }) {
           {tokens["token0"].symbol}
         </p>
         <Input
+          pattern="\d*"
+          onFocus={() => handleToken0AmountChange("")}
           onChange={(e) => handleToken0AmountChange(e.target.value)}
           value={state.token0Amount.toString()}
         ></Input>
@@ -424,20 +463,20 @@ export default function Swap({ block }) {
           {tokens["token1"].symbol}
         </p>
         <Input
+          pattern="\d*"
+          onFocus={() => handleToken1AmountChange("")}
           onChange={(e) => handleToken1AmountChange(e.target.value)}
-          value={numericFormat(BN(state.token1Amount.toFixed(18)).toFixed(18))}
+          value={state.token1Amount.toString()}
         ></Input>
         <Label>
           <b>{tokens["token1"].symbol}</b>
         </Label>
+        <p></p>
         <CurrencySelector
           provider={ethersProvider}
           onChange={(tokens, poolHop) => {
             setState({ ...state, poolHop: poolHop });
             setTokens(tokens);
-
-            //handleCurrencyChange(e);
-            //getBlockData();
           }}
         ></CurrencySelector>
         <br />
@@ -455,36 +494,77 @@ export default function Swap({ block }) {
             <P>{numericFormat(BN(blockData.p0Rate).toFixed(18))}</P>
           )}
         </p>
-        <p style={{ marginLeft: 70, textAlign: "start", fontSize: "small" }}>
-          You will receive min.{" "}
-          {numericFormat(
-            state.token1AmountMin.dividedBy(BN(10).pow(18)).toFixed(18)
-          )}{" "}
-          {tokens["token1"].symbol}
-        </p>
-        <p style={{ marginLeft: 70, textAlign: "start" }}>
-          Price Impact: {state.impact.toString()}
-        </p>
-        <div style={{ display: "flex", justifyContent: "space-evenly" }}>
-          <div style={{ width: "30%", height: "100%" }}>
+
+        
+
+        <LargeButton
+          style={{ width:"70%"}}
+          onClick={async () => {
+            if (!wallet) {
+              await connect();
+              return;
+            }
+            if (state.poolHop) {
+              swapTokens();
+              return;
+            }
+            if (tokens["token0"].contract.address === wbnb) {
+              swapETHToToken();
+            } else {
+              swapTokenToETH();
+            }
+          }}
+        >
+          Swap <br />
+          {tokens["token0"].symbol} to {tokens["token1"].symbol}
+        </LargeButton>
+        <ContainerInverted>
+          <p style={{fontSize: "small" }}>
+            You will receive min.{" "}
+            <span style={{color:primary}}>            {numericFormat(
+              state.token1AmountMin.dividedBy(BN(10).pow(18)).toFixed(18)
+            )}{" "}
+            {tokens["token1"].symbol}</span>
+
+          </p>
+          <p style={{fontSize:"small"}}>
+            Price Impact: <span style={{color:primary}}>{state.impact.toString()}%</span>
+          </p>
+        </ContainerInverted>
+        <GradientDiv
+          style={{ height: 90  }}
+        >
+                  <br/>
+
+          <div
+            style={{ display: "flex", justifyContent: "center"}}
+          >
             {tokens["token0"].contract.address === wbnb ? (
               <span></span>
             ) : (
-              <MediumButton
+              <MediumButtonInverted
                 onClick={() => {
+                  if (!wallet) {
+                    connect();
+                    return;
+                  }
                   approveToken(
                     tokens["token0"].contract,
                     "100000000000000000000000"
                   );
                 }}
               >
-                Approve {tokens["token0"].symbol}
-              </MediumButton>
+                Approve {tokens["token0"].symbol}{" "}
+                <img
+                  style={{ height: 20, position: "relative", top: 2 }}
+                  src={`/tokenlogos/${tokens["token0"].icon}`}
+                ></img>
+              </MediumButtonInverted>
             )}
             {tokens["token1"].contract.address === wbnb ? (
               <span></span>
             ) : (
-              <MediumButton
+              <MediumButtonInverted
                 onClick={() => {
                   approveToken(
                     tokens["token1"].contract,
@@ -492,40 +572,27 @@ export default function Swap({ block }) {
                   );
                 }}
               >
-                Approve {tokens["token1"].symbol}
-              </MediumButton>
+                Approve {tokens["token1"].symbol}{" "}
+                <img
+                  style={{ height: 20, position: "relative", top: 2 }}
+                  src={`/tokenlogos/${tokens["token1"].icon}`}
+                ></img>
+              </MediumButtonInverted>
             )}
           </div>
-          <LargeButton
-            style={{ height: 106 }}
-            onClick={async () => {
-              if (state.poolHop) {
-                swapTokens();
-                return;
-              }
-              if (tokens["token0"].contract.address === wbnb) {
-                swapETHToToken();
-              } else {
-                swapTokenToETH();
-              }
-            }}
-          >
-            Swap <br />
-            {tokens["token0"].symbol} to {tokens["token1"].symbol}
-          </LargeButton>
+        </GradientDiv>
         </div>
-        <p>{state.poolHop ? "true" : "false"}</p>
+      
       </Container>
-      <div style={{width:"100vw"}}>
-      <Container style={{height:500,maxWidth:"100%",width:"98%",margin:"0 auto" }}>
-        <ContainerTitle>Recent Transactions</ContainerTitle>
-            <div style={{height:500,position:"relative",top:-18,overflowY:"scroll","&::-webkit-scrollbar": { width: 100, } }}>
-            <TransactionList 
-          transactions={blockData.transactionHistory}
-        ></TransactionList>
-            </div>
-
-      </Container>
+      <div style={{ width: "100vw" }}>
+        <Container style={{ maxWidth: 1210, width: "98%", margin: "0 auto" }}>
+          <ContainerTitle>Recent Transactions</ContainerTitle>
+          <div style={{ maxHeight: 500, marginTop: -18, overflowY: "scroll" }}>
+            <TransactionList
+              transactions={blockData.transactionHistory}
+            ></TransactionList>
+          </div>
+        </Container>
       </div>
     </div>
   );
