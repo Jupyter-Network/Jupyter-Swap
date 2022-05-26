@@ -1,11 +1,20 @@
+import BN from "bignumber.js";
+import { isBigNumberish } from "ethers/node_modules/@ethersproject/bignumber/lib/bignumber";
+import { error } from "./alerts";
+
 export function validate(value) {
+  console.log(value)
+  if(isBigNumberish(value)){
+    value.toString()
+  }
   if (isNaN(value)) {
-    return value.slice(0, -1);
+    return 0.0;
   }
   return value;
 }
 
 export function numericFormat(value) {
+  value = value.toString()
   let v = value.split(".");
   let firstNonNullDecimal = 0;
 

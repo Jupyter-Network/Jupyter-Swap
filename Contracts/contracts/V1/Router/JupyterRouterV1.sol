@@ -52,7 +52,6 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
     }
 
     function withdrawAndTransferETH(uint256 _amount, address _to) private {
-        //WBNB handling
         IWETH(wbnb).withdraw(_amount);
         payable(_to).transfer(_amount);
     }

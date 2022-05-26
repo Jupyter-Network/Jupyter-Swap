@@ -24,7 +24,7 @@ export default function CurrencySelector({ onChange, provider }) {
       icon: "placeholder.svg",
     },
     token1: {
-      symbol: "WBNB",
+      symbol: "BNB",
       contract: new ethers.Contract(wbnb, erc20Abi, provider),
       icon: "bnb-bnb-logo.svg",
     },
@@ -35,6 +35,27 @@ export default function CurrencySelector({ onChange, provider }) {
   useEffect(() => {
     onChange(tokens, poolHop);
   }, [tokens]);
+
+  useEffect(() => {
+    setTokens({
+      token0: {
+        ...tokens["token0"],
+        contract: new ethers.Contract(
+          tokens["token0"].contract.address,
+          erc20Abi,
+          provider.getSigner()
+        ),
+      },
+      token1: {
+        ...tokens["token1"],
+        contract: new ethers.Contract(
+          tokens["token1"].contract.address,
+          erc20Abi,
+          provider.getSigner()
+        ),
+      },
+    });
+  }, [provider]);
 
   function checkValidityAndSetTokens(newAddress, newName, icon, position) {
     let other = position === 0 ? 1 : 0;
@@ -138,12 +159,17 @@ export default function CurrencySelector({ onChange, provider }) {
             position: "absolute",
             left: 0,
             right: 0,
-            backgroundColor: background,
+            background: background,
             width: 300,
             margin: "0 auto",
             boxShadow: "0px 2px 5px -3px black",
             height: "fit-content",
-          }}
+            border:"solid",
+            borderWidth:1,
+          borderRadius:5,
+          zIndex:1000
+    
+        }}
         >
           <h4>Search Token :</h4>
           <Input
@@ -174,6 +200,7 @@ export default function CurrencySelector({ onChange, provider }) {
           ></Input>
           {currencies.map((item) => (
             <ListOption
+              key={item.address}
               tabIndex={0}
               onClick={() => {
                 checkValidityAndSetTokens(
@@ -214,6 +241,9 @@ export default function CurrencySelector({ onChange, provider }) {
             margin: "0 auto",
             boxShadow: "0px 2px 5px -3px black",
             height: "fit-content",
+            border:"solid",
+            borderWidth:1,
+          borderRadius:5
           }}
         >
           <h4>Search Token :</h4>

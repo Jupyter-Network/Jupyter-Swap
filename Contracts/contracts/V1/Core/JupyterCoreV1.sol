@@ -117,10 +117,11 @@ contract JupyterCoreV1 is
         //Interactions
         token0.safeTransfer(Router, token0Withdrawal);
         token1.safeTransfer(from, token1Withdrawal);
-        if(totalSupply() <= 10000){
-            emit PoolClosed(address(this), address(token1));
-            selfdestruct(payable(vaultAddress));
-        }
+
+ //       if(totalSupply() <= 10000){
+ //           emit PoolClosed(address(this), address(token1));
+ //           selfdestruct(payable(vaultAddress));
+ //       }
         return token0Withdrawal;
     }
 

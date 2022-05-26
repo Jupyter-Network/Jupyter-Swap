@@ -41,13 +41,13 @@ export const MediumButtonInverted = styled.button`
   border: none;
   border-width: 2px;
   color: ${primary};
-  padding: 6px 7px;
+  padding: 10px 10px;
   cursor: pointer;
+  z-index:1;
   &:hover {
     color: ${background};
     background-color: ${highlight};
     background:${highlightGradient};
-
     box-shadow: 10px -10px ${shadowEffect};
 
   }
@@ -61,7 +61,7 @@ export const LargeButton = styled.button`
   border-radius: 5px;
   border: none;
   color: ${background};
-  padding: 10px 12px;
+  padding: 12px 12px;
   cursor: pointer;
   box-shadow: 0px 0px 15px -10px rgba(0,0,0,0.8)};
   background:${backgroundGradient};

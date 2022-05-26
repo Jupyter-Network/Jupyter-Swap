@@ -1,6 +1,14 @@
 import Swal from "sweetalert2";
-import { primary, secondary, highlight, background } from "../theme/theme";
+import {
+  primary,
+  secondary,
+  highlight,
+  background,
+  backgroundGradient,
+  highlightGradient,
+} from "../theme/theme";
 
+import { toast } from "react-toastify";
 const theme = {
   showConfirmButton: false,
   allowOutsideClick: false,
@@ -20,15 +28,11 @@ const theme = {
   backdrop: false,
   grow: "row",
   heightAuto: false,
-  background: background,
-  color: primary,
+  background: highlightGradient,
+  color: background,
 };
 
-export function transaction(
-    message,
-  exec,
-  options
-) {
+export function transaction(message, exec, options) {
   return Swal.fire({
     ...theme,
     position: "center",
@@ -43,8 +47,9 @@ export function transaction(
       try {
         let tx = await exec(...options);
         await tx.wait();
-        success()
+        success();
       } catch (e) {
+        console.log(e);
         if (e.data) {
           error(e.data.message);
         } else {
@@ -58,19 +63,42 @@ export function transaction(
 }
 
 export function success() {
-  return Swal.fire({
-    ...theme,
-    //icon:"success",
-    timer: 1500,
-    text: "Success",
+  toast.success("Success", {
+    position: "top-left",
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "colored",
   });
+  // Swal.fire({
+  //  ...theme,
+  //  //icon:"success",
+  //  timer: 1500,
+  //  text: "Success",
+  //});
 }
 
 export function error(message) {
-  return Swal.fire({
-    ...theme,
-    timer: 1500,
-    allowOutsideClick: true,
-    text: message,
+  toast.error(<div>
+    <h4>Error</h4>
+    <p style={{fontSize:"small"}}>{message}</p>
+  </div>, {
+    position: "top-left",
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "colored",
   });
+  //return Swal.fire({
+  //  ...theme,
+  //  timer: 1500,
+  //  allowOutsideClick: true,
+  //  text: message,
+  //});
 }

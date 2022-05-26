@@ -1,5 +1,6 @@
 import styled from 'styled-components';
-import { primary,background, secondary, highlight } from './theme';
+import { primary,background, secondary, highlight, backgroundGradient, highlightGradient } from './theme';
+const borderWidth = "5px"
 export const P = styled.span`
 font-size:medium;
   background-color:${background};
@@ -21,3 +22,25 @@ font-size:medium;
   width:fit-content;
   margin:5px;
 `;
+
+export const ColorFrame = styled.div`
+  position: relative;
+  width:fit-content;
+  padding:0px 20px;
+  color:${highlight};
+  margin:3px;
+&:before {
+  content: "";
+  position: absolute;
+  inset: 0px;
+  border-radius: 5px; 
+  padding: 2px;
+  background:${highlightGradient}; 
+  -webkit-mask: 
+     linear-gradient(#fff 0 0) content-box, 
+     linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude; 
+}
+
+`

@@ -12,6 +12,7 @@ import routerAbi from "./contracts/build/JupyterRouterV1.json";
 import erc20Abi from "./contracts/build/ERC20.json";
 import Frame from "./components/layout/Frame";
 import ContractWrapper from "./components/ContractWrapper";
+import { ToastContainer } from "react-toastify";
 
 const injected = injectedModule();
 const web3Onboard = init({
@@ -68,7 +69,20 @@ const web3Onboard = init({
 function App() {
   return (
     <div>
+      
+         <ToastContainer
+        position="top-left"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <ContractWrapper></ContractWrapper>
+ 
     </div>
   );
 }

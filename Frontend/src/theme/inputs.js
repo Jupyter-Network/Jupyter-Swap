@@ -40,10 +40,13 @@ export const ListOption = styled.p`
   width:50px;
   margin:5px auto;
   &:hover{
+    background:${background};
     color:${highlight};
+    padding:5px;
     border-bottom:solid;
     border-width:1px;
     width:80%;
+    border-radius:3px;
 
   }
 `

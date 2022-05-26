@@ -4,7 +4,7 @@ import { background, backgroundGradient, primary, secondary } from "../../theme/
 import styles from "./MainMenu.module.css";
 
 export default function MainMenu({ onclick, active, block }) {
-  const items = ["Home", "Swap", "Liquidity"];
+  const items = ["Home", "Swap", "Liquidity","Build"];
   useEffect(() => {
     //get balances here
     if (block) {

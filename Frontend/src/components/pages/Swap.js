@@ -3,12 +3,16 @@ import { ethers, utils } from "ethers";
 import { useEffect, useState } from "react";
 import { token0, router, token1, wbnb } from "../../contracts/addresses";
 import erc20 from "../..//contracts/build/IERC20.json";
-import routerMeta from "../../contracts/build/JupyterRouterV1.json";
 import BN from "bignumber.js";
 import CurrencySelector from "../swap/CurrencySelector";
-import * as quotes from "../../quotes.js";
+import * as quotes from "../../utils/quotes.js";
 import { numericFormat, validate } from "../../utils/inputValidations";
-import { Container, ContainerInverted, ContainerTitle, GradientDiv } from "../../theme";
+import {
+  Container,
+  ContainerInverted,
+  ContainerTitle,
+  GradientDiv,
+} from "../../theme";
 import { Input } from "../../theme/inputs";
 import {
   LargeButton,
@@ -29,7 +33,6 @@ import {
 } from "../../theme/theme";
 import { getHistory, getTransanctionHistory } from "../../utils/requests";
 import TransactionList from "../swap/TransactionList";
-const routerAbi = routerMeta.abi;
 const erc20Abi = erc20.abi;
 BN.config({ DECIMAL_PLACES: 18 });
 //Add this to a Math file later
@@ -37,7 +40,7 @@ function _scaleDown(value) {
   return BN(value.toString()).div(BN(10).pow(18)).toString();
 }
 
-export default function Swap({ block }) {
+export default function Swap({ block, ethersProvider, routerContract }) {
   const [state, setState] = useState({
     token0Amount: new BN(0),
     token1Amount: new BN(0),
@@ -62,23 +65,6 @@ export default function Swap({ block }) {
     poolBalances: [new BN(0), new BN(0)],
     pool1Balances: [new BN(0), new BN(0)],
   });
-  let ethersProvider;
-  let routerContract;
-  //Init contracts
-  if (wallet) {
-    ethersProvider = new ethers.providers.Web3Provider(wallet.provider);
-
-    routerContract = new ethers.Contract(
-      router,
-      routerAbi,
-      ethersProvider.getSigner()
-    );
-  } else {
-    ethersProvider = new ethers.providers.JsonRpcProvider(
-      "http://127.0.0.1:8545"
-    );
-    routerContract = new ethers.Contract(router, routerAbi, ethersProvider);
-  }
 
   const [tokens, setTokens] = useState({
     token0: {
@@ -131,23 +117,13 @@ export default function Swap({ block }) {
   useEffect(() => {
     handleToken0AmountChange(state.token0Amount);
   }, [blockData]);
+
+  useEffect(() => {
+    getBlockData();
+  }, [wallet]);
+
+
   //Router
-  async function addLiquidity(token0Amount) {
-    await routerContract.addLiquidity(
-      tokens["token1"].contract.address,
-      token0Amount,
-      token0Amount
-    );
-  }
-  async function removeLiquidity() {
-    await routerContract.removeLiquidity(tokens["token1"].contract.address);
-  }
-  async function getToken1AmountFromToken0Amount(amount) {
-    return await routerContract.getToken1AmountFromToken0Amount(
-      tokens["token1"].contract.address,
-      amount
-    );
-  }
   async function swapETHToToken() {
     const value = new BN(state.token0Amount)
       .multipliedBy(new BN(10).pow(18))
@@ -218,9 +194,14 @@ export default function Swap({ block }) {
       contract.address === tokens["token0"].contract.address
         ? tokens["token0"].symbol
         : tokens["token1"].symbol;
+    const tokenContract =
+      contract.address === tokens["token0"].contract.address
+        ? tokens["token0"].contract
+        : tokens["token1"].contract;
+    console.log(ethersProvider);
     await transaction(
       `Approve ${BN(amount).dividedBy(BN(10).pow(18))} ${symbol}`,
-      contract.approve,
+      tokenContract.approve,
       [router, amount]
     );
   }
@@ -357,15 +338,8 @@ export default function Swap({ block }) {
   }
 
   let d = [];
-  let labels = [];
-  let data = [];
   if (blockData.priceHistory) {
     d = blockData.priceHistory;
-    labels = blockData.priceHistory.map((item) => {
-      const date = new Date(item.bucket);
-      return `${date.getHours()}`;
-    });
-    data = d.map((item) => BN(item.rate).dividedBy(BN(10).pow(18)).toString());
   }
 
   return (
@@ -424,165 +398,161 @@ export default function Swap({ block }) {
         )}
       </Container>
       <Container>
-        <div style={{borderRadius:7,overflow:"hidden"}}>
-        <ContainerTitle>
-          {tokens["token0"].symbol} / {tokens["token1"].symbol}
-        </ContainerTitle>
-        <p
-          style={{
-            margin: 25,
-            textAlign: "end",
-            fontSize: "small",
-            marginBottom: -4,
-          }}
-        >
-          Balance : {BN(blockData.token0Balance).toFixed(3)}{" "}
-          {tokens["token0"].symbol}
-        </p>
-        <Input
-          pattern="\d*"
-          onFocus={() => handleToken0AmountChange("")}
-          onChange={(e) => handleToken0AmountChange(e.target.value)}
-          value={state.token0Amount.toString()}
-        ></Input>
-        <Label>
-          <b>{tokens["token0"].symbol}</b>
-        </Label>
-
-        <br />
-        <p
-          style={{
-            margin: 25,
-            textAlign: "end",
-            fontSize: "small",
-            marginBottom: -4,
-          }}
-        >
-          {" "}
-          Balance : {BN(blockData.token1Balance).toFixed(3)}{" "}
-          {tokens["token1"].symbol}
-        </p>
-        <Input
-          pattern="\d*"
-          onFocus={() => handleToken1AmountChange("")}
-          onChange={(e) => handleToken1AmountChange(e.target.value)}
-          value={state.token1Amount.toString()}
-        ></Input>
-        <Label>
-          <b>{tokens["token1"].symbol}</b>
-        </Label>
-        <p></p>
-        <CurrencySelector
-          provider={ethersProvider}
-          onChange={(tokens, poolHop) => {
-            setState({ ...state, poolHop: poolHop });
-            setTokens(tokens);
-          }}
-        ></CurrencySelector>
-        <br />
-        <p>
-          Price: &nbsp;
-          {state.poolHop ? (
-            <P>
-              {numericFormat(
-                BN(blockData.p0Rate.toString())
-                  .dividedBy(BN(blockData.p1Rate.toString()))
-                  .toFixed(18)
-              )}
-            </P>
-          ) : (
-            <P>{numericFormat(BN(blockData.p0Rate).toFixed(18))}</P>
-          )}
-        </p>
-
-        
-
-        <LargeButton
-          style={{ width:"70%"}}
-          onClick={async () => {
-            if (!wallet) {
-              await connect();
-              return;
-            }
-            if (state.poolHop) {
-              swapTokens();
-              return;
-            }
-            if (tokens["token0"].contract.address === wbnb) {
-              swapETHToToken();
-            } else {
-              swapTokenToETH();
-            }
-          }}
-        >
-          Swap <br />
-          {tokens["token0"].symbol} to {tokens["token1"].symbol}
-        </LargeButton>
-        <ContainerInverted>
-          <p style={{fontSize: "small" }}>
-            You will receive min.{" "}
-            <span style={{color:primary}}>            {numericFormat(
-              state.token1AmountMin.dividedBy(BN(10).pow(18)).toFixed(18)
-            )}{" "}
-            {tokens["token1"].symbol}</span>
-
-          </p>
-          <p style={{fontSize:"small"}}>
-            Price Impact: <span style={{color:primary}}>{state.impact.toString()}%</span>
-          </p>
-        </ContainerInverted>
-        <GradientDiv
-          style={{ height: 90  }}
-        >
-                  <br/>
-
-          <div
-            style={{ display: "flex", justifyContent: "center"}}
+        <div style={{ borderRadius: 7, overflow: "hidden" }}>
+          <ContainerTitle>
+            {tokens["token0"].symbol} / {tokens["token1"].symbol}
+          </ContainerTitle>
+          <p
+            style={{
+              margin: 25,
+              textAlign: "end",
+              fontSize: "small",
+              marginBottom: -4,
+            }}
           >
-            {tokens["token0"].contract.address === wbnb ? (
-              <span></span>
+            Balance : {BN(blockData.token0Balance).toFixed(3)}{" "}
+            {tokens["token0"].symbol}
+          </p>
+          <Input
+            pattern="\d*"
+            onFocus={() => handleToken0AmountChange("")}
+            onChange={(e) => handleToken0AmountChange(e.target.value)}
+            value={state.token0Amount.toString()}
+          ></Input>
+          <Label>
+            <b>{tokens["token0"].symbol}</b>
+          </Label>
+
+          <br />
+          <p
+            style={{
+              margin: 25,
+              textAlign: "end",
+              fontSize: "small",
+              marginBottom: -4,
+            }}
+          >
+            {" "}
+            Balance : {BN(blockData.token1Balance).toFixed(3)}{" "}
+            {tokens["token1"].symbol}
+          </p>
+          <Input
+            pattern="\d*"
+            onFocus={() => handleToken1AmountChange("")}
+            onChange={(e) => handleToken1AmountChange(e.target.value)}
+            value={state.token1Amount.toString()}
+          ></Input>
+          <Label>
+            <b>{tokens["token1"].symbol}</b>
+          </Label>
+          <p></p>
+          <CurrencySelector
+            provider={ethersProvider}
+            onChange={(tokens, poolHop) => {
+              setState({ ...state, poolHop: poolHop });
+              setTokens(tokens);
+            }}
+          ></CurrencySelector>
+          <br />
+          <p>
+            Price: &nbsp;
+            {state.poolHop ? (
+              <P>
+                {numericFormat(
+                  BN(blockData.p0Rate.toString())
+                    .dividedBy(BN(blockData.p1Rate.toString()))
+                    .toFixed(18)
+                )}
+              </P>
             ) : (
-              <MediumButtonInverted
-                onClick={() => {
-                  if (!wallet) {
-                    connect();
-                    return;
-                  }
-                  approveToken(
-                    tokens["token0"].contract,
-                    "100000000000000000000000"
-                  );
-                }}
-              >
-                Approve {tokens["token0"].symbol}{" "}
-                <img
-                  style={{ height: 20, position: "relative", top: 2 }}
-                  src={`/tokenlogos/${tokens["token0"].icon}`}
-                ></img>
-              </MediumButtonInverted>
+              <P>{numericFormat(BN(blockData.p0Rate).toFixed(18))}</P>
             )}
-            {tokens["token1"].contract.address === wbnb ? (
-              <span></span>
-            ) : (
-              <MediumButtonInverted
-                onClick={() => {
-                  approveToken(
-                    tokens["token1"].contract,
-                    "100000000000000000000000"
-                  );
-                }}
-              >
-                Approve {tokens["token1"].symbol}{" "}
-                <img
-                  style={{ height: 20, position: "relative", top: 2 }}
-                  src={`/tokenlogos/${tokens["token1"].icon}`}
-                ></img>
-              </MediumButtonInverted>
-            )}
-          </div>
-        </GradientDiv>
+          </p>
+
+          <LargeButton
+            style={{ width: "70%" }}
+            onClick={async () => {
+              if (!wallet) {
+                await connect();
+                return;
+              }
+              if (state.poolHop) {
+                swapTokens();
+                return;
+              }
+              if (tokens["token0"].contract.address === wbnb) {
+                swapETHToToken();
+              } else {
+                swapTokenToETH();
+              }
+            }}
+          >
+            Swap <br />
+            {tokens["token0"].symbol} to {tokens["token1"].symbol}
+          </LargeButton>
+          <ContainerInverted>
+            <p style={{ fontSize: "small" }}>
+              You will receive min.{" "}
+              <span style={{ color: primary }}>
+                {" "}
+                {numericFormat(
+                  state.token1AmountMin.dividedBy(BN(10).pow(18)).toFixed(18)
+                )}{" "}
+                {tokens["token1"].symbol}
+              </span>
+            </p>
+            <p style={{ fontSize: "small" }}>
+              Price Impact:{" "}
+              <span style={{ color: primary }}>{state.impact.toString()}%</span>
+            </p>
+          </ContainerInverted>
+          <GradientDiv style={{ height: 90 }}>
+            <br />
+
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              {tokens["token0"].contract.address === wbnb ? (
+                <span></span>
+              ) : (
+                <MediumButtonInverted
+                  onClick={() => {
+                    if (!wallet) {
+                      connect();
+                      return;
+                    }
+                    approveToken(
+                      tokens["token0"].contract,
+                      "100000000000000000000000"
+                    );
+                  }}
+                >
+                  Approve {tokens["token0"].symbol}{" "}
+                  <img
+                    style={{ height: 20, position: "relative", top: 2 }}
+                    src={`/tokenlogos/${tokens["token0"].icon}`}
+                  ></img>
+                </MediumButtonInverted>
+              )}
+              {tokens["token1"].contract.address === wbnb ? (
+                <span></span>
+              ) : (
+                <MediumButtonInverted
+                  onClick={() => {
+                    approveToken(
+                      tokens["token1"].contract,
+                      "100000000000000000000000"
+                    );
+                  }}
+                >
+                  Approve {tokens["token1"].symbol}{" "}
+                  <img
+                    style={{ height: 20, position: "relative", top: 2 }}
+                    src={`/tokenlogos/${tokens["token1"].icon}`}
+                  ></img>
+                </MediumButtonInverted>
+              )}
+            </div>
+          </GradientDiv>
         </div>
-      
       </Container>
       <div style={{ width: "100vw" }}>
         <Container style={{ maxWidth: 1210, width: "98%", margin: "0 auto" }}>

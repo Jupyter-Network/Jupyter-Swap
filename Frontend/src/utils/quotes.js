@@ -1,5 +1,5 @@
 import BN from "bignumber.js";
-import { validate } from "./utils/inputValidations";
+import { validate } from "./inputValidations.js";
 
 export function token0ToToken1(blockData, maxSlippage, value) {
   let amount = new BN(value).multipliedBy(new BN(10).pow(18));
@@ -53,6 +53,7 @@ export function token1ToToken0(blockData, maxSlippage, value) {
   let amount = new BN(value).multipliedBy(new BN(10).pow(18));
   let rate = 0;
   let rateWithoutSlippage = new BN(0);
+  console.log("Token1ToToken0")
 
   let b11 = BN(blockData.pool1Balances[0].toString());
   let b10 = BN(blockData.pool1Balances[1].toString());
@@ -61,13 +62,16 @@ export function token1ToToken0(blockData, maxSlippage, value) {
   let b00 = BN(blockData.poolBalances[1].toString());
 
   amount = amount.dividedBy(997).multipliedBy(1000);
-  rate = b10.dividedBy(b11.minus(amount)).multipliedBy(amount);
+  rate = b00.dividedBy(b01.minus(amount)).multipliedBy(amount);
+  console.log("You get: ",rate.dividedBy(BN(10).pow(18)).toString(), " BNB")
+
   rate = rate.dividedBy(997).multipliedBy(1000);
-  rate = b01
-    .dividedBy(b00.minus(rate))
+
+  rate = b10
+    .dividedBy(b11.minus(rate))
     .multipliedBy(rate)
     .dividedBy(BN(10).pow(18));
-
+  console.log("You get: ",rate.toString(), " Token")
   rateWithoutSlippage = b10.dividedBy(b11).multipliedBy(amount);
   rateWithoutSlippage = rateWithoutSlippage.multipliedBy(1000).dividedBy(997);
   rateWithoutSlippage = b01.dividedBy(b00).multipliedBy(rateWithoutSlippage);
@@ -169,6 +173,8 @@ export function TokenToETH(blockData, maxSlippage, value) {
   let amount = new BN(value).multipliedBy(new BN(10).pow(18));
   let rate = new BN(0);
   let rateWithoutSlippage = new BN(0);
+
+  console.log("Rate:", blockData)
 
   if (blockData.poolBalances[1].toString()) {
     rate = new BN(blockData.poolBalances[1].toString());
