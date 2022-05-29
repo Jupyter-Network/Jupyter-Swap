@@ -28,13 +28,15 @@ export const ColorFrame = styled.div`
   width:fit-content;
   padding:0px 20px;
   color:${highlight};
-  margin:3px;
+  margin:1px;
+  font-size:large;
 &:before {
   content: "";
   position: absolute;
   inset: 0px;
-  border-radius: 5px; 
-  padding: 2px;
+  border-radius:10px;
+
+  padding: 3px;
   background:${highlightGradient}; 
   -webkit-mask: 
      linear-gradient(#fff 0 0) content-box, 

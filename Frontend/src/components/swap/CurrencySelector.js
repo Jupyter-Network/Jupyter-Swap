@@ -12,27 +12,31 @@ import { background } from "../../theme/theme";
 import { getPools } from "../../utils/requests";
 const erc20Abi = erc20.abi;
 
-export default function CurrencySelector({ onChange, provider }) {
+export default function CurrencySelector({ onChange, provider, initialToken }) {
   const [currencies, setCurrencies] = useState([]);
   const [filteredCurrencies, setFilteredCurrencies] = useState([]);
   const [poolHop, setPoolHop] = useState(false);
-  //const [selected, setSelected] = useState(currencies[0]);
-  const [tokens, setTokens] = useState({
-    token0: {
-      symbol: "MRC",
-      contract: new ethers.Contract(token0, erc20Abi, provider),
-      icon: "placeholder.svg",
-    },
-    token1: {
-      symbol: "BNB",
-      contract: new ethers.Contract(wbnb, erc20Abi, provider),
-      icon: "bnb-bnb-logo.svg",
-    },
-  });
+
+  const [tokens, setTokens] = useState(initialToken);
 
   const [activeSelector, setActiveSelector] = useState();
 
   useEffect(() => {
+    localStorage.setItem(
+      "tokens",
+      JSON.stringify({
+        token0: {
+          address: tokens.token0.contract.address,
+          symbol: tokens.token0.symbol,
+          icon: tokens.token0.icon,
+        },
+        token1: {
+          address: tokens.token1.contract.address,
+          symbol: tokens.token1.symbol,
+          icon: tokens.token1.icon,
+        },
+      })
+    );
     onChange(tokens, poolHop);
   }, [tokens]);
 
@@ -59,6 +63,7 @@ export default function CurrencySelector({ onChange, provider }) {
 
   function checkValidityAndSetTokens(newAddress, newName, icon, position) {
     let other = position === 0 ? 1 : 0;
+
     if (
       newAddress === wbnb ||
       tokens["token" + other].contract.address === wbnb
@@ -67,6 +72,7 @@ export default function CurrencySelector({ onChange, provider }) {
     } else {
       setPoolHop(true);
     }
+
     if (tokens["token" + other].contract.address === newAddress) {
       if (
         tokens["token0"].contract.address === wbnb ||
@@ -164,12 +170,11 @@ export default function CurrencySelector({ onChange, provider }) {
             margin: "0 auto",
             boxShadow: "0px 2px 5px -3px black",
             height: "fit-content",
-            border:"solid",
-            borderWidth:1,
-          borderRadius:5,
-          zIndex:1000
-    
-        }}
+            border: "solid",
+            borderWidth: 1,
+            borderRadius: 5,
+            zIndex: 1000,
+          }}
         >
           <h4>Search Token :</h4>
           <Input
@@ -241,9 +246,9 @@ export default function CurrencySelector({ onChange, provider }) {
             margin: "0 auto",
             boxShadow: "0px 2px 5px -3px black",
             height: "fit-content",
-            border:"solid",
-            borderWidth:1,
-          borderRadius:5
+            border: "solid",
+            borderWidth: 1,
+            borderRadius: 5,
           }}
         >
           <h4>Search Token :</h4>

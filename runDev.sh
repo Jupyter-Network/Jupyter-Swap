@@ -37,3 +37,4 @@ echo "Start Rest Server"
 
 echo "Start Frontend"
 (cd ./Frontend && gnome-terminal -- npm run start)
+

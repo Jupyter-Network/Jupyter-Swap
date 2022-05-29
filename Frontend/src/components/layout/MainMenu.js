@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import { MainMenuItem } from "../../theme";
-import { background, backgroundGradient, primary, secondary } from "../../theme/theme";
+import {
+  background,
+  backgroundGradient,
+  primary,
+  secondary,
+} from "../../theme/theme";
 import styles from "./MainMenu.module.css";
 
 export default function MainMenu({ onclick, active, block }) {
-  const items = ["Home", "Swap", "Liquidity","Build"];
+  const items = ["Home", "Swap", "Liquidity", "Build"];
   useEffect(() => {
     //get balances here
     if (block) {
@@ -12,26 +17,12 @@ export default function MainMenu({ onclick, active, block }) {
     }
   }, [block]);
   return (
-    <div
-      style={{
-        backgroundColor: background,
-      }}
-    >
-      <h3
-        style={{
-          color: secondary,
-          textAlign: "start",
-          marginTop: 0,
-          padding:20,
-        }}
-      >
-        Jupyter-Swap
-      </h3>
+    <div style={{ zIndex: -1 }}>
       <div
         style={{
           display: "flex",
           justifyContent: "center",
-          height: 30,
+          height: 40,
         }}
       >
         {items.map((item) => (

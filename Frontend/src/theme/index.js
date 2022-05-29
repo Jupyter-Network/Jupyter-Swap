@@ -10,7 +10,7 @@ export const Container = styled.div`
   overflow: hidden;
   text-align: center;
   box-shadow: 0px 0px 7px -2px black;
-  margin: 1px;
+  margin: 2px;
 `;
 
 export const ContainerTitle = styled.p`
@@ -27,7 +27,6 @@ export const Table = styled.table`
 `;
 
 export const MainMenuItem = styled.div`
-  background-color: ${background};
   color: ${primary};
   padding:10px;
   paddingTop:0px;

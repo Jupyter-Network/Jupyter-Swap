@@ -50,6 +50,7 @@ export function token0ToToken1(blockData, maxSlippage, value) {
 }
 
 export function token1ToToken0(blockData, maxSlippage, value) {
+  console.log("TOOOOKENTOOO")
   let amount = new BN(value).multipliedBy(new BN(10).pow(18));
   let rate = 0;
   let rateWithoutSlippage = new BN(0);

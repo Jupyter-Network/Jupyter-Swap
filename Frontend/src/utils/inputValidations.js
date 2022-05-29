@@ -3,9 +3,8 @@ import { isBigNumberish } from "ethers/node_modules/@ethersproject/bignumber/lib
 import { error } from "./alerts";
 
 export function validate(value) {
-  console.log(value)
-  if(isBigNumberish(value)){
-    value.toString()
+  if (isBigNumberish(value)) {
+    value.toString();
   }
   if (isNaN(value)) {
     return 0.0;
@@ -13,8 +12,12 @@ export function validate(value) {
   return value;
 }
 
-export function numericFormat(value) {
-  value = value.toString()
+export function numericFormat(value, maxDigits = 18) {
+  let dollarUSLocale = Intl.NumberFormat("en-US", {
+    maximumFractionDigits: maxDigits,
+  });
+
+  value = BN(value).toFixed(36);
   let v = value.split(".");
   let firstNonNullDecimal = 0;
 
@@ -26,12 +29,12 @@ export function numericFormat(value) {
       firstNonNullDecimal = i;
       const factor = Math.pow(10, firstNonNullDecimal) * 10000;
       const out = Math.floor(value * factor) / factor;
-      return out.toFixed(parseInt(firstNonNullDecimal) + 3);
+      value = out.toFixed(parseInt(firstNonNullDecimal) + 3);
     }
-  } else if (v[0].length < 5) {
-    return (Math.floor(value * 1000) / 1000).toLocaleString().replaceAll(",","'");
-  } else if (v[0].length >= 5) {
-    return Math.floor(value).toLocaleString().replaceAll(",","'");
+  } else if (v[0].length < 6) {
+    value = Math.floor(value * 10000) / 10000;
+  } else if (v[0].length >= 6) {
+    value = Math.floor(value);
   }
-  return value;
+  return dollarUSLocale.format(value);
 }

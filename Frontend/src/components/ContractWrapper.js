@@ -41,15 +41,7 @@ export default function ContractWrapper() {
 
   return (
     <div>
-
-        <div>
           <Frame block={block}></Frame>
-          <button onClick={() => connect()}>Connect</button>
-          //Work here bring all contracts to this wrapper and make them usable
-          in the child components also create a state here with the balances
-          allowances similar to
-        </div>
-      
     </div>
   );
 }

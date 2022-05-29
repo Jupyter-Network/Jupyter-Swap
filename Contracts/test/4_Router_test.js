@@ -72,32 +72,14 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
       value: amount,
       from: testAddress,
     });
-
+    const balanceBefore = await router.getBalance(token1.address);
     await router.removeLiquidity(token1.address, amount);
     //assert(parseInt(await router.getBalance(token0.address,token1.address)) ===  0,"Burn failed");
-    assert(
-      (await router.getBalance(token1.address)).eq(new BN(0)),
-      "Burn failed"
-    );
 
     assert(
-      (
-        await router.getBalance(token1.address, {
-          from: testAddress,
-        })
-      ).eq(new BN(amount).mul(new BN(amount))),
-      "Burn failed"
-    );
-
-    await router.removeLiquidity(token1.address, amount, {
-      from: testAddress,
-    });
-    assert(
-      (
-        await router.getBalance(token1.address, {
-          from: testAddress,
-        })
-      ).eq(new BN(0)),
+      balanceBefore
+        .sub(await router.getBalance(token1.address))
+        .eq(new BN(amount)),
       "Burn failed"
     );
   });
@@ -205,7 +187,7 @@ contract("Router", ([owner, testAddress, testAddress2]) => {
       new BN(await web3.eth.getBalance(owner)).toString(),
       new BN(token0Wallet).toString()
     );
-    await router.swapTokens(token1.address,token0.address, amount, 0);
+    await router.swapTokens(token1.address, token0.address, amount, 0);
 
     //assert(
     //  new BN(await web3.eth.getBalance(owner)).gt(

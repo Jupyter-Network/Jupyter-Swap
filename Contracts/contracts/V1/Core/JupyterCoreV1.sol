@@ -16,7 +16,7 @@ contract JupyterCoreV1 is
         require(_amount > _minAmount, "amount lower than min. amount!");
         _;
     }
-    
+
     modifier calledByRouter() {
         require(msg.sender == Router, "Denied can only be accessed by router");
         _;
@@ -31,8 +31,6 @@ contract JupyterCoreV1 is
 
     IERC20 public token0;
     IERC20 public token1;
-
-    event PoolClosed(address poolAddress,address tokenAddress);
 
     constructor(
         address _token0,
@@ -68,8 +66,8 @@ contract JupyterCoreV1 is
         mint(_token0Amount * _token1Amount, from);
         initialDepositDone = true;
         //Interactions
-        _rcvTokens(token0, _token0Amount, Router);
-        _rcvTokens(token1, _token1Amount, from);
+        _rcvTokens(token0, _token0Amount);
+        _rcvTokens(token1, _token1Amount);
     }
 
     //---Deposit and withdraw
@@ -86,17 +84,18 @@ contract JupyterCoreV1 is
     {
         //Checks
         require(
-            _token1Amount <= _scaleUp(_token0Amount+1000) / rate() && _token1Amount >= _scaleUp(_token0Amount-1000) / rate(),
+            _token1Amount <= _scaleUp(_token0Amount + 1000) / rate() &&
+                _token1Amount >= _scaleUp(_token0Amount - 1000) / rate(),
             "Wrong amount of tokens sent"
         );
         //Effects
-        mint((totalSupply() * _token0Amount) / token1Balance, from);
+        mint((totalSupply() / token0Balance) * _token0Amount, from);
         //Interactions
-        _rcvTokens(token1, _scaleUp(_token0Amount) / rate(), from);
-        _rcvTokens(token0, _token0Amount, from);
+        _rcvTokens(token1, _scaleUp(_token0Amount) / rate());
+        _rcvTokens(token0, _token0Amount);
     }
 
-    function withdraw(address from,uint256 _withdrawalAmount)
+    function withdraw(address from, uint256 _withdrawalAmount)
         external
         override
         calledByRouter
@@ -118,33 +117,46 @@ contract JupyterCoreV1 is
         token0.safeTransfer(Router, token0Withdrawal);
         token1.safeTransfer(from, token1Withdrawal);
 
- //       if(totalSupply() <= 10000){
- //           emit PoolClosed(address(this), address(token1));
- //           selfdestruct(payable(vaultAddress));
- //       }
+        //if(totalSupply() <= 0){
+        //    emit PoolClosed(address(this), address(token1));
+        //    selfdestruct(payable(vaultAddress));
+        //}
         return token0Withdrawal;
     }
 
-    //---Trade
+    function closePool() external calledByRouter {
+        if (totalSupply() <= 0) {
+            selfdestruct(payable(vaultAddress));
+        }
+    }
 
     //---Trade
     function swapToken0ToToken1(
         uint256 _token0Amount,
         uint256 _token1AmountMin,
         address from
-    ) external override calledByRouter minValue(_token0Amount) returns(uint256) {
+    )
+        external
+        override
+        calledByRouter
+        minValue(_token0Amount)
+        returns (uint256)
+    {
         //Checks
-        uint256 token1Withdrawal = getToken1AmountFromToken0Amount(
-            _token0Amount
-        );
+        uint256 token1Withdrawal = t1FromT0(_token0Amount);
+        uint256 protocolFee = _scaleDown(token1Withdrawal * _protocolFee);
+
         require(token1Withdrawal >= _token1AmountMin, "Price changed");
 
         //Effects
-        token1Balance -= token1Withdrawal;
-        _sendProtocolFeeToken1(token1Withdrawal);
+        token1Balance -= token1Withdrawal + protocolFee;
+        token0Balance += _token0Amount;
 
         //Interactions
-        _rcvTokens(token0, _token0Amount, from);
+
+        //Protocol fee
+        token1.safeTransfer(vaultAddress, protocolFee);
+
         token1.safeTransfer(from, token1Withdrawal);
         return token1Withdrawal;
     }
@@ -161,22 +173,24 @@ contract JupyterCoreV1 is
         returns (uint256)
     {
         //Checks
-        uint256 tokenWithdrawal = getToken0AmountFromToken1Amount(
-            _token1Amount
-        );
+        uint256 tokenWithdrawal = t0FromT1(_token1Amount);
+        uint256 protocolFee = _scaleDown(tokenWithdrawal * _protocolFee);
+
         require(tokenWithdrawal >= _token0AmountMin, "Price changed");
-        //
         ////Effects
-        token0Balance -= tokenWithdrawal;
-        _sendProtocolFeeToken0(tokenWithdrawal);
-        //
+
+        token0Balance -= tokenWithdrawal + protocolFee;
+        token1Balance += _token1Amount;
+
         ////Interactions
-        _rcvTokens(token1, _token1Amount, from);
-        token0.safeTransfer(Router, tokenWithdrawal);
+        //Protocol Fee
+        token0.safeTransfer(vaultAddress, protocolFee);
+
+        token0.safeTransfer(from, tokenWithdrawal);
         return tokenWithdrawal;
     }
 
-    function getToken1AmountFromToken0Amount(uint256 tokenAmount)
+    function t1FromT0(uint256 tokenAmount)
         public
         view
         calledByRouter
@@ -188,7 +202,7 @@ contract JupyterCoreV1 is
             );
     }
 
-    function getToken0AmountFromToken1Amount(uint256 tokenAmount)
+    function t0FromT1(uint256 tokenAmount)
         public
         view
         calledByRouter
@@ -201,11 +215,7 @@ contract JupyterCoreV1 is
     }
 
     //---helper
-    function _rcvTokens(
-        IERC20 token,
-        uint256 amount,
-        address from
-    ) private {
+    function _rcvTokens(IERC20 token, uint256 amount) private {
         //Checks
         // require(token.balanceOf(from) >= amount, "Your balance is too too low");
         require(_minAmount <= amount, "Sent amount too low");
@@ -222,7 +232,7 @@ contract JupyterCoreV1 is
     }
 
     function _subtractFee(uint256 value) private pure returns (uint256) {
-        return (value * (_scaleFactor - _percentFee)) / _scaleFactor;
+        return _scaleDown(value * _feeMultiplier);
     }
 
     function _sendProtocolFeeToken0(uint256 value) private {

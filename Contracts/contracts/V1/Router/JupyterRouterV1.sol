@@ -17,7 +17,7 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         _;
     }
 
-    event CreateLiquidityPool(address token, address pool,uint256 rate);
+    event CreateLiquidityPool(address token, address pool, uint256 rate);
     event AddLiquidity(
         address pool,
         uint256 token0Amount,
@@ -28,6 +28,8 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         uint256 token0Amount,
         uint256 token1Amount
     );
+
+    event ClosePool(address pool);
 
     event ExchangeTokens(
         address from,
@@ -88,7 +90,11 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
 
         depositAndTransferWETH(address(newPool), msg.value);
 
-        emit CreateLiquidityPool(_token1Address, address(newPool),newPool.rate());
+        emit CreateLiquidityPool(
+            _token1Address,
+            address(newPool),
+            newPool.rate()
+        );
     }
 
     function addLiquidity(address _token1Address, uint256 _token1Amount)
@@ -115,7 +121,6 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
     function removeLiquidity(address _token1Address, uint256 _withdrawalAmount)
         external
         override
-        existingPair(wbnb, _token1Address)
     {
         JupyterCoreV1 pair = _existingPair(_token1Address);
         uint256 bnbToWithdraw = pair.withdraw(msg.sender, _withdrawalAmount);
@@ -126,6 +131,11 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
             pair.token0Balance(),
             pair.token1Balance()
         );
+        if (pair.token0Balance() == 0) {
+            emit ClosePool(address(pair));
+            pair.closePool();
+            delete pairs[wbnb][_token1Address];
+        }
     }
 
     function swapETHToToken(address _tokenAddress, uint256 _tokenAmountMin)
@@ -159,10 +169,10 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         uint256 withdrawalAmount = pair.swapToken1ToToken0(
             _tokenAmount,
             _ethAmountMin,
-            msg.sender
+            address(this)
         );
 
-        IERC20(pair.token1()).safeTransferFrom(
+        IERC20(_tokenAddress).safeTransferFrom(
             msg.sender,
             address(pair),
             _tokenAmount
@@ -176,7 +186,6 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
             withdrawalAmount,
             pair.rate()
         );
-        //emit rateChanged(address(pair), pair.rate());
     }
 
     function getToken1AmountFromToken0Amount(
@@ -184,7 +193,7 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         uint256 amount
     ) external view override returns (uint256) {
         JupyterCoreV1 pair = _existingPair(_token1Address);
-        return pair.getToken1AmountFromToken0Amount(amount);
+        return pair.t1FromT0(amount);
     }
 
     function getToken0AmountFromToken1Amount(
@@ -192,7 +201,7 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         uint256 amount
     ) external view override returns (uint256) {
         JupyterCoreV1 pair = _existingPair(_token1Address);
-        return pair.getToken0AmountFromToken1Amount(amount);
+        return pair.t0FromT1(amount);
     }
 
     function getRate(address token1Address)
@@ -218,10 +227,10 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         view
         returns (JupyterCoreV1)
     {
-        require(
-            address(pairs[wbnb][_token1Address]) != address(0),
-            "Pair does not exist"
-        );
+        //require(
+        //    address(pairs[wbnb][_token1Address]) != address(0),
+        //    "Pair does not exist"
+        //);
         return pairs[wbnb][_token1Address];
     }
 
@@ -281,36 +290,28 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         require(address(token0Wbnb) != address(0x00), "Token not listed");
         JupyterCoreV1 token1Wbnb = _existingPair(_toToken);
         require(address(token1Wbnb) != address(0x00), "Token not listed");
-        IERC20(_fromToken).safeTransferFrom(
-            msg.sender,
-            address(this),
-            _fromAmount
-        );
 
         //From
-        uint256 wbnbMinAmount = token0Wbnb.getToken0AmountFromToken1Amount(
-            _fromAmount
-        );
+        uint256 wbnbMinAmount = token0Wbnb.t0FromT1(_fromAmount);
         uint256 wbnbAmount = token0Wbnb.swapToken1ToToken0(
             _fromAmount,
             wbnbMinAmount,
-            address(this)
+            address(token1Wbnb)
         );
-        IERC20(_fromToken).safeTransfer(address(token0Wbnb), _fromAmount);
 
-
-
-        //To
-        uint256 toAmountMin = token1Wbnb.getToken1AmountFromToken0Amount(
-            wbnbAmount
-        );
         //require(toAmountMin >= _toMinAmount,"Price changed");
         uint256 receivedAmount = token1Wbnb.swapToken0ToToken1(
             wbnbAmount,
             _toMinAmount,
             address(this)
         );
-        IERC20(wbnb).safeTransfer(address(token1Wbnb), wbnbAmount);
+
+        IERC20(_fromToken).safeTransferFrom(
+            msg.sender,
+            address(token0Wbnb),
+            _fromAmount
+        );
+        //IERC20(wbnb).safeTransfer(address(token1Wbnb), wbnbAmount);
         //require(receivedAmount >= _toMinAmount,"Price changed");
         IERC20(_toToken).safeTransfer(msg.sender, receivedAmount);
 
@@ -342,14 +343,10 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         require(address(token1Wbnb) != address(0x00), "Token not listed");
 
         //From
-        uint256 wbnbAmount = token0Wbnb.getToken0AmountFromToken1Amount(
-            _fromAmount
-        );
+        uint256 wbnbAmount = token0Wbnb.t0FromT1(_fromAmount);
 
         //To
-        uint256 toAmountMin = token1Wbnb.getToken1AmountFromToken0Amount(
-            wbnbAmount
-        );
+        uint256 toAmountMin = token1Wbnb.t1FromT0(wbnbAmount);
         return toAmountMin;
     }
 

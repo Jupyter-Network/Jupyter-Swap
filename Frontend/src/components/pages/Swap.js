@@ -64,18 +64,53 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   const [blockData, setBlockData] = useState({
     poolBalances: [new BN(0), new BN(0)],
     pool1Balances: [new BN(0), new BN(0)],
+    token0Balance: BN(0),
   });
+  let storage = JSON.parse(localStorage.getItem("tokens"));
 
-  const [tokens, setTokens] = useState({
-    token0: {
-      symbol: "MRC",
-      contract: new ethers.Contract(token0, erc20Abi, ethersProvider),
-    },
-    token1: {
-      symbol: "WBNB",
-      contract: new ethers.Contract(wbnb, erc20Abi, ethersProvider),
-    },
-  });
+  const [tokens, setTokens] = useState(
+    storage
+      ? {
+          token0: {
+            symbol: storage.token0.symbol,
+            contract: new ethers.Contract(
+              storage.token0.address,
+              erc20Abi,
+              ethersProvider.getSigner()
+            ),
+            icon: storage.token0.icon,
+          },
+          token1: {
+            symbol: storage.token1.symbol,
+            contract: new ethers.Contract(
+              storage.token1.address,
+              erc20Abi,
+              ethersProvider.getSigner()
+            ),
+            icon: storage.token1.icon,
+          },
+        }
+      : {
+          token0: {
+            symbol: "ARM",
+            contract: new ethers.Contract(
+              token1,
+              erc20Abi,
+              ethersProvider.getSigner()
+            ),
+            icon: "/placeholder.svg",
+          },
+          token1: {
+            symbol: "BNB",
+            contract: new ethers.Contract(
+              wbnb,
+              erc20Abi,
+              ethersProvider.getSigner()
+            ),
+            icon: "/placeholder.svg",
+          },
+        }
+  );
 
   function handleToken0AmountChange(value) {
     console.log("Token 0 Amount change Handler", "value:", value);
@@ -110,9 +145,13 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       await getBlockData();
       //If pools changed -> recalculate
       handleToken0AmountChange(state.token0Amount.toString());
+      if (storage.token0.address !== wbnb && storage.token1.address !== wbnb) {
+        setState({ ...state, poolHop: true });
+      }
     }
     asyncRun();
   }, [block, tokens]);
+
   //newBlockData
   useEffect(() => {
     handleToken0AmountChange(state.token0Amount);
@@ -120,8 +159,50 @@ export default function Swap({ block, ethersProvider, routerContract }) {
 
   useEffect(() => {
     getBlockData();
+    setTokens(
+      storage
+        ? {
+            token0: {
+              symbol: storage.token0.symbol,
+              contract: new ethers.Contract(
+                storage.token0.address,
+                erc20Abi,
+                ethersProvider.getSigner()
+              ),
+              icon: storage.token0.icon,
+            },
+            token1: {
+              symbol: storage.token1.symbol,
+              contract: new ethers.Contract(
+                storage.token1.address,
+                erc20Abi,
+                ethersProvider.getSigner()
+              ),
+              icon: storage.token1.icon,
+            },
+          }
+        : {
+            token0: {
+              symbol: "ARM",
+              contract: new ethers.Contract(
+                token1,
+                erc20Abi,
+                ethersProvider.getSigner()
+              ),
+              icon: "/placeholder.svg",
+            },
+            token1: {
+              symbol: "BNB",
+              contract: new ethers.Contract(
+                wbnb,
+                erc20Abi,
+                ethersProvider.getSigner()
+              ),
+              icon: "/placeholder.svg",
+            },
+          }
+    );
   }, [wallet]);
-
 
   //Router
   async function swapETHToToken() {
@@ -129,7 +210,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       .multipliedBy(new BN(10).pow(18))
       .toFixed(0);
     await transaction(
-      `Swap ${BN(value).dividedBy(BN(10).pow(18)).toFixed(6)} ${
+      `Swap ${BN(value).dividedBy(BN(10).pow(18))} ${
         tokens["token0"].symbol
       } to ${state.token1Amount.toFixed(6)} ${tokens["token1"].symbol}`,
       routerContract.swapETHToToken,
@@ -199,11 +280,10 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         ? tokens["token0"].contract
         : tokens["token1"].contract;
     console.log(ethersProvider);
-    await transaction(
-      `Approve ${BN(amount).dividedBy(BN(10).pow(18))} ${symbol}`,
-      tokenContract.approve,
-      [router, amount]
-    );
+    await transaction(`Approve ${symbol}`, tokenContract.approve, [
+      router,
+      amount,
+    ]);
   }
 
   async function getBlockData() {
@@ -410,18 +490,27 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               marginBottom: -4,
             }}
           >
-            Balance : {BN(blockData.token0Balance).toFixed(3)}{" "}
-            {tokens["token0"].symbol}
+            Balance : {numericFormat(BN(blockData.token0Balance))}
           </p>
-          <Input
-            pattern="\d*"
-            onFocus={() => handleToken0AmountChange("")}
-            onChange={(e) => handleToken0AmountChange(e.target.value)}
-            value={state.token0Amount.toString()}
-          ></Input>
-          <Label>
-            <b>{tokens["token0"].symbol}</b>
-          </Label>
+          <div style={{ display: "flex", flexWrap: "nowrap" }}>
+            <SmallButton
+              style={{ marginLeft: 10, marginRight: 2 }}
+              onClick={() =>
+                handleToken0AmountChange(blockData.token0Balance - 0.002)
+              }
+            >
+              Max.
+            </SmallButton>
+            <Input
+              pattern="\d*"
+              onFocus={() => handleToken0AmountChange("")}
+              onChange={(e) => handleToken0AmountChange(e.target.value)}
+              value={state.token0Amount.toString()}
+            ></Input>
+            <Label>
+              <b>{tokens["token0"].symbol}</b>
+            </Label>
+          </div>
 
           <br />
           <p
@@ -433,21 +522,24 @@ export default function Swap({ block, ethersProvider, routerContract }) {
             }}
           >
             {" "}
-            Balance : {BN(blockData.token1Balance).toFixed(3)}{" "}
-            {tokens["token1"].symbol}
+            Balance : {numericFormat(BN(blockData.token1Balance))}
           </p>
+
           <Input
             pattern="\d*"
             onFocus={() => handleToken1AmountChange("")}
             onChange={(e) => handleToken1AmountChange(e.target.value)}
             value={state.token1Amount.toString()}
           ></Input>
+
           <Label>
             <b>{tokens["token1"].symbol}</b>
           </Label>
+
           <p></p>
           <CurrencySelector
             provider={ethersProvider}
+            initialToken={tokens}
             onChange={(tokens, poolHop) => {
               setState({ ...state, poolHop: poolHop });
               setTokens(tokens);
@@ -456,16 +548,17 @@ export default function Swap({ block, ethersProvider, routerContract }) {
           <br />
           <p>
             Price: &nbsp;
+            {state.poolHop ? "true" : "false"}
             {state.poolHop ? (
               <P>
                 {numericFormat(
                   BN(blockData.p0Rate.toString())
                     .dividedBy(BN(blockData.p1Rate.toString()))
-                    .toFixed(18)
+                    .toString()
                 )}
               </P>
             ) : (
-              <P>{numericFormat(BN(blockData.p0Rate).toFixed(18))}</P>
+              <P>{numericFormat(BN(blockData.p0Rate).toString())}</P>
             )}
           </p>
 
@@ -496,7 +589,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               <span style={{ color: primary }}>
                 {" "}
                 {numericFormat(
-                  state.token1AmountMin.dividedBy(BN(10).pow(18)).toFixed(18)
+                  state.token1AmountMin.dividedBy(BN(10).pow(18)).toFixed(18),
+                  6
                 )}{" "}
                 {tokens["token1"].symbol}
               </span>
@@ -521,7 +615,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                     }
                     approveToken(
                       tokens["token0"].contract,
-                      "100000000000000000000000"
+                      ethers.constants.MaxUint256
                     );
                   }}
                 >
@@ -539,7 +633,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                   onClick={() => {
                     approveToken(
                       tokens["token1"].contract,
-                      "100000000000000000000000"
+                      ethers.constants.MaxUint256
                     );
                   }}
                 >

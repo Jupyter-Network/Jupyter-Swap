@@ -18,6 +18,7 @@ fastify.get("/tokens/:token_symbol", async (request, reply) => {
   return await query.getPool({ tokenSymbol: request.params.token_symbol });
 });
 
+
 // Run the server!
 const start = async () => {
   try {

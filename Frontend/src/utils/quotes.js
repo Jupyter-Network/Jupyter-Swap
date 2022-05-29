@@ -62,7 +62,7 @@ export function token1ToToken0(blockData, maxSlippage, value) {
   let b00 = BN(blockData.poolBalances[1].toString());
 
   amount = amount.dividedBy(997).multipliedBy(1000);
-  rate = b00.dividedBy(b01.minus(amount)).multipliedBy(amount);
+  rate = b01.dividedBy(b00.minus(amount)).multipliedBy(amount);
   console.log("You get: ",rate.dividedBy(BN(10).pow(18)).toString(), " BNB")
 
   rate = rate.dividedBy(997).multipliedBy(1000);

@@ -55,7 +55,6 @@ export default function PoolSelector({ onChange, provider }) {
   }, [provider]);
 
   function checkValidityAndSetTokens(newAddress, newName, icon) {
-    console.log(tokens);
     setTokens({
       ...tokens,
       ["token1"]: {
@@ -69,7 +68,6 @@ export default function PoolSelector({ onChange, provider }) {
       },
     });
   }
-  console.log(tokens);
 
   async function queryTokens(value) {
     if (value) {

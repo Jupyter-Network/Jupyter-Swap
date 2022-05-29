@@ -60,7 +60,7 @@ function ListItem({ transaction, index }) {
       }}
     >
       <td style={{ padding: 8 }}>
-        {numericFormat(BN(transaction.from_amount).dividedBy(BN(10).pow(18)).toFixed(18))}{" "}
+        {numericFormat(BN(transaction.from_amount).dividedBy(BN(10).pow(18)),18)}{" "}
         &nbsp;
         {transaction.from_symbol}
       </td>
@@ -73,11 +73,11 @@ function ListItem({ transaction, index }) {
         <img style={{ height: 25 }} src={"/tokenlogos/" + transaction.to_icon}></img>
       </td>
       <td style={{textAlign:"right"}}>
-        {numericFormat(BN(transaction.to_amount).dividedBy(BN(10).pow(18)).toFixed(18))} &nbsp;
+        {numericFormat(BN(transaction.to_amount).dividedBy(BN(10).pow(18)),18)} &nbsp;
         {transaction.to_symbol}
       </td>
       <td style={{textAlign:"right"}}>
-        {numericFormat(BN(transaction.to_amount).dividedBy(transaction.from_amount).toFixed(18))} &nbsp;
+        {numericFormat(BN(transaction.to_amount).dividedBy(transaction.from_amount),18)} &nbsp;
       </td>
       <td style={{textAlign:"right"}}><a target="_blank" href={"http://bscscan.com/tx/"+transaction.transaction_hash}><img style={{height:21,paddingRight:5}} src="/chain.svg"></img></a></td>
 

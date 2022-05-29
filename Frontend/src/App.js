@@ -64,13 +64,15 @@ const web3Onboard = init({
       { name: "Coinbase", url: "https://wallet.coinbase.com/" },
     ],
   },
+  accountCenter: {
+    desktop: { enabled: false },
+  },
 });
 
 function App() {
   return (
     <div>
-      
-         <ToastContainer
+      <ToastContainer
         position="top-left"
         autoClose={5000}
         hideProgressBar={false}
@@ -82,7 +84,6 @@ function App() {
         pauseOnHover
       />
       <ContractWrapper></ContractWrapper>
- 
     </div>
   );
 }

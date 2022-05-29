@@ -49,8 +49,8 @@ module.exports = {
       return await sql`SELECT * FROM public."Pools" WHERE token_symbol LIKE '%' || ${queryObject.tokenSymbol} || '%'`;
     }
   },
-  deletePool: async (tokenAddress) => {
-    await sql`DELETE from public."Pools" WHERE token_address = ${tokenAddress}`;
+  deletePool: async (poolAddress) => {
+    await sql`DELETE from public."Pools" WHERE pool_address = ${poolAddress}`;
   },
 
   //Swaps
@@ -102,4 +102,6 @@ module.exports = {
     LIMIT 10;
       `;
   },
+
+
 };

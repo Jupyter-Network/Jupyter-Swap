@@ -10,7 +10,7 @@ const routerAddress = addresses.router;
 const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545");
 const routerContract = new ethers.Contract(routerAddress, routerAbi, provider);
 let lastBlock = 1000;
-routerContract.queryFilter("*",lastBlock)
+routerContract.queryFilter("*", lastBlock);
 routerContract.on("*", async (tx) => {
   lastBlock = tx.blockNumber;
   switch (tx.event) {
@@ -25,14 +25,12 @@ routerContract.on("*", async (tx) => {
         console.log(e);
       }
       break;
-  
-      case "AddLiquidity":
-      break;
-    case "RemoveLiquidity":
-      if (tx.args.token0Amount.toString() === "0") {
-        console.log("Pool destroyed");
 
-      }
+    case "AddLiquidity":
+      break;
+    case "ClosePool":
+      console.log(tx);
+      await query.deletePool(tx.args.pool);
       break;
     case "ExchangeTokens":
       try {
@@ -50,7 +48,6 @@ routerContract.on("*", async (tx) => {
       break;
   }
 });
-
 
 /*
 SELECT time_bucket_gapfill('15 minutes', time,now() - INTERVAL '1 day',now()) AS bucket, 

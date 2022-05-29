@@ -18,9 +18,12 @@ import { error, success, transaction } from "../../utils/alerts";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PoolSelector from "../liquidity/PoolSelector";
-import { background } from "../../theme/theme";
+import { background, primary, secondary } from "../../theme/theme";
 
 import CurrencyDisplay from "../liquidity/CurrencyDisplay";
+import Balances from "../liquidity/Balances";
+import Chart from "../liquidity/Chart";
+
 const routerAbi = routerMeta.abi;
 const erc20Abi = erc20.abi;
 //Add this to a Math file later
@@ -53,12 +56,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
   const [createWidgetPrice, setCreateWidgetPrice] = useState(0);
 
   useEffect(() => {
-    console.log(
-      "Set widget price",
-      BN(createWidgetState.tokenAmount).toFixed(18),
-      BN(createWidgetState.bnbAmount).toFixed(18)
-    );
-
     setCreateWidgetPrice(
       BN(createWidgetState.bnbAmount)
         .dividedBy(BN(createWidgetState.tokenAmount))
@@ -169,19 +166,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       ]
     );
     getBlockData();
-    console.log(
-      createWidgetState.address,
-      BN(createWidgetState.tokenAmount)
-        .multipliedBy(BN(10).pow(18))
-        .toFixed(0)
-        .toString(),
-      {
-        value: BN(createWidgetState.bnbAmount)
-          .multipliedBy(BN(10).pow(18))
-          .toFixed(0)
-          .toString(),
-      }
-    );
     await routerContract.createLiquidityPool(
       createWidgetState.address,
       BN(createWidgetState.tokenAmount)
@@ -244,7 +228,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
   async function approveToken(contract, amount) {
     const symbol = tokens["token1"].symbol;
     const tokenContract = tokens["token1"].contract;
-    console.log(ethersProvider);
     await transaction(
       `Approve ${BN(amount).dividedBy(BN(10).pow(18))} ${symbol}`,
       tokenContract.approve,
@@ -254,7 +237,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
 
   //BEP-20
   async function approveAnonymousToken(contract, amount) {
-    console.log(ethersProvider);
     await transaction(
       `Approve ${BN(amount).dividedBy(BN(10).pow(18))}`,
       contract.approve,
@@ -263,8 +245,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
   }
 
   async function getBlockData() {
-    console.log("Reload");
-    console.log("Wallet: ", wallet);
     const t0Balance = wallet
       ? await ethersProvider.getBalance(wallet.accounts[0].address)
       : 0;
@@ -281,8 +261,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     const poolBalances = await routerContract.getPoolBalances(
       tokens["token1"].contract.address
     );
-    console.log("Pool Balances: ", poolBalances[0].toString());
-    console.log("Pool Balances: ", poolBalances[1].toString());
 
     const lpTotalSupply = await routerContract.getLPTotalSupply(
       tokens["token1"].contract.address
@@ -299,14 +277,16 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
   return (
     <div
       style={{
-        margin:"0 auto",
+        margin: "0 auto",
         display: "flex",
         flexWrap: "wrap",
         justifyContent: "center",
         maxWidth: 1200,
       }}
     >
-       <Container style={{ maxHeight: 230 }}>
+      <Balances blockData={blockData} tokens={tokens}></Balances>
+      <div style={{ width: "100vw" }}></div>
+      <Container style={{ maxHeight: 230 }}>
         <ContainerTitle>Select Pool</ContainerTitle>
         <PoolSelector
           provider={ethersProvider}
@@ -345,90 +325,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           </div>
         </GradientDiv>
       </Container>
-      <Container>
-        <ContainerTitle>Balance</ContainerTitle>
-        <div>
-          <p>Your Balance:</p>
-          {blockData ? (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
-            >
-              <CurrencyDisplay
-                amount={numericFormat(
-                  BN(blockData.userBalance.toString())
-                    .dividedBy(BN(10).pow(36))
-                    .toString()
-                )}
-                symbol="LP"
-                icon="/bnb-bnb-logo.svg"
-              ></CurrencyDisplay>
-
-              <CurrencyDisplay
-                amount={numericFormat(blockData.token0Balance.toString())}
-                symbol={tokens["token0"].symbol}
-                icon={tokens["token0"].icon}
-              ></CurrencyDisplay>
-              <CurrencyDisplay
-                amount={numericFormat(blockData.token1Balance.toString())}
-                symbol={tokens["token1"].symbol}
-                icon={tokens["token1"].icon}
-              ></CurrencyDisplay>
-            </div>
-          ) : (
-            <p></p>
-          )}
-        </div>
-        <div>
-          <p>Pool Balance:</p>
-          {blockData ? (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
-            >
-              <CurrencyDisplay
-                amount={numericFormat(
-                  BN(blockData.lpTotalSupply.toString())
-                    .dividedBy(BN(10).pow(36))
-                    .toString()
-                )}
-                symbol="LP"
-                icon="/bnb-bnb-logo.svg"
-              ></CurrencyDisplay>
-
-              <CurrencyDisplay
-                amount={numericFormat(
-                  BN(blockData.poolBalances[0].toString())
-                    .dividedBy(BN(10).pow(18))
-                    .toString()
-                )}
-                symbol={tokens["token0"].symbol}
-                icon={tokens["token0"].icon}
-              ></CurrencyDisplay>
-              <CurrencyDisplay
-                amount={numericFormat(
-                  BN(blockData.poolBalances[1].toString())
-                    .dividedBy(BN(10).pow(18))
-                    .toString()
-                )}
-                symbol={tokens["token1"].symbol}
-                icon={tokens["token1"].icon}
-              ></CurrencyDisplay>
-            </div>
-          ) : (
-            <p></p>
-          )}
-        </div>
-        <br />
-      </Container>
-
-     
+<Chart blockData={blockData}></Chart>
       <Container>
         <ContainerTitle>Add Liquidity</ContainerTitle>
         <span>
@@ -455,23 +352,13 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         <br />
         <LargeButton
           onClick={() => {
-            console.log(
-              BN(state.token0Amount)
-                .multipliedBy(BN(10).pow(18))
-                .toFixed(0)
-                .toString(),
-              BN(state.token1Amount)
-                .multipliedBy(BN(10).pow(18))
-                .toFixed(0)
-                .toString()
-            );
             addLiquidity();
           }}
         >
           Add Liquidity
         </LargeButton>
       </Container>
-      <Container style={{maxHeight:180}}>
+      <Container style={{ maxHeight: 180 }}>
         <ContainerTitle>Remove Liquidity</ContainerTitle>
         <span>
           {tokens["token0"].symbol} / {tokens["token1"].symbol}
@@ -487,14 +374,18 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         <Label>
           <b>LP</b>
         </Label>
-          <br/>
-          <br/>
+        <br />
+        <br />
         <LargeButton onClick={() => removeLiquidity()}>
           RemoveLiquidity
         </LargeButton>
       </Container>
-      <div style={{ width: "100%" }}></div>
-      <Container style={{maxHeight:390}}>
+      <div style={{ width: "100%" }}>
+        <h3 style={{ color: primary, textAlign: "center" }}>
+          Open a new liquidty pool:
+        </h3>
+      </div>
+      <Container style={{ maxHeight: 390 }}>
         <ContainerTitle>Create New Liquidity Pool</ContainerTitle>
         <Input
           value={createWidgetState.address}
@@ -510,7 +401,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         <br />
         <br />
         <Input
-          value={createWidgetState.bnbAmount}
+          value={validate(createWidgetState.bnbAmount)}
           onChange={(e) =>
             setCreateWidgetState({
               ...createWidgetState,
@@ -522,7 +413,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         ></Input>
         <Label>BNB</Label>
         <Input
-          value={createWidgetState.tokenAmount}
+          value={validate(createWidgetState.tokenAmount)}
           onChange={(e) =>
             setCreateWidgetState({
               ...createWidgetState,
@@ -537,8 +428,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           Initial Price:{" "}
           <P>{numericFormat(BN(createWidgetPrice).toFixed(18))}</P>
         </p>
-   
-     
         <LargeButton onClick={() => createLiquidityPool()}>
           Create Pool
         </LargeButton>
@@ -547,24 +436,22 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         <GradientDiv style={{ height: 90 }}>
           <br />
 
-            <MediumButtonInverted
-              onClick={() => {
-                console.log(createWidgetState.address);
-                approveAnonymousToken(
-                  new ethers.Contract(
-                    createWidgetState.address,
-                    erc20Abi,
-                    ethersProvider.getSigner()
-                  ),
-                  createWidgetState.tokenAmount
-                    .multipliedBy(BN(10).pow(18))
-                    .toFixed(0)
-                );
-              }}
-            >
-              Approve Token
-            </MediumButtonInverted>
-
+          <MediumButtonInverted
+            onClick={() => {
+              approveAnonymousToken(
+                new ethers.Contract(
+                  createWidgetState.address,
+                  erc20Abi,
+                  ethersProvider.getSigner()
+                ),
+                createWidgetState.tokenAmount
+                  .multipliedBy(BN(10).pow(18))
+                  .toFixed(0)
+              );
+            }}
+          >
+            Approve Token
+          </MediumButtonInverted>
         </GradientDiv>
       </Container>
     </div>
