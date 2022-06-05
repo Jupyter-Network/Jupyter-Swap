@@ -5,12 +5,17 @@ const erc20Abi = erc20Metadata.abi;
 const addresses = require("./addresses.json");
 const query = require("./Database/query");
 const { wbnb } = require("../Frontend/src/contracts/addresses");
+const { createPoolEvent } = require("./Database/query");
+const { lpValue } = require("./utils/Math");
 const routerAbi = routerMetadata.abi;
 const routerAddress = addresses.router;
 const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545");
 const routerContract = new ethers.Contract(routerAddress, routerAbi, provider);
+const BN = require("bignumber.js");
 let lastBlock = 1000;
 routerContract.queryFilter("*", lastBlock);
+
+//On router Events
 routerContract.on("*", async (tx) => {
   lastBlock = tx.blockNumber;
   switch (tx.event) {
@@ -27,10 +32,41 @@ routerContract.on("*", async (tx) => {
       break;
 
     case "AddLiquidity":
+      console.log(tx);
+      var lpv = lpValue(
+        BN(tx.args.lpTotalSupply.toString()),
+        BN(tx.args.token0Balance.toString()),
+        BN(tx.args.token1Balance.toString())
+      );
+
+      await query.createPoolEvent(
+        tx.args.pool,
+        tx.args.token0Balance.toString(),
+        tx.args.token1Balance.toString(),
+        tx.args.lpTotalSupply.toString(),
+        lpv.toString(),
+        "addLiquidity"
+      );
       break;
     case "ClosePool":
       console.log(tx);
       await query.deletePool(tx.args.pool);
+      break;
+    case "RemoveLiquidity":
+      console.log(tx);
+      var lpv = lpValue(
+        BN(tx.args.lpTotalSupply.toString()),
+        BN(tx.args.token0Balance.toString()),
+        BN(tx.args.token1Balance.toString())
+      );
+      await query.createPoolEvent(
+        tx.args.pool,
+        tx.args.token0Balance.toString(),
+        tx.args.token1Balance.toString(),
+        tx.args.lpTotalSupply.toString(),
+        lpv.toString(),
+        "removeLiquidity"
+      );
       break;
     case "ExchangeTokens":
       try {

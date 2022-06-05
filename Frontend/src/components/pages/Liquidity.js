@@ -67,6 +67,10 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
 
   const [blockData, setBlockData] = useState();
 
+  function deadline() {
+    return Date.now() + 900;
+  }
+
   function handleToken0AmountChange(value) {
     console.log("Token 0 Amount change Handler", value);
     value = value;
@@ -136,19 +140,62 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
 
     getBlockData();
   }, [wallet]);
+  let storage = JSON.parse(localStorage.getItem("tokens"));
 
-  const [tokens, setTokens] = useState({
-    token0: {
-      symbol: "BNB",
-      contract: new ethers.Contract(wbnb, erc20Abi, ethersProvider),
-      icon: "bnb-bnb-logo.svg",
-    },
-    token1: {
-      symbol: "ARM",
-      contract: new ethers.Contract(token1, erc20Abi, ethersProvider),
-      icon: "placeholder.svg",
-    },
-  });
+  const [tokens, setTokens] = useState(
+    storage
+      ? {
+          token0: {
+            symbol: "BNB",
+            contract: new ethers.Contract(
+              wbnb,
+              erc20Abi,
+              ethersProvider.getSigner()
+            ),
+            icon: "/placeholder.svg",
+          },
+          token1:
+            storage.token0.address === wbnb
+              ? {
+                  symbol: storage.token1.symbol,
+                  contract: new ethers.Contract(
+                    storage.token1.address,
+                    erc20Abi,
+                    ethersProvider.getSigner()
+                  ),
+                  icon: storage.token1.icon,
+                }
+              : {
+                  symbol: storage.token0.symbol,
+                  contract: new ethers.Contract(
+                    storage.token0.address,
+                    erc20Abi,
+                    ethersProvider.getSigner()
+                  ),
+                  icon: storage.token0.icon,
+                },
+        }
+      : {
+          token0: {
+            symbol: "ARM",
+            contract: new ethers.Contract(
+              token1,
+              erc20Abi,
+              ethersProvider.getSigner()
+            ),
+            icon: "/placeholder.svg",
+          },
+          token1: {
+            symbol: "BNB",
+            contract: new ethers.Contract(
+              wbnb,
+              erc20Abi,
+              ethersProvider.getSigner()
+            ),
+            icon: "/placeholder.svg",
+          },
+        }
+  );
 
   useEffect(() => {
     getBlockData();
@@ -193,6 +240,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           .multipliedBy(BN(10).pow(18))
           .toFixed(0)
           .toString(),
+          deadline(),
         {
           value: BN(state.token0Amount)
             .multipliedBy(BN(10).pow(18))
@@ -211,6 +259,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       [
         tokens["token1"].contract.address,
         BN(state.lpAmount).multipliedBy(BN(10).pow(36)).toFixed(0),
+        deadline()
       ]
     );
     getBlockData();
@@ -293,6 +342,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           onChange={(tokens) => {
             setTokens(tokens);
           }}
+          initialTokens={tokens}
         ></PoolSelector>
 
         <br />
@@ -325,7 +375,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           </div>
         </GradientDiv>
       </Container>
-<Chart blockData={blockData}></Chart>
+      <Chart blockData={blockData}></Chart>
       <Container>
         <ContainerTitle>Add Liquidity</ContainerTitle>
         <span>

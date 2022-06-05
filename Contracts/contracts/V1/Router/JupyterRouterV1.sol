@@ -17,16 +17,23 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         _;
     }
 
+    modifier ensure(uint256 deadline) {
+        require(deadline >= block.timestamp, "Deadline reached");
+        _;
+    }
+
     event CreateLiquidityPool(address token, address pool, uint256 rate);
     event AddLiquidity(
         address pool,
-        uint256 token0Amount,
-        uint256 token1Amount
+        uint256 token0Balance,
+        uint256 token1Balance,
+        uint256 lpTotalSupply
     );
     event RemoveLiquidity(
         address pool,
-        uint256 token0Amount,
-        uint256 token1Amount
+        uint256 token0Balance,
+        uint256 token1Balance,
+        uint256 lpTotalSupply
     );
 
     event ClosePool(address pool);
@@ -63,11 +70,11 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         IERC20(wbnb).transfer(pair, value);
     }
 
-    function createLiquidityPool(address _token1Address, uint256 _token1Amount)
-        external
-        payable
-        override
-    {
+    function createLiquidityPool(
+        address _token1Address,
+        uint256 _token1Amount,
+        uint256 deadline
+    ) external payable override ensure(deadline) {
         require(
             address(pairs[wbnb][_token1Address]) == address(0),
             "Pair exists"
@@ -95,13 +102,19 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
             address(newPool),
             newPool.rate()
         );
+        emit AddLiquidity(
+            address(newPool),
+            newPool.token0Balance(),
+            newPool.token1Balance(),
+            newPool.totalSupply()
+        );
     }
 
-    function addLiquidity(address _token1Address, uint256 _token1Amount)
-        external
-        payable
-        override
-    {
+    function addLiquidity(
+        address _token1Address,
+        uint256 _token1Amount,
+        uint256 deadline
+    ) external payable override ensure(deadline) {
         JupyterCoreV1 pair = pairs[wbnb][_token1Address];
         pair.deposit(msg.value, _token1Amount, msg.sender);
         depositAndTransferWETH(address(pair), msg.value);
@@ -114,14 +127,16 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         emit AddLiquidity(
             address(pair),
             pair.token0Balance(),
-            pair.token1Balance()
+            pair.token1Balance(),
+            pair.totalSupply()
         );
     }
 
-    function removeLiquidity(address _token1Address, uint256 _withdrawalAmount)
-        external
-        override
-    {
+    function removeLiquidity(
+        address _token1Address,
+        uint256 _withdrawalAmount,
+        uint256 deadline
+    ) external override ensure(deadline) {
         JupyterCoreV1 pair = _existingPair(_token1Address);
         uint256 bnbToWithdraw = pair.withdraw(msg.sender, _withdrawalAmount);
         withdrawAndTransferETH(bnbToWithdraw, msg.sender);
@@ -129,20 +144,22 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         emit RemoveLiquidity(
             address(pair),
             pair.token0Balance(),
-            pair.token1Balance()
+            pair.token1Balance(),
+            pair.totalSupply()
         );
         if (pair.token0Balance() == 0) {
             emit ClosePool(address(pair));
             pair.closePool();
             delete pairs[wbnb][_token1Address];
+            //TODO: delete reversed pair [_token1Address][wbnb]
         }
     }
 
-    function swapETHToToken(address _tokenAddress, uint256 _tokenAmountMin)
-        external
-        payable
-        override
-    {
+    function swapETHToToken(
+        address _tokenAddress,
+        uint256 _tokenAmountMin,
+        uint256 deadline
+    ) external payable override ensure(deadline) {
         JupyterCoreV1 pair = _existingPair(_tokenAddress);
         uint256 received = pair.swapToken0ToToken1(
             msg.value,
@@ -163,8 +180,9 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
     function swapTokenToETH(
         address _tokenAddress,
         uint256 _tokenAmount,
-        uint256 _ethAmountMin
-    ) external payable override {
+        uint256 _ethAmountMin,
+        uint256 deadline
+    ) external payable override ensure(deadline) {
         JupyterCoreV1 pair = _existingPair(_tokenAddress);
         uint256 withdrawalAmount = pair.swapToken1ToToken0(
             _tokenAmount,
@@ -273,8 +291,10 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
     {
         JupyterCoreV1 pair = _existingPair(_token1Address);
         return (
-            IERC20(wbnb).balanceOf(address(pair)),
-            IERC20(_token1Address).balanceOf(address(pair))
+            pair.token0Balance(),
+            pair.token1Balance()
+            //IERC20(wbnb).balanceOf(address(pair)),
+            //IERC20(_token1Address).balanceOf(address(pair))
         );
     }
 
@@ -283,7 +303,8 @@ contract JupyterRouterV1 is IJupyterRouterV1 {
         address _fromToken,
         address _toToken,
         uint256 _fromAmount,
-        uint256 _toMinAmount
+        uint256 _toMinAmount,
+        uint256 deadline
     ) public {
         require(_fromToken != wbnb, "Function does not swap bnb");
         JupyterCoreV1 token0Wbnb = _existingPair(_fromToken);

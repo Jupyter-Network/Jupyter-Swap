@@ -105,22 +105,20 @@ contract JupyterCoreV1 is
         uint256 userTokenBalance = balanceOf(from);
         require(userTokenBalance >= _withdrawalAmount, "Balance too low");
         //Effects
-        uint256 partOfPool = totalSupply() / _withdrawalAmount;
-        uint256 token0Withdrawal = token0Balance / partOfPool;
-        uint256 token1Withdrawal = token1Balance / partOfPool;
+        uint256 partOfPool = totalSupply() / _scaleDown(_withdrawalAmount);
+        uint256 token0Withdrawal = _scaleUp(token0Balance) / partOfPool;
+        uint256 token1Withdrawal = _scaleUp(token1Balance) / partOfPool;
 
-        burn(_withdrawalAmount, from);
         token0Balance -= token0Withdrawal;
         token1Balance -= token1Withdrawal;
+
+
+        burn(_withdrawalAmount, from);
 
         //Interactions
         token0.safeTransfer(Router, token0Withdrawal);
         token1.safeTransfer(from, token1Withdrawal);
 
-        //if(totalSupply() <= 0){
-        //    emit PoolClosed(address(this), address(token1));
-        //    selfdestruct(payable(vaultAddress));
-        //}
         return token0Withdrawal;
     }
 
@@ -235,15 +233,7 @@ contract JupyterCoreV1 is
         return _scaleDown(value * _feeMultiplier);
     }
 
-    function _sendProtocolFeeToken0(uint256 value) private {
-        uint256 amount = _scaleDown(value * _protocolFee);
-        mint((totalSupply() / (2 * token1Balance)) * amount, vaultAddress);
-    }
 
-    function _sendProtocolFeeToken1(uint256 value) private {
-        uint256 amount = _scaleDown(value * _protocolFee);
-        mint((totalSupply() / (2 * token0Balance)) * amount, vaultAddress);
-    }
 
     function getBalances(address from)
         public
@@ -257,4 +247,5 @@ contract JupyterCoreV1 is
         uint256 token1Withdrawal = token1Balance / partOfPool;
         return (token0Withdrawal, token1Withdrawal);
     }
+
 }

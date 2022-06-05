@@ -1,19 +1,29 @@
 import { Pie } from "react-chartjs-2";
 import { Container, ContainerTitle } from "../../theme";
 import BN from "bignumber.js";
-import { background, primary, secondary } from "../../theme/theme";
+import {
+  background,
+  backgroundGradient,
+  highlight,
+  primary,
+  secondary,
+} from "../../theme/theme";
 export default function Chart({ blockData, tokens }) {
-  console.log(blockData);
   return (
     <Container>
       <ContainerTitle>Your amount</ContainerTitle>
-      <div style={{width:170,margin:"0 auto"}}>
+      <div style={{ width: 170, margin: "0 auto" }}>
         {blockData ? (
           <Pie
             options={{
               plugins: {
                 legend: {
-                  display: false,
+                  display: true,
+                  labels: {
+                    color: primary,
+                  
+                  },
+                  textAlign:"left"
                 },
               },
             }}
@@ -21,11 +31,10 @@ export default function Chart({ blockData, tokens }) {
               labels: ["Pool", "Your piece"],
               datasets: [
                 {
-                  fill: false,
-                  pointBorderColor: secondary,
-                  label: "BRRRR",
+                  label: "",
                   backgroundColor: background,
                   borderColor: primary,
+                  hoverBorderWidth: 3,
                   data: [
                     BN(blockData.lpTotalSupply.toString())
                       .minus(BN(blockData.userBalance.toString()))

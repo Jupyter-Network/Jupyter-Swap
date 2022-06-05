@@ -27,6 +27,20 @@ module.exports = {
     )`;
     await sql`SELECT create_hypertable('public."Swaps"','time');`;
   },
+  createPoolEventsTable: async () => {
+    await sql`CREATE TABLE IF NOT EXISTS public."PoolEvents"
+    (
+        pool character varying(64) COLLATE pg_catalog."default" NOT NULL,
+        type character varying(64) COLLATE pg_catalog."default" NOT NULL,
+        bnb_balance double precision,
+        token_balance double precision,
+        lp_total_supply double precision,
+        lp_value double precision,
+        time timestamp NOT NULL,
+        UNIQUE(time,pool,bnb_balance)
+    )`;
+    await sql`SELECT create_hypertable('public."PoolEvents"','time');`;
+  },
 
   //Pool
   createPool: async (
@@ -51,6 +65,37 @@ module.exports = {
   },
   deletePool: async (poolAddress) => {
     await sql`DELETE from public."Pools" WHERE pool_address = ${poolAddress}`;
+  },
+
+  createPoolEvent: async (
+    poolAddress,
+    bnbBalance,
+    tokenBalance,
+    lpTotalSupply,
+    lpValue,
+    type
+  ) => {
+    await sql`INSERT INTO public."PoolEvents" (
+      pool,type,bnb_balance,token_balance,lp_total_supply,lp_value,time
+    )VALUES (${poolAddress},${type},${bnbBalance},${tokenBalance},${lpTotalSupply},${lpValue},${Date.now()})`;
+  },
+
+  getAPY: async (tokenAddress) => {
+    return await sql`select
+    last(lp_value,
+    "time") as lastValue,
+    first(lp_value,
+    "time") as firstValue,
+    last("time" ,
+    "time") as lastTime,
+    first("time" ,
+    "time") as firstTime
+  from
+    "PoolEvents"
+  where
+    "time"  > (now() at time zone 'utc') - interval '1 day' 
+  and 
+    pool = (select pool_address from "Pools" where token_address=${tokenAddress} limit 1)`;
   },
 
   //Swaps
@@ -102,6 +147,4 @@ module.exports = {
     LIMIT 10;
       `;
   },
-
-
 };

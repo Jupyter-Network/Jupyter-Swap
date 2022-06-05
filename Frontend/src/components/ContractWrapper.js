@@ -35,7 +35,7 @@ export default function ContractWrapper() {
     }
   }
 
-  let refreshTime = 1500; //ms
+  let refreshTime = 100000; //ms
   useInterval(checkBlock, refreshTime);
 
 

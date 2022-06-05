@@ -2,25 +2,35 @@
 pragma solidity ^0.8.7;
 
 interface IJupyterRouterV1 {
-    function createLiquidityPool(address _token1Address, uint256 _token1Amount)
-        external
-        payable;
+    function createLiquidityPool(
+        address _token1Address,
+        uint256 _token1Amount,
+        uint256 deadline
+    ) external payable;
 
-    function addLiquidity(address _token1Address, uint256 _token1Amount)
-        external
-        payable;
+    function addLiquidity(
+        address _token1Address,
+        uint256 _token1Amount,
+        uint256 deadline
+    ) external payable;
 
-    function removeLiquidity(address _token1Address, uint256 _withdrawalAmount)
-        external;
+    function removeLiquidity(
+        address _token1Address,
+        uint256 _withdrawalAmount,
+        uint256 deadline
+    ) external;
 
-    function swapETHToToken(address _tokenAddress, uint256 _tokenAmountMin)
-        external
-        payable;
+    function swapETHToToken(
+        address _tokenAddress,
+        uint256 _tokenAmountMin,
+        uint256 deadline
+    ) external payable;
 
     function swapTokenToETH(
         address _tokenAddress,
         uint256 _tokenAmount,
-        uint256 _ethAmountMin
+        uint256 _ethAmountMin,
+        uint256 deadline
     ) external payable;
 
     function getToken1AmountFromToken0Amount(

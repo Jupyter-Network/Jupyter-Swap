@@ -26,7 +26,7 @@ export default function Frame({ block }) {
     return () => {
       window.removeEventListener("resize", handleWindowSizeChange);
     };
-  }, []);
+  }, [window]);
   const isMobile = width <= 768;
 
   const [

@@ -1,5 +1,13 @@
 import styled from "styled-components";
-import { primary, background, secondary, highlight, backgroundGradient, shadowEffect, highlightGradient } from "./theme";
+import {
+  primary,
+  background,
+  secondary,
+  highlight,
+  backgroundGradient,
+  shadowEffect,
+  highlightGradient,
+} from "./theme";
 export const SmallButton = styled.button`
   background-color: ${primary};
   transition: 0.4s;
@@ -29,7 +37,6 @@ export const MediumButton = styled.button`
     color: ${background};
     background-color: ${highlight};
     box-shadow: 10px -10px ${shadowEffect};
-
   }
   margin: 5px;
 `;
@@ -43,13 +50,12 @@ export const MediumButtonInverted = styled.button`
   color: ${primary};
   padding: 10px 10px;
   cursor: pointer;
-  z-index:1;
+  z-index: 1;
   &:hover {
     color: ${background};
     background-color: ${highlight};
-    background:${highlightGradient};
+    background: ${highlightGradient};
     box-shadow: 10px -10px ${shadowEffect};
-
   }
   margin: 5px;
 `;
@@ -73,4 +79,19 @@ export const LargeButton = styled.button`
 
   }
   margin: 5px;
+`;
+
+export const SmallSecondaryButton = styled.button`
+  background-color: ${background};
+  transition: 0.4s;
+  border-radius: 3px;
+  border: solid;
+  border-width: 1px;
+  color: ${secondary};
+  padding: 5px 7px;
+  cursor: pointer;
+  &:hover {
+    color: ${background};
+    background: ${highlightGradient};
+  }
 `;

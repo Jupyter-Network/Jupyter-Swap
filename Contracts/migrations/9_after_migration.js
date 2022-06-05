@@ -60,11 +60,14 @@ module.exports = async function initTest(deployer, network, accounts) {
     await router.createLiquidityPool(
       token1.address,
       "1" + "0000000000000000000",
+      Date.now() + 900000,
       { value: "1" + "0000000000000000000" }
     );
     await router.createLiquidityPool(
       token0.address,
       "1" + "0000000000000000000",
+      Date.now() + 900000,
+
       { value: "1" + "0000000000000000000" }
     );
     /*

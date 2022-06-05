@@ -33,6 +33,8 @@ import {
 } from "../../theme/theme";
 import { getHistory, getTransanctionHistory } from "../../utils/requests";
 import TransactionList from "../swap/TransactionList";
+import MaxSlippageSelector from "../swap/MaxSlippageSelector";
+import TransactionTimeoutSelector from "../swap/TransactionTimeoutSelector";
 const erc20Abi = erc20.abi;
 BN.config({ DECIMAL_PLACES: 18 });
 //Add this to a Math file later
@@ -60,6 +62,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   ] = useConnectWallet();
 
   const [maxSlippage, setMaxSlippage] = useState(new BN(0.5));
+  const [timeout, setTimeoutTime] = useState(900000);
 
   const [blockData, setBlockData] = useState({
     poolBalances: [new BN(0), new BN(0)],
@@ -112,6 +115,10 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         }
   );
 
+  function deadline() {
+    return Date.now() + timeout / 1000;
+  }
+
   function handleToken0AmountChange(value) {
     console.log("Token 0 Amount change Handler", "value:", value);
     value = validate(value);
@@ -150,7 +157,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       }
     }
     asyncRun();
-  }, [block, tokens]);
+  }, [block, tokens, maxSlippage]);
 
   //newBlockData
   useEffect(() => {
@@ -217,6 +224,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       [
         tokens["token1"].contract.address,
         state.token1AmountMin.toFixed(0),
+        deadline(),
         { value: value },
       ]
     );
@@ -237,6 +245,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         tokens["token0"].contract.address,
         new BN(state.token0Amount).multipliedBy(new BN(10).pow(18)).toFixed(0),
         state.token1AmountMin.toFixed(0),
+        deadline(),
       ]
     );
 
@@ -258,6 +267,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         tokens["token1"].contract.address,
         new BN(state.token0Amount).multipliedBy(new BN(10).pow(18)).toFixed(0),
         state.token1AmountMin.toFixed(0),
+        deadline(),
       ]
     );
 
@@ -431,7 +441,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         {blockData.priceHistory ? (
           <div>
             <Line
-              height={200}
+              height={220}
               options={{
                 tension: 0.3,
                 scales: {
@@ -499,7 +509,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                 handleToken0AmountChange(blockData.token0Balance - 0.002)
               }
             >
-              Max.
+              Max
             </SmallButton>
             <Input
               pattern="\d*"
@@ -599,7 +609,18 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               Price Impact:{" "}
               <span style={{ color: primary }}>{state.impact.toString()}%</span>
             </p>
+            <div style={{ display: "flex",justifyContent:"space-around" }}>
+              <MaxSlippageSelector
+                maxSlippage={0.5}
+                setMaxSlippage={setMaxSlippage}
+              ></MaxSlippageSelector>
+              <TransactionTimeoutSelector
+                initTimeout={timeout}
+                setTime={setTimeoutTime}
+              ></TransactionTimeoutSelector>
+            </div>
           </ContainerInverted>
+
           <GradientDiv style={{ height: 90 }}>
             <br />
 

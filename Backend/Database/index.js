@@ -8,6 +8,7 @@ initDB();
 async function initDB() {
   await query.createPoolsTable();
   await query.createSwapsTable();
+  await query.createPoolEventsTable();
   //Add wbnb
   await query.createPool(wbnb, "BNB", "BNB", "0x0");
 

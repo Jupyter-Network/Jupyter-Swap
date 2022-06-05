@@ -12,20 +12,9 @@ import { background } from "../../theme/theme";
 import { getPools } from "../../utils/requests";
 const erc20Abi = erc20.abi;
 
-export default function PoolSelector({ onChange, provider }) {
+export default function PoolSelector({ onChange, provider,initialTokens }) {
   const [currencies, setCurrencies] = useState([]);
-  const [tokens, setTokens] = useState({
-    token1: {
-      symbol: "MRC",
-      contract: new ethers.Contract(token0, erc20Abi, provider),
-      icon: "placeholder.svg",
-    },
-    token0: {
-      symbol: "BNB",
-      contract: new ethers.Contract(wbnb, erc20Abi, provider),
-      icon: "bnb-bnb-logo.svg",
-    },
-  });
+  const [tokens, setTokens] = useState(initialTokens);
 
   const [activeSelector, setActiveSelector] = useState();
 
