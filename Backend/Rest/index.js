@@ -21,8 +21,10 @@ fastify.get("/tokens/:token_symbol", async (request, reply) => {
 
 fastify.get("/apy/:tokenAddress", async (request, reply) => {
   let d = await query.getPoolProfit(request.params.tokenAddress);
-    return (d[0].sum +d[1].sum) * 121.66;
-
+  if (d[0].sum) {
+    return (d[0].sum + d[1].sum) * 121.66;
+  }
+  return 0;
 });
 
 // Run the server!

@@ -126,22 +126,20 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           token1:
             storage.token0.address === wbnb
               ? {
-                  symbol: storage.token1.symbol,
+                  ...storage.token0,
                   contract: new ethers.Contract(
                     storage.token1.address,
                     erc20Abi,
                     ethersProvider.getSigner()
                   ),
-                  icon: storage.token1.icon,
                 }
               : {
-                  symbol: storage.token0.symbol,
+                  ...storage.token0,
                   contract: new ethers.Contract(
                     storage.token0.address,
                     erc20Abi,
                     ethersProvider.getSigner()
                   ),
-                  icon: storage.token0.icon,
                 },
         }
       : {
@@ -222,6 +220,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         .multipliedBy(BN(10).pow(18))
         .toFixed(0)
         .toString(),
+      deadline(),
       {
         value: BN(createWidgetState.bnbAmount)
           .multipliedBy(BN(10).pow(18))
@@ -325,6 +324,11 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     );
 
     const apy = await getAPY(tokens.token1.contract.address);
+    console.log(
+      BN(apy)
+        .dividedBy(BN(poolBalances[1].toString()).dividedBy(BN(10).pow(18)))
+        .toString()
+    );
     setBlockData({
       token0Balance: _scaleDown(t0Balance),
       token1Balance: _scaleDown(t1Balance),
@@ -332,7 +336,14 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       userBalance: userBalance,
       poolBalances: poolBalances,
       lpTotalSupply: lpTotalSupply,
-      apy: apy,
+      apy: BN(apy)
+        .dividedBy(
+          BN(poolBalances[1].toString())
+            .multipliedBy(2)
+            .dividedBy(BN(10).pow(18))
+        )
+        .multipliedBy(100)
+        .toString(),
     });
     setLoading(false);
   }
@@ -348,7 +359,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     >
       <Balances blockData={blockData} tokens={tokens}></Balances>
       <div style={{ width: "100vw" }}></div>
-      <Container style={{ maxHeight: 230 }}>
+      <Container style={{ maxHeight: 260 }}>
         <ContainerTitle>Select Pool</ContainerTitle>
         <PoolSelector
           provider={ethersProvider}
@@ -357,7 +368,13 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           }}
           initialTokens={tokens}
         ></PoolSelector>
-        <br />
+        {blockData ? (
+          <p>
+            APY: <b>{numericFormat(blockData.apy)} % </b>
+          </p>
+        ) : (
+          <p></p>
+        )}
         <GradientDiv style={{ height: 90 }}>
           <br />
 
@@ -389,11 +406,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       </Container>
       <Chart blockData={blockData}></Chart>
       <Container>
-        <ContainerTitle>Title</ContainerTitle>
-        {blockData ? <p>{blockData.apy} %APY</p> : <p></p>}
-        <br />
-      </Container>
-      <Container>
         <ContainerTitle>Add Liquidity</ContainerTitle>
         <p>
           {tokens["token0"].symbol} / {tokens["token1"].symbol}
@@ -404,6 +416,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             onChange={(e) => handleToken0AmountChange(e.target.value)}
             value={state.token0Amount.toString()}
             icon={tokens["token0"].icon}
+            onFocus={(e) => setState({ ...state, token0Amount: "" })}
           ></LabeledInput>
 
           <LabeledInput
@@ -411,6 +424,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             onChange={(e) => handleToken1AmountChange(e.target.value)}
             value={state.token1Amount.toString()}
             icon={tokens["token1"].icon}
+            onFocus={(e) => setState({ ...state, token1Amount: "" })}
           ></LabeledInput>
         </div>
 
@@ -438,6 +452,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             }}
             value={state.lpAmount}
             icon={""}
+            onFocus={(e) => setState({ ...state, lpAmount: "" })}
           ></LabeledInput>
         </div>
 
@@ -463,6 +478,12 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
                 address: e.target.value,
               })
             }
+            onFocus={(e) =>
+              setCreateWidgetState({
+                ...createWidgetState,
+                address: "",
+              })
+            }
           ></LabeledInput>
           <br></br>
 
@@ -475,6 +496,12 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
                 bnbAmount: BN(e.target.value),
               })
             }
+            onFocus={(e) =>
+              setCreateWidgetState({
+                ...createWidgetState,
+                bnbAmount: "",
+              })
+            }
             icon={"/bnb-bnb-logo.svg"}
           ></LabeledInput>
           <br></br>
@@ -485,6 +512,12 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
               setCreateWidgetState({
                 ...createWidgetState,
                 tokenAmount: BN(e.target.value),
+              })
+            }
+            onFocus={(e) =>
+              setCreateWidgetState({
+                ...createWidgetState,
+                tokenAmount: "",
               })
             }
           ></LabeledInput>

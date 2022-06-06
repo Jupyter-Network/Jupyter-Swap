@@ -56,6 +56,7 @@ export default function LabeledInput({
         onFocus={(e) => {
           onFocus(e);
         }}
+        type={"tel"}
       ></Input>
     </div>
   );

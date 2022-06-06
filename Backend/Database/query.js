@@ -84,9 +84,9 @@ module.exports = {
 
   getPoolProfit: async (tokenAddress) => {
     return await sql`
-      select sum(to_amount / rate * 0.003)  from "Swaps" where from_address=${tokenAddress} and
+      select sum(from_amount / rate * 0.003)  from "Swaps" where from_address=${tokenAddress} and
       "time"  > (now() at time zone 'utc') - interval '3 days' 
-  union select sum(from_amount / rate * 0.003)  from "Swaps" where to_address=${tokenAddress}  and
+  union select sum(from_amount *( rate / 1000000000000000000000000000000000000) * 0.003)  from "Swaps" where to_address=${tokenAddress}  and
       "time"  > (now() at time zone 'utc') - interval '3 days'`;
   },
 
