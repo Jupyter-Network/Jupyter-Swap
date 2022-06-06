@@ -10,6 +10,8 @@ module.exports = {
             token_symbol character varying(16) COLLATE pg_catalog."default" NOT NULL,
             token_icon character varying(64) COLLATE pg_catalog."default" NOT NULL,
             pool_address character varying(64) COLLATE pg_catalog."default" NOT NULL,
+            token_verified boolean DEFAULT false,
+            token_description text COLLATE pg_catalog."default",
             CONSTRAINT "Pools_pkey" PRIMARY KEY (token_address)
         )`;
   },
@@ -80,22 +82,12 @@ module.exports = {
     )VALUES (${poolAddress},${type},${bnbBalance},${tokenBalance},${lpTotalSupply},${lpValue},${Date.now()})`;
   },
 
-  getAPY: async (tokenAddress) => {
-    return await sql`select
-    last(lp_value,
-    "time") as lastValue,
-    first(lp_value,
-    "time") as firstValue,
-    last("time" ,
-    "time") as lastTime,
-    first("time" ,
-    "time") as firstTime
-  from
-    "PoolEvents"
-  where
-    "time"  > (now() at time zone 'utc') - interval '1 day' 
-  and 
-    pool = (select pool_address from "Pools" where token_address=${tokenAddress} limit 1)`;
+  getPoolProfit: async (tokenAddress) => {
+    return await sql`
+      select sum(to_amount / rate * 0.003)  from "Swaps" where from_address=${tokenAddress} and
+      "time"  > (now() at time zone 'utc') - interval '3 days' 
+  union select sum(from_amount / rate * 0.003)  from "Swaps" where to_address=${tokenAddress}  and
+      "time"  > (now() at time zone 'utc') - interval '3 days'`;
   },
 
   //Swaps

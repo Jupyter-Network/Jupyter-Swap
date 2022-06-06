@@ -23,6 +23,8 @@ import { background, primary, secondary } from "../../theme/theme";
 import CurrencyDisplay from "../liquidity/CurrencyDisplay";
 import Balances from "../liquidity/Balances";
 import Chart from "../liquidity/Chart";
+import LabeledInput from "../LabeledInput";
+import { getAPY } from "../../utils/requests";
 
 const routerAbi = routerMeta.abi;
 const erc20Abi = erc20.abi;
@@ -47,6 +49,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     allowanceCheck: new BN(0),
     lpAmount: "0.0",
   });
+  const [loading, setLoading] = useState(false);
 
   const [createWidgetState, setCreateWidgetState] = useState({
     bnbAmount: new BN(0),
@@ -107,41 +110,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     );
   }
 
-  //New Block
-  useEffect(() => {
-    async function asyncRun() {
-      console.log("Block changed in swap");
-      await getBlockData();
-      handleToken0AmountChange(state.token0Amount.toString());
-    }
-    asyncRun();
-  }, [block]);
-
-  useEffect(() => {
-    setTokens({
-      token0: {
-        symbol: "BNB",
-        contract: new ethers.Contract(
-          wbnb,
-          erc20Abi,
-          ethersProvider.getSigner()
-        ),
-        icon: "bnb-bnb-logo.svg",
-      },
-      token1: {
-        ...tokens.token1,
-        contract: new ethers.Contract(
-          tokens.token1.contract.address,
-          erc20Abi,
-          ethersProvider.getSigner()
-        ),
-      },
-    });
-
-    getBlockData();
-  }, [wallet]);
   let storage = JSON.parse(localStorage.getItem("tokens"));
-
   const [tokens, setTokens] = useState(
     storage
       ? {
@@ -197,8 +166,42 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         }
   );
 
+  //New Block
   useEffect(() => {
-    getBlockData();
+    async function asyncRun() {
+      console.log("Block changed in swap");
+      await getBlockData();
+      handleToken0AmountChange(state.token0Amount.toString());
+    }
+    asyncRun();
+  }, [block, tokens]);
+
+  useEffect(() => {
+    setTokens({
+      token0: {
+        symbol: "BNB",
+        contract: new ethers.Contract(
+          wbnb,
+          erc20Abi,
+          ethersProvider.getSigner()
+        ),
+        icon: "bnb-bnb-logo.svg",
+      },
+      token1: {
+        ...tokens.token1,
+        contract: new ethers.Contract(
+          tokens.token1.contract.address,
+          erc20Abi,
+          ethersProvider.getSigner()
+        ),
+      },
+    });
+
+    //getBlockData();
+  }, [wallet]);
+
+  useEffect(() => {
+    //getBlockData();
   }, [tokens]);
 
   //Router
@@ -240,7 +243,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           .multipliedBy(BN(10).pow(18))
           .toFixed(0)
           .toString(),
-          deadline(),
+        deadline(),
         {
           value: BN(state.token0Amount)
             .multipliedBy(BN(10).pow(18))
@@ -259,7 +262,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       [
         tokens["token1"].contract.address,
         BN(state.lpAmount).multipliedBy(BN(10).pow(36)).toFixed(0),
-        deadline()
+        deadline(),
       ]
     );
     getBlockData();
@@ -294,6 +297,12 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
   }
 
   async function getBlockData() {
+    console.log("Fetch Block Data");
+    if (loading) {
+      console.log("Loading in progress");
+      return true;
+    }
+    setLoading(true);
     const t0Balance = wallet
       ? await ethersProvider.getBalance(wallet.accounts[0].address)
       : 0;
@@ -314,6 +323,8 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     const lpTotalSupply = await routerContract.getLPTotalSupply(
       tokens["token1"].contract.address
     );
+
+    const apy = await getAPY(tokens.token1.contract.address);
     setBlockData({
       token0Balance: _scaleDown(t0Balance),
       token1Balance: _scaleDown(t1Balance),
@@ -321,7 +332,9 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       userBalance: userBalance,
       poolBalances: poolBalances,
       lpTotalSupply: lpTotalSupply,
+      apy: apy,
     });
+    setLoading(false);
   }
   return (
     <div
@@ -344,7 +357,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           }}
           initialTokens={tokens}
         ></PoolSelector>
-
         <br />
         <GradientDiv style={{ height: 90 }}>
           <br />
@@ -377,28 +389,31 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       </Container>
       <Chart blockData={blockData}></Chart>
       <Container>
+        <ContainerTitle>Title</ContainerTitle>
+        {blockData ? <p>{blockData.apy} %APY</p> : <p></p>}
+        <br />
+      </Container>
+      <Container>
         <ContainerTitle>Add Liquidity</ContainerTitle>
-        <span>
+        <p>
           {tokens["token0"].symbol} / {tokens["token1"].symbol}
-        </span>
-        <br />
-        <Input
-          onChange={(e) => handleToken0AmountChange(e.target.value)}
-          value={state.token0Amount.toString()}
-        ></Input>
-        <Label>
-          <b>{tokens["token0"].symbol}</b>
-        </Label>
+        </p>
+        <div style={{ width: "80%", margin: "0 auto" }}>
+          <LabeledInput
+            name={tokens["token0"].symbol}
+            onChange={(e) => handleToken0AmountChange(e.target.value)}
+            value={state.token0Amount.toString()}
+            icon={tokens["token0"].icon}
+          ></LabeledInput>
 
-        <br />
-        <Input
-          onChange={(e) => handleToken1AmountChange(e.target.value)}
-          value={state.token1Amount.toString()}
-        ></Input>
-        <Label>
-          <b>{tokens["token1"].symbol}</b>
-        </Label>
-        <br />
+          <LabeledInput
+            name={tokens["token1"].symbol}
+            onChange={(e) => handleToken1AmountChange(e.target.value)}
+            value={state.token1Amount.toString()}
+            icon={tokens["token1"].icon}
+          ></LabeledInput>
+        </div>
+
         <br />
         <LargeButton
           onClick={() => {
@@ -408,23 +423,24 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           Add Liquidity
         </LargeButton>
       </Container>
-      <Container style={{ maxHeight: 180 }}>
+      <Container style={{ maxHeight: 192 }}>
         <ContainerTitle>Remove Liquidity</ContainerTitle>
         <span>
           {tokens["token0"].symbol} / {tokens["token1"].symbol}
         </span>
         <br />
-        <Input
-          onChange={(e) => {
-            let v = BN(validate(e.target.value));
-            setState({ ...state, lpAmount: validate(e.target.value) });
-          }}
-          value={state.lpAmount}
-        ></Input>
-        <Label>
-          <b>LP</b>
-        </Label>
-        <br />
+        <div style={{ width: "80%", margin: "0 auto" }}>
+          <LabeledInput
+            name={"LP"}
+            onChange={(e) => {
+              let v = BN(validate(e.target.value));
+              setState({ ...state, lpAmount: validate(e.target.value) });
+            }}
+            value={state.lpAmount}
+            icon={""}
+          ></LabeledInput>
+        </div>
+
         <br />
         <LargeButton onClick={() => removeLiquidity()}>
           RemoveLiquidity
@@ -435,45 +451,45 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           Open a new liquidty pool:
         </h3>
       </div>
-      <Container style={{ maxHeight: 390 }}>
+      <Container style={{ maxHeight: 440 }}>
         <ContainerTitle>Create New Liquidity Pool</ContainerTitle>
-        <Input
-          value={createWidgetState.address}
-          onChange={(e) =>
-            setCreateWidgetState({
-              ...createWidgetState,
-              address: e.target.value,
-            })
-          }
-          placeholder="Address"
-        ></Input>
-        <Label>Token</Label>
-        <br />
-        <br />
-        <Input
-          value={validate(createWidgetState.bnbAmount)}
-          onChange={(e) =>
-            setCreateWidgetState({
-              ...createWidgetState,
-              bnbAmount: BN(e.target.value),
-            })
-          }
-          style={{ width: 200 }}
-          placeholder="BNB Amount"
-        ></Input>
-        <Label>BNB</Label>
-        <Input
-          value={validate(createWidgetState.tokenAmount)}
-          onChange={(e) =>
-            setCreateWidgetState({
-              ...createWidgetState,
-              tokenAmount: BN(e.target.value),
-            })
-          }
-          style={{ width: 200 }}
-          placeholder="Token Amount"
-        ></Input>{" "}
-        <Label>Token</Label>
+        <div style={{ width: "80%", margin: "0 auto" }}>
+          <LabeledInput
+            name={"Token Address"}
+            value={createWidgetState.address}
+            onChange={(e) =>
+              setCreateWidgetState({
+                ...createWidgetState,
+                address: e.target.value,
+              })
+            }
+          ></LabeledInput>
+          <br></br>
+
+          <LabeledInput
+            name={"BNB Amount"}
+            value={validate(createWidgetState.bnbAmount)}
+            onChange={(e) =>
+              setCreateWidgetState({
+                ...createWidgetState,
+                bnbAmount: BN(e.target.value),
+              })
+            }
+            icon={"/bnb-bnb-logo.svg"}
+          ></LabeledInput>
+          <br></br>
+          <LabeledInput
+            name={"Token Amount"}
+            value={validate(createWidgetState.tokenAmount)}
+            onChange={(e) =>
+              setCreateWidgetState({
+                ...createWidgetState,
+                tokenAmount: BN(e.target.value),
+              })
+            }
+          ></LabeledInput>
+        </div>
+
         <p>
           Initial Price:{" "}
           <P>{numericFormat(BN(createWidgetPrice).toFixed(18))}</P>

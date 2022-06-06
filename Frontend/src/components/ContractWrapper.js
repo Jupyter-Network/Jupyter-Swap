@@ -35,13 +35,13 @@ export default function ContractWrapper() {
     }
   }
 
+
   let refreshTime = 100000; //ms
   useInterval(checkBlock, refreshTime);
 
-
   return (
     <div>
-          <Frame block={block}></Frame>
+          <Frame></Frame>
     </div>
   );
 }

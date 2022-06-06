@@ -11,13 +11,15 @@ import routerMeta from "../../contracts/build/JupyterRouterV1.json";
 import Build from "../pages/Build";
 import { ToastContainer } from "react-toastify";
 import Header from "./Header";
+import useInterval from "react-useinterval";
 const routerAbi = routerMeta.abi;
 
-export default function Frame({ block }) {
+export default function Frame() {
   const [active, setActive] = useState("Home");
-  let connectedWallets = useWallets()
+  let connectedWallets = useWallets();
   //Check if mobile
   const [width, setWidth] = useState(window.innerWidth);
+  const [selected, setSelected] = useState();
   function handleWindowSizeChange() {
     setWidth(window.innerWidth);
   }
@@ -28,6 +30,7 @@ export default function Frame({ block }) {
     };
   }, [window]);
   const isMobile = width <= 768;
+  console.log("rerender frame");
 
   const [
     {
@@ -47,9 +50,23 @@ export default function Frame({ block }) {
     provider: ethersProvider,
     routerContract: new ethers.Contract(router, routerAbi, ethersProvider),
   });
+  const [index, setIndex] = useState(0);
+  const [block, setBlock] = useState(0);
 
   const [content, setContent] = useState(<p></p>);
-  console.log("Load Frame", wallet?.accounts[0].address);
+
+  //Check if new block is out
+  async function checkBlock() {
+    if (state.provider) {
+      let result = await ethersProvider.getBlockNumber();
+      console.log("Interval:", result);
+      if (result !== block) {
+        setBlock(result);
+      }
+    }
+  }
+
+
 
   useEffect(() => {
     console.log("Wallet reload");
@@ -58,7 +75,7 @@ export default function Frame({ block }) {
 
       let ethersProvider = new ethers.providers.Web3Provider(wallet.provider);
       setState({
-        wallet:wallet,
+        wallet: wallet,
         provider: ethersProvider,
         routerContract: new ethers.Contract(
           router,
@@ -66,45 +83,42 @@ export default function Frame({ block }) {
           ethersProvider.getSigner()
         ),
       });
-      setActive("Home");
-
+      setSelected(select("Home"));
     }
   }, [connectedWallets]);
 
-
-
-
+  console.log(block);
+  let refreshTime = 100000; //ms
+  useInterval(checkBlock, refreshTime);
   //let content = <p></p>;
-  function select() {
-    switch (active) {
+  function select(value) {
+    console.log("Select");
+    switch (value) {
       case "Swap":
-        return(
+        return (
           <Swap
             routerContract={state.routerContract}
             ethersProvider={state.provider}
             block={block}
           />
         );
-        break;
       case "Liquidity":
-        return(
+        return (
           <Liquidity
             routerContract={state.routerContract}
             ethersProvider={state.provider}
             block={block}
           />
         );
-        break;
 
       case "Build":
-        return(
+        return (
           <Build
             routerContract={state.routerContract}
             ethersProvider={state.provider}
-            block={block}
+            block={1}
           />
         );
-        break;
       default:
         break;
     }
@@ -112,16 +126,15 @@ export default function Frame({ block }) {
 
   return (
     <div style={{ backgroundColor: background, minHeight: "100vh" }}>
-     <Header></Header>
+      <Header></Header>
       <MainMenu
         block={block}
-        onclick={(item) => setActive(item)}
+        onclick={(item) => setSelected(select(item))}
         active={active}
       ></MainMenu>
       <br />
 
-      {select()}
-    
+      {selected}
     </div>
   );
 }

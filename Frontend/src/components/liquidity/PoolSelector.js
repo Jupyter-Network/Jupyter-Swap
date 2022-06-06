@@ -84,6 +84,7 @@ export default function PoolSelector({ onChange, provider,initialTokens }) {
           }
           style={{
             border: "solid",
+            borderWidth:1,
             borderRadius: 5,
             width: 120,
             height: 70,

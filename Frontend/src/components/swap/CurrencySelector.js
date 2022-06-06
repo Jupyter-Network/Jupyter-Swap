@@ -29,11 +29,15 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
           address: tokens.token0.contract.address,
           symbol: tokens.token0.symbol,
           icon: tokens.token0.icon,
+          description: tokens.token0.description,
+          name: tokens.token0.name,
         },
         token1: {
           address: tokens.token1.contract.address,
           symbol: tokens.token1.symbol,
           icon: tokens.token1.icon,
+          description: tokens.token1.description,
+          name: tokens.token1.name,
         },
       })
     );
@@ -61,7 +65,14 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
     });
   }, [provider]);
 
-  function checkValidityAndSetTokens(newAddress, newName, icon, position) {
+  function checkValidityAndSetTokens(
+    newAddress,
+    newName,
+    icon,
+    name,
+    description,
+    position
+  ) {
     let other = position === 0 ? 1 : 0;
 
     if (
@@ -94,9 +105,16 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             provider.getSigner()
           ),
           icon: icon,
+          name: name,
+          description: description,
+          address: newAddress,
         },
       });
     }
+  }
+
+  function switchTokens() {
+    setTokens({ token0: tokens["token1"], token1: tokens["token0"] });
   }
 
   async function queryTokens(value) {
@@ -105,9 +123,11 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
       setCurrencies(
         res.map((item) => {
           return {
-            name: item.token_symbol,
+            symbol: item.token_symbol,
             address: item.token_address,
             icon: item.token_icon,
+            name: item.token_name,
+            description: item.token_description,
           };
         })
       );
@@ -119,12 +139,16 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
       <div style={{ display: "flex", justifyContent: "center" }}>
         <MediumButtonInverted
           onClick={() => {
-            activeSelector === 0
-              ? setActiveSelector(null)
-              : setActiveSelector(0);
+            setTimeout(() => {
+              activeSelector === 0
+                ? setActiveSelector(null)
+                : setActiveSelector(0);
+            }, 100);
           }}
           style={{
             border: "solid",
+            borderWidth: 1,
+
             borderRadius: 5,
             width: 120,
             height: 70,
@@ -137,15 +161,24 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
           &nbsp;
           <p style={{ lineHeight: 0.2 }}>{tokens["token0"].symbol}</p>
         </MediumButtonInverted>
+        <MediumButtonInverted
+          style={{ height: 70 }}
+          onClick={() => switchTokens()}
+        >
+          <img src={"/chevron.svg"} style={{ width: 25, padding: 10 }}></img>
+        </MediumButtonInverted>
 
         <MediumButtonInverted
           onClick={() =>
-            activeSelector === 1
-              ? setActiveSelector(null)
-              : setActiveSelector(1)
+            setTimeout(() => {
+              activeSelector === 1
+                ? setActiveSelector(null)
+                : setActiveSelector(1);
+            }, 100)
           }
           style={{
             border: "solid",
+            borderWidth: 1,
             borderRadius: 5,
             width: 120,
             height: 70,
@@ -194,7 +227,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
               setFilteredCurrencies(
                 currencies.filter((item) => {
                   return (
-                    item.name.slice(0, e.target.value.length) ===
+                    item.symbol.slice(0, e.target.value.length) ===
                     e.target.value.toUpperCase()
                   );
                 })
@@ -210,8 +243,10 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
               onClick={() => {
                 checkValidityAndSetTokens(
                   item.address,
-                  item.name,
+                  item.symbol,
                   item.icon,
+                  item.name,
+                  item.description,
                   1
                 );
                 setActiveSelector(null);
@@ -225,7 +260,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
                 <div style={{ minWidth: 10 }}>
                   <p> </p>
                 </div>{" "}
-                {item.name}
+                {item.symbol}
               </div>
             </ListOption>
           ))}
@@ -269,7 +304,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
               setFilteredCurrencies(
                 currencies.filter((item) => {
                   return (
-                    item.name.slice(0, e.target.value.length) ===
+                    item.symbol.slice(0, e.target.value.length) ===
                     e.target.value.toUpperCase()
                   );
                 })
@@ -284,8 +319,10 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
               onClick={() => {
                 checkValidityAndSetTokens(
                   item.address,
-                  item.name,
+                  item.symbol,
                   item.icon,
+                  item.name,
+                  item.description,
                   0
                 );
                 setActiveSelector(null);
@@ -299,7 +336,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
                 <div style={{ minWidth: 10 }}>
                   <p> </p>
                 </div>{" "}
-                {item.name}
+                {item.symbol}
               </div>
             </ListOption>
           ))}
@@ -324,10 +361,10 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
                   : "",
             }}
             onClick={() => {
-              checkValidityAndSetTokens(item.address, item.name, 0);
+              checkValidityAndSetTokens(item.address, item.symbol, 0);
             }}
           >
-            {item.name}
+            {item.symbol}
           </button>
         ))}
       </div>
@@ -342,10 +379,10 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
                   : "",
             }}
             onClick={() => {
-              checkValidityAndSetTokens(item.address, item.name, 1);
+              checkValidityAndSetTokens(item.address, item.symbol, 1);
             }}
           >
-            {item.name}
+            {item.symbol}
           </button>
         ))}
         <p style={{ color: "white" }}>{tokens["token0"].address}</p>

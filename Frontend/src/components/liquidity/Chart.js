@@ -10,8 +10,8 @@ import {
 } from "../../theme/theme";
 export default function Chart({ blockData, tokens }) {
   return (
-    <Container>
-      <ContainerTitle>Your amount</ContainerTitle>
+    <Container style={{height:230}}>
+      <ContainerTitle>Pool</ContainerTitle>
       <div style={{ width: 170, margin: "0 auto" }}>
         {blockData ? (
           <Pie
@@ -28,7 +28,7 @@ export default function Chart({ blockData, tokens }) {
               },
             }}
             data={{
-              labels: ["Pool", "Your piece"],
+              labels: ["Pool", "Your share"],
               datasets: [
                 {
                   label: "",

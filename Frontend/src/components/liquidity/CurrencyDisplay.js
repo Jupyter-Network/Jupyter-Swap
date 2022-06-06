@@ -1,4 +1,5 @@
 import { ColorFrame } from "../../theme/outputs";
+import { secondary } from "../../theme/theme";
 
 export default function CurrencyDisplay({
   amount = 0,
@@ -7,7 +8,7 @@ export default function CurrencyDisplay({
 }) {
   return (
     <ColorFrame>
-      <div style={{ lineHeight: 2}}>
+      <div style={{ lineHeight: 2,color:secondary}}>
           <img
             style={{ height:25 ,position:"relative",top:6,right:5}}
             src={"/tokenlogos/" + icon}

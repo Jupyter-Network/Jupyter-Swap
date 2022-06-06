@@ -20,14 +20,9 @@ fastify.get("/tokens/:token_symbol", async (request, reply) => {
 });
 
 fastify.get("/apy/:tokenAddress", async (request, reply) => {
-  let d = await query.getAPY(request.params.tokenAddress);
-  let timeFrac = 365 / ((d[0].lasttime - d[0].firsttime) / 1000 / 60 / 60 / 24);
-  return  BN(d[0].lastvalue)
-  .dividedBy(d[0].firstvalue)
-  .minus(1)
-  .multipliedBy(100)
-  .multipliedBy(timeFrac)
-  .toString();
+  let d = await query.getPoolProfit(request.params.tokenAddress);
+    return (d[0].sum +d[1].sum) * 121.66;
+
 });
 
 // Run the server!

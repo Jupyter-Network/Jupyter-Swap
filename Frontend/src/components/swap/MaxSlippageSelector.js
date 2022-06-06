@@ -37,7 +37,9 @@ export default function MaxSlippageSelector({ maxSlippage, setMaxSlippage }) {
       ) : (
         <SmallSecondaryButton
           onClick={() => {
-            setOpen(!open);
+            setTimeout(()=>{
+              setOpen(!open);
+            },50)
             setTimeout(() => setOpen(false), 10000);
           }}
         >

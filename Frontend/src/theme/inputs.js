@@ -9,12 +9,11 @@ font-size:medium;
   padding:5px 3px;
   text-align:end;
   outline:none;
-  width:75%;
+  width:100%;
   transition: 0.4s;
   &:focus{
     color:${highlight};
   }
-
   margin:5px;
 `;
 

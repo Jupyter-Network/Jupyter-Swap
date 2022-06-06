@@ -20,7 +20,9 @@ font-size:medium;
   text-align:end;
   outline:none;
   width:fit-content;
-  margin:5px;
+  margin:7px;
+  position:relative;
+  top:-2px;
 `;
 
 export const ColorFrame = styled.div`
@@ -36,7 +38,7 @@ export const ColorFrame = styled.div`
   inset: 0px;
   border-radius:10px;
 
-  padding: 3px;
+  padding: 0.09em;
   background:${highlightGradient}; 
   -webkit-mask: 
      linear-gradient(#fff 0 0) content-box, 

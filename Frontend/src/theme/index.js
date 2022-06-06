@@ -41,6 +41,8 @@ line-height:0.1;
     border-bottom: solid ${primary};
     height:20px;
   }
+  -webkit-tap-highlight-color: transparent;
+
 `;
 
 export const GradientDiv = styled.div`

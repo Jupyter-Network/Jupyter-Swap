@@ -35,6 +35,8 @@ import { getHistory, getTransanctionHistory } from "../../utils/requests";
 import TransactionList from "../swap/TransactionList";
 import MaxSlippageSelector from "../swap/MaxSlippageSelector";
 import TransactionTimeoutSelector from "../swap/TransactionTimeoutSelector";
+import LabeledInput from "../LabeledInput";
+import TokenInfo from "../swap/TokenInfo";
 const erc20Abi = erc20.abi;
 BN.config({ DECIMAL_PLACES: 18 });
 //Add this to a Math file later
@@ -52,6 +54,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     poolHop: false,
   });
 
+  const [loading, setLoading] = useState(false);
   const [
     {
       wallet, // the wallet that has been connected or null if not yet connected
@@ -75,22 +78,20 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     storage
       ? {
           token0: {
-            symbol: storage.token0.symbol,
+            ...storage.token0,
             contract: new ethers.Contract(
               storage.token0.address,
               erc20Abi,
               ethersProvider.getSigner()
             ),
-            icon: storage.token0.icon,
           },
           token1: {
-            symbol: storage.token1.symbol,
+            ...storage.token1,
             contract: new ethers.Contract(
               storage.token1.address,
               erc20Abi,
               ethersProvider.getSigner()
             ),
-            icon: storage.token1.icon,
           },
         }
       : {
@@ -102,6 +103,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               ethersProvider.getSigner()
             ),
             icon: "/placeholder.svg",
+            address: token1,
           },
           token1: {
             symbol: "BNB",
@@ -110,7 +112,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               erc20Abi,
               ethersProvider.getSigner()
             ),
-            icon: "/placeholder.svg",
+            icon: "/bnb-bnb-logo.svg",
+            address: wbnb,
           },
         }
   );
@@ -152,7 +155,11 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       await getBlockData();
       //If pools changed -> recalculate
       handleToken0AmountChange(state.token0Amount.toString());
-      if (storage.token0.address !== wbnb && storage.token1.address !== wbnb) {
+      if (
+        storage.token0 &&
+        storage.token0.address !== wbnb &&
+        storage.token1.address !== wbnb
+      ) {
         setState({ ...state, poolHop: true });
       }
     }
@@ -165,27 +172,24 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   }, [blockData]);
 
   useEffect(() => {
-    getBlockData();
     setTokens(
       storage
         ? {
             token0: {
-              symbol: storage.token0.symbol,
+              ...storage.token0,
               contract: new ethers.Contract(
                 storage.token0.address,
                 erc20Abi,
                 ethersProvider.getSigner()
               ),
-              icon: storage.token0.icon,
             },
             token1: {
-              symbol: storage.token1.symbol,
+              ...storage.token1,
               contract: new ethers.Contract(
                 storage.token1.address,
                 erc20Abi,
                 ethersProvider.getSigner()
               ),
-              icon: storage.token1.icon,
             },
           }
         : {
@@ -197,6 +201,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                 ethersProvider.getSigner()
               ),
               icon: "/placeholder.svg",
+              address: token1,
             },
             token1: {
               symbol: "BNB",
@@ -206,6 +211,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                 ethersProvider.getSigner()
               ),
               icon: "/placeholder.svg",
+              address: wbnb,
             },
           }
     );
@@ -297,6 +303,10 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   }
 
   async function getBlockData() {
+    if (loading) {
+      return true;
+    }
+    setLoading(true);
     let p0Rate = BN(10).pow(18);
     let t0Balance = 0;
     if (tokens["token0"].contract.address === wbnb) {
@@ -425,6 +435,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       transactionHistory: transactions,
     });
     handleToken0AmountChange(state.token0Amount);
+    setLoading(false);
   }
 
   let d = [];
@@ -436,7 +447,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     <div
       style={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}
     >
-      <Container style={{ width: "100vw", maxWidth: "800px" }}>
+      <Container style={{ width: "100vw", maxWidth: "775px" }}>
         <ContainerTitle>Chart</ContainerTitle>
         {blockData.priceHistory ? (
           <div>
@@ -492,59 +503,45 @@ export default function Swap({ block, ethersProvider, routerContract }) {
           <ContainerTitle>
             {tokens["token0"].symbol} / {tokens["token1"].symbol}
           </ContainerTitle>
-          <p
-            style={{
-              margin: 25,
-              textAlign: "end",
-              fontSize: "small",
-              marginBottom: -4,
-            }}
-          >
-            Balance : {numericFormat(BN(blockData.token0Balance))}
-          </p>
-          <div style={{ display: "flex", flexWrap: "nowrap" }}>
-            <SmallButton
-              style={{ marginLeft: 10, marginRight: 2 }}
-              onClick={() =>
-                handleToken0AmountChange(blockData.token0Balance - 0.002)
-              }
-            >
-              Max
-            </SmallButton>
-            <Input
-              pattern="\d*"
-              onFocus={() => handleToken0AmountChange("")}
-              onChange={(e) => handleToken0AmountChange(e.target.value)}
-              value={state.token0Amount.toString()}
-            ></Input>
-            <Label>
-              <b>{tokens["token0"].symbol}</b>
-            </Label>
-          </div>
-
-          <br />
-          <p
-            style={{
-              margin: 25,
-              textAlign: "end",
-              fontSize: "small",
-              marginBottom: -4,
-            }}
-          >
-            {" "}
-            Balance : {numericFormat(BN(blockData.token1Balance))}
-          </p>
-
-          <Input
-            pattern="\d*"
-            onFocus={() => handleToken1AmountChange("")}
-            onChange={(e) => handleToken1AmountChange(e.target.value)}
-            value={state.token1Amount.toString()}
-          ></Input>
-
-          <Label>
-            <b>{tokens["token1"].symbol}</b>
-          </Label>
+          <table style={{ width: "90%", margin: "0 auto" }}>
+            <tbody>
+              <tr>
+                <td colspan={1}>
+                  <SmallButton
+                    style={{ marginLeft: 10, marginRight: -10, marginTop: 32 }}
+                    onClick={() =>
+                      handleToken0AmountChange(blockData.token0Balance - 0.002)
+                    }
+                  >
+                    Max
+                  </SmallButton>
+                </td>
+                <td colspan={4}>
+                  <LabeledInput
+                    name={tokens["token0"].symbol}
+                    onChange={(e) => handleToken0AmountChange(e.target.value)}
+                    onFocus={() => handleToken0AmountChange("")}
+                    value={state.token0Amount}
+                    icon={tokens["token0"].icon}
+                    info={`Bal: ${numericFormat(BN(blockData.token0Balance))}`}
+                  ></LabeledInput>
+                </td>
+              </tr>
+              <tr>
+                <td colSpan={1}></td>
+                <td colSpan={5}>
+                  <LabeledInput
+                    name={tokens["token1"].symbol}
+                    onChange={(e) => handleToken1AmountChange(e.target.value)}
+                    onFocus={() => handleToken1AmountChange("")}
+                    value={state.token1Amount}
+                    icon={tokens["token1"].icon}
+                    info={`Bal: ${numericFormat(BN(blockData.token1Balance))}`}
+                  ></LabeledInput>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
           <p></p>
           <CurrencySelector
@@ -558,7 +555,6 @@ export default function Swap({ block, ethersProvider, routerContract }) {
           <br />
           <p>
             Price: &nbsp;
-            {state.poolHop ? "true" : "false"}
             {state.poolHop ? (
               <P>
                 {numericFormat(
@@ -609,7 +605,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               Price Impact:{" "}
               <span style={{ color: primary }}>{state.impact.toString()}%</span>
             </p>
-            <div style={{ display: "flex",justifyContent:"space-around" }}>
+            <div style={{ display: "flex", justifyContent: "space-around" }}>
               <MaxSlippageSelector
                 maxSlippage={0.5}
                 setMaxSlippage={setMaxSlippage}
@@ -670,7 +666,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         </div>
       </Container>
       <div style={{ width: "100vw" }}>
-        <Container style={{ maxWidth: 1210, width: "98%", margin: "0 auto" }}>
+        <TokenInfo tokens={tokens}></TokenInfo>
+        <Container style={{ maxWidth: 1180, width: "98%", margin: "0 auto" }}>
           <ContainerTitle>Recent Transactions</ContainerTitle>
           <div style={{ maxHeight: 500, marginTop: -18, overflowY: "scroll" }}>
             <TransactionList

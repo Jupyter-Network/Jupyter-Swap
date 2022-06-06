@@ -11,6 +11,7 @@ import { MediumButtonInverted } from "../../theme/buttons";
 import { Input } from "../../theme/inputs";
 import { Label, P } from "../../theme/outputs";
 import { transaction } from "../../utils/alerts";
+import LabeledInput from "../LabeledInput";
 const routerAbi = routerMeta.abi;
 const erc20Abi = erc20.abi;
 //Add this to a Math file later
@@ -30,16 +31,10 @@ export default function Build({ block, ethersProvider, routerContract }) {
 
   const [state, setState] = useState({ name: "", symbol: "", supply: "" });
 
-
   async function approveToken(contract, amount) {
     console.log(ethersProvider.getSigner());
-    await transaction(
-      `Approve `,
-      contract.approve,
-      [router, amount]
-    );
+    await transaction(`Approve `, contract.approve, [router, amount]);
   }
-
 
   //New Block
   useEffect(() => {
@@ -56,23 +51,27 @@ export default function Build({ block, ethersProvider, routerContract }) {
         flexWrap: "wrap",
         justifyContent: "center",
         maxWidth: 1200,
+        margin: "0 auto",
       }}
     >
       <Container>
         <ContainerTitle>Create BEP-20 Token</ContainerTitle>
         <br />
-        <Input
-          onChange={(e) => setState({ ...state, name: e.target.value })}
-        ></Input>
-        <Label>Name</Label>
-        <Input
-          onChange={(e) => setState({ ...state, symbol: e.target.value })}
-        ></Input>
-        <Label>Symbol</Label>
-        <Input
-          onChange={(e) => setState({ ...state, supply: e.target.value })}
-        ></Input>
-        <Label>Supply</Label>
+        <div style={{ width: "80%", margin: "0 auto" }}>
+          <LabeledInput
+            name={"Token Name"}
+            onChange={(e) => setState({ ...state, name: e.target.value })}
+          ></LabeledInput>
+
+          <LabeledInput
+            name={"Token Symbol"}
+            onChange={(e) => setState({ ...state, symbol: e.target.value })}
+          ></LabeledInput>
+          <LabeledInput
+            name={"Total Supply"}
+            onChange={(e) => setState({ ...state, supply: e.target.value })}
+          ></LabeledInput>
+        </div>
 
         <GradientDiv style={{ height: 90 }}>
           <br />
@@ -86,8 +85,12 @@ export default function Build({ block, ethersProvider, routerContract }) {
                   erc20.bytecode,
                   ethersProvider.getSigner()
                 );
-                let token = await factory.deploy(state.name, state.symbol,BN(state.supply).toString());
-                console.log("Token created: ",token.address)
+                let token = await factory.deploy(
+                  state.name,
+                  state.symbol,
+                  BN(state.supply).toString()
+                );
+                console.log("Token created: ", token.address);
                 console.log(await token.totalSupply());
               }}
             >
