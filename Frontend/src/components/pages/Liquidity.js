@@ -25,7 +25,7 @@ import Balances from "../liquidity/Balances";
 import Chart from "../liquidity/Chart";
 import LabeledInput from "../LabeledInput";
 import { getAPY } from "../../utils/requests";
-
+import { initTokens } from "../../initialValues";
 const routerAbi = routerMeta.abi;
 const erc20Abi = erc20.abi;
 //Add this to a Math file later
@@ -122,11 +122,12 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
               ethersProvider.getSigner()
             ),
             icon: "/placeholder.svg",
+            address: wbnb,
           },
           token1:
             storage.token0.address === wbnb
               ? {
-                  ...storage.token0,
+                  ...storage.token1,
                   contract: new ethers.Contract(
                     storage.token1.address,
                     erc20Abi,
@@ -142,26 +143,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
                   ),
                 },
         }
-      : {
-          token0: {
-            symbol: "ARM",
-            contract: new ethers.Contract(
-              token1,
-              erc20Abi,
-              ethersProvider.getSigner()
-            ),
-            icon: "/placeholder.svg",
-          },
-          token1: {
-            symbol: "BNB",
-            contract: new ethers.Contract(
-              wbnb,
-              erc20Abi,
-              ethersProvider.getSigner()
-            ),
-            icon: "/placeholder.svg",
-          },
-        }
+      : initTokens(ethers, ethersProvider, erc20Abi)
   );
 
   //New Block

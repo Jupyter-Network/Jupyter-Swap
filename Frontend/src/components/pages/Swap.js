@@ -37,6 +37,7 @@ import MaxSlippageSelector from "../swap/MaxSlippageSelector";
 import TransactionTimeoutSelector from "../swap/TransactionTimeoutSelector";
 import LabeledInput from "../LabeledInput";
 import TokenInfo from "../swap/TokenInfo";
+import { initTokens } from "../../initialValues";
 const erc20Abi = erc20.abi;
 BN.config({ DECIMAL_PLACES: 18 });
 //Add this to a Math file later
@@ -94,28 +95,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
             ),
           },
         }
-      : {
-          token0: {
-            symbol: "ARM",
-            contract: new ethers.Contract(
-              token1,
-              erc20Abi,
-              ethersProvider.getSigner()
-            ),
-            icon: "/placeholder.svg",
-            address: token1,
-          },
-          token1: {
-            symbol: "BNB",
-            contract: new ethers.Contract(
-              wbnb,
-              erc20Abi,
-              ethersProvider.getSigner()
-            ),
-            icon: "/bnb-bnb-logo.svg",
-            address: wbnb,
-          },
-        }
+      : initTokens(ethers, ethersProvider, erc20Abi)
   );
 
   function deadline() {
@@ -555,7 +535,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
           <br />
           <p>
             Price: &nbsp;
-            {state.poolHop ? (
+            {state.poolHop && blockData.p0Rate ? (
               <P>
                 {numericFormat(
                   BN(blockData.p0Rate.toString())

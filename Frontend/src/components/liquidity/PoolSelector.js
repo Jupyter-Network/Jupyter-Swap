@@ -12,7 +12,7 @@ import { background } from "../../theme/theme";
 import { getPools } from "../../utils/requests";
 const erc20Abi = erc20.abi;
 
-export default function PoolSelector({ onChange, provider,initialTokens }) {
+export default function PoolSelector({ onChange, provider, initialTokens }) {
   const [currencies, setCurrencies] = useState([]);
   const [tokens, setTokens] = useState(initialTokens);
 
@@ -42,11 +42,11 @@ export default function PoolSelector({ onChange, provider,initialTokens }) {
       },
     });
   }, [provider]);
-
+  console.log(tokens);
   function checkValidityAndSetTokens(newAddress, newName, icon) {
     setTokens({
       ...tokens,
-      ["token1"]: {
+      token1: {
         symbol: newName,
         contract: new ethers.Contract(
           newAddress,
@@ -54,6 +54,7 @@ export default function PoolSelector({ onChange, provider,initialTokens }) {
           provider.getSigner()
         ),
         icon: icon,
+        address: newAddress,
       },
     });
   }
@@ -73,6 +74,7 @@ export default function PoolSelector({ onChange, provider,initialTokens }) {
     }
   }
 
+  console.log(tokens.token1);
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "center" }}>
@@ -84,7 +86,7 @@ export default function PoolSelector({ onChange, provider,initialTokens }) {
           }
           style={{
             border: "solid",
-            borderWidth:1,
+            borderWidth: 1,
             borderRadius: 5,
             width: 120,
             height: 70,
@@ -92,9 +94,9 @@ export default function PoolSelector({ onChange, provider,initialTokens }) {
         >
           <img
             style={{ width: 22 }}
-            src={"/tokenlogos/" + tokens["token1"].icon}
+            src={"/tokenlogos/" + tokens.token1.icon}
           ></img>
-          <p style={{ lineHeight: 0.2 }}>{tokens["token1"].symbol}</p>{" "}
+          <p style={{ lineHeight: 0.2 }}>{tokens.token1.symbol}</p>{" "}
         </MediumButtonInverted>
       </div>
 
