@@ -26,6 +26,7 @@ import Chart from "../liquidity/Chart";
 import LabeledInput from "../LabeledInput";
 import { getAPY } from "../../utils/requests";
 import { initTokens } from "../../initialValues";
+import LoadingSpinner from "../LoadingSpinner";
 const routerAbi = routerMeta.abi;
 const erc20Abi = erc20.abi;
 //Add this to a Math file later
@@ -330,211 +331,214 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     setLoading(false);
   }
   return (
-    <div
-      style={{
-        margin: "0 auto",
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "center",
-        maxWidth: 1200,
-      }}
-    >
-      <Balances blockData={blockData} tokens={tokens}></Balances>
-      <div style={{ width: "100vw" }}></div>
-      <Container style={{ maxHeight: 260 }}>
-        <ContainerTitle>Select Pool</ContainerTitle>
-        <PoolSelector
-          provider={ethersProvider}
-          onChange={(tokens) => {
-            setTokens(tokens);
-          }}
-          initialTokens={tokens}
-        ></PoolSelector>
-        {blockData ? (
-          <p>
-            APY: <b>{numericFormat(blockData.apy)} % </b>
-          </p>
-        ) : (
-          <p></p>
-        )}
-        <GradientDiv style={{ height: 90 }}>
-          <br />
-
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            {tokens["token1"].contract.address === wbnb ? (
-              <span></span>
-            ) : (
-              <MediumButtonInverted
-                onClick={() => {
-                  if (!wallet) {
-                    connect();
-                    return;
-                  }
-                  approveToken(
-                    tokens["token0"].contract,
-                    "100000000000000000000000"
-                  );
-                }}
-              >
-                Approve {tokens["token1"].symbol}{" "}
-                <img
-                  style={{ height: 20, position: "relative", top: 2 }}
-                  src={`/tokenlogos/${tokens["token1"].icon}`}
-                ></img>
-              </MediumButtonInverted>
-            )}
-          </div>
-        </GradientDiv>
-      </Container>
-      <Chart blockData={blockData}></Chart>
-      <Container>
-        <ContainerTitle>Add Liquidity</ContainerTitle>
-        <p>
-          {tokens["token0"].symbol} / {tokens["token1"].symbol}
-        </p>
-        <div style={{ width: "80%", margin: "0 auto" }}>
-          <LabeledInput
-            name={tokens["token0"].symbol}
-            onChange={(e) => handleToken0AmountChange(e.target.value)}
-            value={state.token0Amount.toString()}
-            icon={tokens["token0"].icon}
-            onFocus={(e) => setState({ ...state, token0Amount: "" })}
-          ></LabeledInput>
-
-          <LabeledInput
-            name={tokens["token1"].symbol}
-            onChange={(e) => handleToken1AmountChange(e.target.value)}
-            value={state.token1Amount.toString()}
-            icon={tokens["token1"].icon}
-            onFocus={(e) => setState({ ...state, token1Amount: "" })}
-          ></LabeledInput>
-        </div>
-
-        <br />
-        <LargeButton
-          onClick={() => {
-            addLiquidity();
-          }}
-        >
-          Add Liquidity
-        </LargeButton>
-      </Container>
-      <Container style={{ maxHeight: 192 }}>
-        <ContainerTitle>Remove Liquidity</ContainerTitle>
-        <span>
-          {tokens["token0"].symbol} / {tokens["token1"].symbol}
-        </span>
-        <br />
-        <div style={{ width: "80%", margin: "0 auto" }}>
-          <LabeledInput
-            name={"LP"}
-            onChange={(e) => {
-              let v = BN(validate(e.target.value));
-              setState({ ...state, lpAmount: validate(e.target.value) });
+    <>
+      <LoadingSpinner loading={loading}></LoadingSpinner>
+      <div
+        style={{
+          margin: "0 auto",
+          display: !loading ? "flex" : "none",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          maxWidth: 1200,
+        }}
+      >
+        <Balances blockData={blockData} tokens={tokens}></Balances>
+        <div style={{ width: "100vw" }}></div>
+        <Container style={{ maxHeight: 260 }}>
+          <ContainerTitle>Select Pool</ContainerTitle>
+          <PoolSelector
+            provider={ethersProvider}
+            onChange={(tokens) => {
+              setTokens(tokens);
             }}
-            value={state.lpAmount}
-            icon={""}
-            onFocus={(e) => setState({ ...state, lpAmount: "" })}
-          ></LabeledInput>
-        </div>
+            initialTokens={tokens}
+          ></PoolSelector>
+          {blockData ? (
+            <p>
+              APY: <b>{numericFormat(blockData.apy)} % </b>
+            </p>
+          ) : (
+            <p></p>
+          )}
+          <GradientDiv style={{ height: 90 }}>
+            <br />
 
-        <br />
-        <LargeButton onClick={() => removeLiquidity()}>
-          RemoveLiquidity
-        </LargeButton>
-      </Container>
-      <div style={{ width: "100%" }}>
-        <h3 style={{ color: primary, textAlign: "center" }}>
-          Open a new liquidty pool:
-        </h3>
-      </div>
-      <Container style={{ maxHeight: 440 }}>
-        <ContainerTitle>Create New Liquidity Pool</ContainerTitle>
-        <div style={{ width: "80%", margin: "0 auto" }}>
-          <LabeledInput
-            name={"Token Address"}
-            value={createWidgetState.address}
-            onChange={(e) =>
-              setCreateWidgetState({
-                ...createWidgetState,
-                address: e.target.value,
-              })
-            }
-            onFocus={(e) =>
-              setCreateWidgetState({
-                ...createWidgetState,
-                address: "",
-              })
-            }
-          ></LabeledInput>
-          <br></br>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              {tokens["token1"].contract.address === wbnb ? (
+                <span></span>
+              ) : (
+                <MediumButtonInverted
+                  onClick={() => {
+                    if (!wallet) {
+                      connect();
+                      return;
+                    }
+                    approveToken(
+                      tokens["token0"].contract,
+                      "100000000000000000000000"
+                    );
+                  }}
+                >
+                  Approve {tokens["token1"].symbol}{" "}
+                  <img
+                    style={{ height: 20, position: "relative", top: 2 }}
+                    src={`/tokenlogos/${tokens["token1"].icon}`}
+                  ></img>
+                </MediumButtonInverted>
+              )}
+            </div>
+          </GradientDiv>
+        </Container>
+        <Chart blockData={blockData}></Chart>
+        <Container>
+          <ContainerTitle>Add Liquidity</ContainerTitle>
+          <p>
+            {tokens["token0"].symbol} / {tokens["token1"].symbol}
+          </p>
+          <div style={{ width: "80%", margin: "0 auto" }}>
+            <LabeledInput
+              name={tokens["token0"].symbol}
+              onChange={(e) => handleToken0AmountChange(e.target.value)}
+              value={state.token0Amount.toString()}
+              icon={tokens["token0"].icon}
+              onFocus={(e) => setState({ ...state, token0Amount: "" })}
+            ></LabeledInput>
 
-          <LabeledInput
-            name={"BNB Amount"}
-            value={validate(createWidgetState.bnbAmount)}
-            onChange={(e) =>
-              setCreateWidgetState({
-                ...createWidgetState,
-                bnbAmount: BN(e.target.value),
-              })
-            }
-            onFocus={(e) =>
-              setCreateWidgetState({
-                ...createWidgetState,
-                bnbAmount: "",
-              })
-            }
-            icon={"/bnb-bnb-logo.svg"}
-          ></LabeledInput>
-          <br></br>
-          <LabeledInput
-            name={"Token Amount"}
-            value={validate(createWidgetState.tokenAmount)}
-            onChange={(e) =>
-              setCreateWidgetState({
-                ...createWidgetState,
-                tokenAmount: BN(e.target.value),
-              })
-            }
-            onFocus={(e) =>
-              setCreateWidgetState({
-                ...createWidgetState,
-                tokenAmount: "",
-              })
-            }
-          ></LabeledInput>
-        </div>
+            <LabeledInput
+              name={tokens["token1"].symbol}
+              onChange={(e) => handleToken1AmountChange(e.target.value)}
+              value={state.token1Amount.toString()}
+              icon={tokens["token1"].icon}
+              onFocus={(e) => setState({ ...state, token1Amount: "" })}
+            ></LabeledInput>
+          </div>
 
-        <p>
-          Initial Price:{" "}
-          <P>{numericFormat(BN(createWidgetPrice).toFixed(18))}</P>
-        </p>
-        <LargeButton onClick={() => createLiquidityPool()}>
-          Create Pool
-        </LargeButton>
-        <br />
-        <br />
-        <GradientDiv style={{ height: 90 }}>
           <br />
-
-          <MediumButtonInverted
+          <LargeButton
             onClick={() => {
-              approveAnonymousToken(
-                new ethers.Contract(
-                  createWidgetState.address,
-                  erc20Abi,
-                  ethersProvider.getSigner()
-                ),
-                createWidgetState.tokenAmount
-                  .multipliedBy(BN(10).pow(18))
-                  .toFixed(0)
-              );
+              addLiquidity();
             }}
           >
-            Approve Token
-          </MediumButtonInverted>
-        </GradientDiv>
-      </Container>
-    </div>
+            Add Liquidity
+          </LargeButton>
+        </Container>
+        <Container style={{ maxHeight: 192 }}>
+          <ContainerTitle>Remove Liquidity</ContainerTitle>
+          <span>
+            {tokens["token0"].symbol} / {tokens["token1"].symbol}
+          </span>
+          <br />
+          <div style={{ width: "80%", margin: "0 auto" }}>
+            <LabeledInput
+              name={"LP"}
+              onChange={(e) => {
+                let v = BN(validate(e.target.value));
+                setState({ ...state, lpAmount: validate(e.target.value) });
+              }}
+              value={state.lpAmount}
+              icon={""}
+              onFocus={(e) => setState({ ...state, lpAmount: "" })}
+            ></LabeledInput>
+          </div>
+
+          <br />
+          <LargeButton onClick={() => removeLiquidity()}>
+            RemoveLiquidity
+          </LargeButton>
+        </Container>
+        <div style={{ width: "100%" }}>
+          <h3 style={{ color: primary, textAlign: "center" }}>
+            Open a new liquidty pool:
+          </h3>
+        </div>
+        <Container style={{ maxHeight: 440 }}>
+          <ContainerTitle>Create New Liquidity Pool</ContainerTitle>
+          <div style={{ width: "80%", margin: "0 auto" }}>
+            <LabeledInput
+              name={"Token Address"}
+              value={createWidgetState.address}
+              onChange={(e) =>
+                setCreateWidgetState({
+                  ...createWidgetState,
+                  address: e.target.value,
+                })
+              }
+              onFocus={(e) =>
+                setCreateWidgetState({
+                  ...createWidgetState,
+                  address: "",
+                })
+              }
+            ></LabeledInput>
+            <br></br>
+
+            <LabeledInput
+              name={"BNB Amount"}
+              value={validate(createWidgetState.bnbAmount)}
+              onChange={(e) =>
+                setCreateWidgetState({
+                  ...createWidgetState,
+                  bnbAmount: BN(e.target.value),
+                })
+              }
+              onFocus={(e) =>
+                setCreateWidgetState({
+                  ...createWidgetState,
+                  bnbAmount: "",
+                })
+              }
+              icon={"/bnb-bnb-logo.svg"}
+            ></LabeledInput>
+            <br></br>
+            <LabeledInput
+              name={"Token Amount"}
+              value={validate(createWidgetState.tokenAmount)}
+              onChange={(e) =>
+                setCreateWidgetState({
+                  ...createWidgetState,
+                  tokenAmount: BN(e.target.value),
+                })
+              }
+              onFocus={(e) =>
+                setCreateWidgetState({
+                  ...createWidgetState,
+                  tokenAmount: "",
+                })
+              }
+            ></LabeledInput>
+          </div>
+
+          <p>
+            Initial Price:{" "}
+            <P>{numericFormat(BN(createWidgetPrice).toFixed(18))}</P>
+          </p>
+          <LargeButton onClick={() => createLiquidityPool()}>
+            Create Pool
+          </LargeButton>
+          <br />
+          <br />
+          <GradientDiv style={{ height: 90 }}>
+            <br />
+
+            <MediumButtonInverted
+              onClick={() => {
+                approveAnonymousToken(
+                  new ethers.Contract(
+                    createWidgetState.address,
+                    erc20Abi,
+                    ethersProvider.getSigner()
+                  ),
+                  createWidgetState.tokenAmount
+                    .multipliedBy(BN(10).pow(18))
+                    .toFixed(0)
+                );
+              }}
+            >
+              Approve Token
+            </MediumButtonInverted>
+          </GradientDiv>
+        </Container>
+      </div>
+    </>
   );
 }

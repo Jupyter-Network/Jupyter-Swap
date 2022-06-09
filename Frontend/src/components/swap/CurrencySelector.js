@@ -148,10 +148,10 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
           style={{
             border: "solid",
             borderWidth: 1,
-
             borderRadius: 5,
             width: 120,
             height: 70,
+            zIndex:1
           }}
         >
           <img

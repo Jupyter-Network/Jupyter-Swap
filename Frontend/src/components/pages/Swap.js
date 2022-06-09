@@ -28,8 +28,10 @@ import {
   background,
   backgroundGradient,
   highlight,
+  highlightGradient,
   primary,
   secondary,
+  tintedBackground,
 } from "../../theme/theme";
 import { getHistory, getTransanctionHistory } from "../../utils/requests";
 import TransactionList from "../swap/TransactionList";
@@ -38,6 +40,7 @@ import TransactionTimeoutSelector from "../swap/TransactionTimeoutSelector";
 import LabeledInput from "../LabeledInput";
 import TokenInfo from "../swap/TokenInfo";
 import { initTokens } from "../../initialValues";
+import LoadingSpinner from "../LoadingSpinner";
 const erc20Abi = erc20.abi;
 BN.config({ DECIMAL_PLACES: 18 });
 //Add this to a Math file later
@@ -424,238 +427,261 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   }
 
   return (
-    <div
-      style={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}
-    >
-      <Container style={{ width: "100vw", maxWidth: "775px" }}>
-        <ContainerTitle>Chart</ContainerTitle>
-        {blockData.priceHistory ? (
-          <div>
-            <Line
-              height={220}
-              options={{
-                tension: 0.3,
-                scales: {
-                  x: {
-                    ticks: {
-                      color: primary,
+    <>
+    <LoadingSpinner loading={loading}></LoadingSpinner>
+      <div
+        style={{
+          display: !loading ? "flex" : "none",
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
+        <Container style={{ width: "100vw", maxWidth: "775px" }}>
+          <ContainerTitle>Chart</ContainerTitle>
+          {blockData.priceHistory ? (
+            <div>
+              <Line
+                height={220}
+                options={{
+                  tension: 0.3,
+                  scales: {
+                    x: {
+                      ticks: {
+                        color: primary,
+                      },
+                    },
+                    y: {
+                      ticks: {
+                        color: primary,
+                      },
                     },
                   },
-                  y: {
-                    ticks: {
-                      color: primary,
+                  plugins: {
+                    legend: {
+                      display: false,
                     },
                   },
-                },
-                plugins: {
-                  legend: {
-                    display: false,
-                  },
-                },
-              }}
-              data={{
-                labels: blockData.priceHistory.map((item) => {
-                  const date = new Date(item.time);
-                  return `${date.getHours()}:${date.getMinutes()}`;
-                }),
-                datasets: [
-                  {
-                    fill: false,
-                    pointBorderColor: secondary,
-                    label:
-                      tokens["token0"].symbol + " / " + tokens["token1"].symbol,
-                    backgroundColor: background,
-                    borderColor: primary,
-                    data: blockData.priceHistory.map((item) =>
-                      BN(item.rate).dividedBy(BN(10).pow(18)).toString()
-                    ),
-                  },
-                ],
-              }}
-            ></Line>
-          </div>
-        ) : (
-          <p></p>
-        )}
-      </Container>
-      <Container>
-        <div style={{ borderRadius: 7, overflow: "hidden" }}>
-          <ContainerTitle>
-            {tokens["token0"].symbol} / {tokens["token1"].symbol}
-          </ContainerTitle>
-          <table style={{ width: "90%", margin: "0 auto" }}>
-            <tbody>
-              <tr>
-                <td colspan={1}>
-                  <SmallButton
-                    style={{ marginLeft: 10, marginRight: -10, marginTop: 32 }}
-                    onClick={() =>
-                      handleToken0AmountChange(blockData.token0Balance - 0.002)
-                    }
-                  >
-                    Max
-                  </SmallButton>
-                </td>
-                <td colspan={4}>
-                  <LabeledInput
-                    name={tokens["token0"].symbol}
-                    onChange={(e) => handleToken0AmountChange(e.target.value)}
-                    onFocus={() => handleToken0AmountChange("")}
-                    value={state.token0Amount}
-                    icon={tokens["token0"].icon}
-                    info={`Bal: ${numericFormat(BN(blockData.token0Balance))}`}
-                  ></LabeledInput>
-                </td>
-              </tr>
-              <tr>
-                <td colSpan={1}></td>
-                <td colSpan={5}>
-                  <LabeledInput
-                    name={tokens["token1"].symbol}
-                    onChange={(e) => handleToken1AmountChange(e.target.value)}
-                    onFocus={() => handleToken1AmountChange("")}
-                    value={state.token1Amount}
-                    icon={tokens["token1"].icon}
-                    info={`Bal: ${numericFormat(BN(blockData.token1Balance))}`}
-                  ></LabeledInput>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <p></p>
-          <CurrencySelector
-            provider={ethersProvider}
-            initialToken={tokens}
-            onChange={(tokens, poolHop) => {
-              setState({ ...state, poolHop: poolHop });
-              setTokens(tokens);
-            }}
-          ></CurrencySelector>
-          <br />
-          <p>
-            Price: &nbsp;
-            {state.poolHop && blockData.p0Rate ? (
-              <P>
-                {numericFormat(
-                  BN(blockData.p0Rate.toString())
-                    .dividedBy(BN(blockData.p1Rate.toString()))
-                    .toString()
-                )}
-              </P>
-            ) : (
-              <P>{numericFormat(BN(blockData.p0Rate).toString())}</P>
-            )}
-          </p>
-
-          <LargeButton
-            style={{ width: "70%" }}
-            onClick={async () => {
-              if (!wallet) {
-                await connect();
-                return;
-              }
-              if (state.poolHop) {
-                swapTokens();
-                return;
-              }
-              if (tokens["token0"].contract.address === wbnb) {
-                swapETHToToken();
-              } else {
-                swapTokenToETH();
-              }
-            }}
-          >
-            Swap <br />
-            {tokens["token0"].symbol} to {tokens["token1"].symbol}
-          </LargeButton>
-          <ContainerInverted>
-            <p style={{ fontSize: "small" }}>
-              You will receive min.{" "}
-              <span style={{ color: primary }}>
-                {" "}
-                {numericFormat(
-                  state.token1AmountMin.dividedBy(BN(10).pow(18)).toFixed(18),
-                  6
-                )}{" "}
-                {tokens["token1"].symbol}
-              </span>
-            </p>
-            <p style={{ fontSize: "small" }}>
-              Price Impact:{" "}
-              <span style={{ color: primary }}>{state.impact.toString()}%</span>
-            </p>
-            <div style={{ display: "flex", justifyContent: "space-around" }}>
-              <MaxSlippageSelector
-                maxSlippage={0.5}
-                setMaxSlippage={setMaxSlippage}
-              ></MaxSlippageSelector>
-              <TransactionTimeoutSelector
-                initTimeout={timeout}
-                setTime={setTimeoutTime}
-              ></TransactionTimeoutSelector>
+                }}
+                data={{
+                  labels: blockData.priceHistory.map((item) => {
+                    const date = new Date(item.time);
+                    return `${date.getHours()}:${date.getMinutes()}`;
+                  }),
+                  datasets: [
+                    {
+                      fill: false,
+                      pointBorderColor: secondary,
+                      label:
+                        tokens["token0"].symbol +
+                        " / " +
+                        tokens["token1"].symbol,
+                      backgroundColor: background,
+                      borderColor: primary,
+                      data: blockData.priceHistory.map((item) =>
+                        BN(item.rate).dividedBy(BN(10).pow(18)).toString()
+                      ),
+                    },
+                  ],
+                }}
+              ></Line>
             </div>
-          </ContainerInverted>
+          ) : (
+            <p></p>
+          )}
+        </Container>
+        <Container>
+          <div style={{ borderRadius: 7, overflow: "hidden" }}>
+            <ContainerTitle>
+              {tokens["token0"].symbol} / {tokens["token1"].symbol}
+            </ContainerTitle>
+            <table style={{ width: "90%", margin: "0 auto" }}>
+              <tbody>
+                <tr>
+                  <td colspan={1}>
+                    <SmallButton
+                      style={{
+                        marginLeft: 10,
+                        marginRight: -10,
+                        marginTop: 32,
+                      }}
+                      onClick={() =>
+                        handleToken0AmountChange(
+                          blockData.token0Balance - 0.002
+                        )
+                      }
+                    >
+                      Max
+                    </SmallButton>
+                  </td>
+                  <td colspan={4}>
+                    <LabeledInput
+                      name={tokens["token0"].symbol}
+                      onChange={(e) => handleToken0AmountChange(e.target.value)}
+                      onFocus={() => handleToken0AmountChange("")}
+                      value={state.token0Amount}
+                      icon={tokens["token0"].icon}
+                      info={`Bal: ${numericFormat(
+                        BN(blockData.token0Balance)
+                      )}`}
+                    ></LabeledInput>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={1}></td>
+                  <td colSpan={5}>
+                    <LabeledInput
+                      name={tokens["token1"].symbol}
+                      onChange={(e) => handleToken1AmountChange(e.target.value)}
+                      onFocus={() => handleToken1AmountChange("")}
+                      value={state.token1Amount}
+                      icon={tokens["token1"].icon}
+                      info={`Bal: ${numericFormat(
+                        BN(blockData.token1Balance)
+                      )}`}
+                    ></LabeledInput>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
-          <GradientDiv style={{ height: 90 }}>
+            <p></p>
+            <CurrencySelector
+              provider={ethersProvider}
+              initialToken={tokens}
+              onChange={(tokens, poolHop) => {
+                setState({ ...state, poolHop: poolHop });
+                setTokens(tokens);
+              }}
+            ></CurrencySelector>
             <br />
+            <p>
+              Price: &nbsp;
+              {state.poolHop && blockData.p0Rate ? (
+                <P>
+                  {numericFormat(
+                    BN(blockData.p0Rate.toString())
+                      .dividedBy(BN(blockData.p1Rate.toString()))
+                      .toString()
+                  )}
+                </P>
+              ) : (
+                <P>{numericFormat(BN(blockData.p0Rate).toString())}</P>
+              )}
+            </p>
 
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              {tokens["token0"].contract.address === wbnb ? (
-                <span></span>
-              ) : (
-                <MediumButtonInverted
-                  onClick={() => {
-                    if (!wallet) {
-                      connect();
-                      return;
-                    }
-                    approveToken(
-                      tokens["token0"].contract,
-                      ethers.constants.MaxUint256
-                    );
-                  }}
-                >
-                  Approve {tokens["token0"].symbol}{" "}
-                  <img
-                    style={{ height: 20, position: "relative", top: 2 }}
-                    src={`/tokenlogos/${tokens["token0"].icon}`}
-                  ></img>
-                </MediumButtonInverted>
-              )}
-              {tokens["token1"].contract.address === wbnb ? (
-                <span></span>
-              ) : (
-                <MediumButtonInverted
-                  onClick={() => {
-                    approveToken(
-                      tokens["token1"].contract,
-                      ethers.constants.MaxUint256
-                    );
-                  }}
-                >
-                  Approve {tokens["token1"].symbol}{" "}
-                  <img
-                    style={{ height: 20, position: "relative", top: 2 }}
-                    src={`/tokenlogos/${tokens["token1"].icon}`}
-                  ></img>
-                </MediumButtonInverted>
-              )}
-            </div>
-          </GradientDiv>
-        </div>
-      </Container>
-      <div style={{ width: "100vw" }}>
-        <TokenInfo tokens={tokens}></TokenInfo>
-        <Container style={{ maxWidth: 1180, width: "98%", margin: "0 auto" }}>
-          <ContainerTitle>Recent Transactions</ContainerTitle>
-          <div style={{ maxHeight: 500, marginTop: -18, overflowY: "scroll" }}>
-            <TransactionList
-              transactions={blockData.transactionHistory}
-            ></TransactionList>
+            <LargeButton
+              style={{ width: "70%" }}
+              onClick={async () => {
+                if (!wallet) {
+                  await connect();
+                  return;
+                }
+                if (state.poolHop) {
+                  swapTokens();
+                  return;
+                }
+                if (tokens["token0"].contract.address === wbnb) {
+                  swapETHToToken();
+                } else {
+                  swapTokenToETH();
+                }
+              }}
+            >
+              Swap <br />
+              {tokens["token0"].symbol} to {tokens["token1"].symbol}
+            </LargeButton>
+            <ContainerInverted>
+              <p style={{ fontSize: "small" }}>
+                You will receive min.{" "}
+                <span style={{ color: primary }}>
+                  {" "}
+                  {numericFormat(
+                    state.token1AmountMin.dividedBy(BN(10).pow(18)).toFixed(18),
+                    6
+                  )}{" "}
+                  {tokens["token1"].symbol}
+                </span>
+              </p>
+              <p style={{ fontSize: "small" }}>
+                Price Impact:{" "}
+                <span style={{ color: primary }}>
+                  {state.impact.toString()}%
+                </span>
+              </p>
+              <div style={{ display: "flex", justifyContent: "space-around" }}>
+                <MaxSlippageSelector
+                  maxSlippage={0.5}
+                  setMaxSlippage={setMaxSlippage}
+                ></MaxSlippageSelector>
+                <TransactionTimeoutSelector
+                  initTimeout={timeout}
+                  setTime={setTimeoutTime}
+                ></TransactionTimeoutSelector>
+              </div>
+            </ContainerInverted>
+
+            <GradientDiv style={{ height: 90 }}>
+              <br />
+
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                {tokens["token0"].contract.address === wbnb ? (
+                  <span></span>
+                ) : (
+                  <MediumButtonInverted
+                    onClick={() => {
+                      if (!wallet) {
+                        connect();
+                        return;
+                      }
+                      approveToken(
+                        tokens["token0"].contract,
+                        ethers.constants.MaxUint256
+                      );
+                    }}
+                  >
+                    Approve {tokens["token0"].symbol}{" "}
+                    <img
+                      style={{ height: 20, position: "relative", top: 2 }}
+                      src={`/tokenlogos/${tokens["token0"].icon}`}
+                    ></img>
+                  </MediumButtonInverted>
+                )}
+                {tokens["token1"].contract.address === wbnb ? (
+                  <span></span>
+                ) : (
+                  <MediumButtonInverted
+                    onClick={() => {
+                      approveToken(
+                        tokens["token1"].contract,
+                        ethers.constants.MaxUint256
+                      );
+                    }}
+                  >
+                    Approve {tokens["token1"].symbol}{" "}
+                    <img
+                      style={{ height: 20, position: "relative", top: 2 }}
+                      src={`/tokenlogos/${tokens["token1"].icon}`}
+                    ></img>
+                  </MediumButtonInverted>
+                )}
+              </div>
+            </GradientDiv>
           </div>
         </Container>
+        <div style={{ width: "100vw" }}>
+          <TokenInfo tokens={tokens}></TokenInfo>
+          <Container style={{ maxWidth: 1180, width: "98%", margin: "0 auto" }}>
+            <ContainerTitle>Recent Transactions</ContainerTitle>
+            <div
+              style={{ maxHeight: 500, marginTop: -18, overflowY: "scroll" }}
+            >
+              <TransactionList
+                transactions={blockData.transactionHistory}
+              ></TransactionList>
+            </div>
+          </Container>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

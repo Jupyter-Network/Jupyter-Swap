@@ -17,7 +17,7 @@ export default function MainMenu({ onclick, active, block }) {
     }
   }, [block]);
   return (
-    <div style={{ zIndex: -1 }}>
+    <div style={{ zIndex:2,position:"sticky",top:0,backgroundColor:background,boxShadow:"0px 4px 4px rgba(0,0,0,0.1)"}}>
       <div
         style={{
           display: "flex",
