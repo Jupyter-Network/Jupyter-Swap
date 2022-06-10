@@ -86,7 +86,7 @@ export function token1ToToken0(blockData, maxSlippage, value) {
       .multipliedBy(new BN(1).minus(maxSlippage / 100))
       .multipliedBy(new BN(10).pow(18)),
     impact: validate(rate
-      .minus(rateWithoutSlippage)
+      .plus(rateWithoutSlippage)
       .dividedBy(rate)
       .multipliedBy(100)
       .toFixed(3)),

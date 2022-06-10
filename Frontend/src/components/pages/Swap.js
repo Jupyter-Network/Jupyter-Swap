@@ -1,7 +1,7 @@
-import { useConnectWallet, useWallets } from "@web3-onboard/react";
-import { ethers, utils } from "ethers";
+import { useConnectWallet } from "@web3-onboard/react";
+import { ethers } from "ethers";
 import { useEffect, useState } from "react";
-import { token0, router, token1, wbnb } from "../../contracts/addresses";
+import { router, token1, wbnb } from "../../contracts/addresses";
 import erc20 from "../..//contracts/build/IERC20.json";
 import BN from "bignumber.js";
 import CurrencySelector from "../swap/CurrencySelector";
@@ -16,23 +16,14 @@ import {
 import { Input } from "../../theme/inputs";
 import {
   LargeButton,
-  MediumButton,
   MediumButtonInverted,
   SmallButton,
 } from "../../theme/buttons";
-import { Label, P } from "../../theme/outputs";
+import { P } from "../../theme/outputs";
 import { transaction } from "../../utils/alerts";
 import "chart.js/auto";
 import { Line } from "react-chartjs-2";
-import {
-  background,
-  backgroundGradient,
-  highlight,
-  highlightGradient,
-  primary,
-  secondary,
-  tintedBackground,
-} from "../../theme/theme";
+import { background, primary, secondary } from "../../theme/theme";
 import { getHistory, getTransanctionHistory } from "../../utils/requests";
 import TransactionList from "../swap/TransactionList";
 import MaxSlippageSelector from "../swap/MaxSlippageSelector";
@@ -41,12 +32,11 @@ import LabeledInput from "../LabeledInput";
 import TokenInfo from "../swap/TokenInfo";
 import { initTokens } from "../../initialValues";
 import LoadingSpinner from "../LoadingSpinner";
+import { _scaleDown } from "../../utils/mathHelper";
+import { fetchBlockData } from "../swap/blockData";
+
 const erc20Abi = erc20.abi;
 BN.config({ DECIMAL_PLACES: 18 });
-//Add this to a Math file later
-function _scaleDown(value) {
-  return BN(value.toString()).div(BN(10).pow(18)).toString();
-}
 
 export default function Swap({ block, ethersProvider, routerContract }) {
   const [state, setState] = useState({
@@ -146,8 +136,10 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         setState({ ...state, poolHop: true });
       }
     }
-    asyncRun();
-  }, [block, tokens, maxSlippage]);
+    if (!loading) {
+      asyncRun();
+    }
+  }, [block,tokens, maxSlippage]);
 
   //newBlockData
   useEffect(() => {
@@ -215,7 +207,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         state.token1AmountMin.toFixed(0),
         deadline(),
         { value: value },
-      ]
+      ],
+      getBlockData
     );
     setState({
       ...state,
@@ -235,7 +228,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         new BN(state.token0Amount).multipliedBy(new BN(10).pow(18)).toFixed(0),
         state.token1AmountMin.toFixed(0),
         deadline(),
-      ]
+      ],
+      getBlockData
     );
 
     setState({
@@ -257,7 +251,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         new BN(state.token0Amount).multipliedBy(new BN(10).pow(18)).toFixed(0),
         state.token1AmountMin.toFixed(0),
         deadline(),
-      ]
+      ],
+      getBlockData
     );
 
     setState({
@@ -285,139 +280,17 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     ]);
   }
 
-  async function getBlockData() {
+  async function getBlockData(loaderVisible = true) {
     if (loading) {
       return true;
     }
-    setLoading(true);
-    let p0Rate = BN(10).pow(18);
-    let t0Balance = 0;
-    if (tokens["token0"].contract.address === wbnb) {
-      t0Balance = wallet
-        ? await ethersProvider.getBalance(wallet.accounts[0].address)
-        : 0;
-      p0Rate = p0Rate.dividedBy(
-        BN(
-          (
-            await routerContract.getRate(tokens["token1"].contract.address)
-          ).toString()
-        )
-      );
-    } else {
-      t0Balance = wallet
-        ? await tokens["token0"].contract.balanceOf(wallet.accounts[0].address)
-        : 0;
-      p0Rate = BN(
-        (
-          await routerContract.getRate(tokens["token0"].contract.address)
-        ).toString()
-      ).dividedBy(BN(10).pow(18));
+    if (loaderVisible) {
+      setLoading(true);
     }
-
-    let t1Balance = 0;
-    let p1Rate = BN(BN(10).pow(18));
-
-    if (tokens["token1"].contract.address === wbnb) {
-      t1Balance = wallet
-        ? await ethersProvider.getBalance(wallet.accounts[0].address)
-        : 0;
-    } else {
-      t1Balance = wallet
-        ? await tokens["token1"].contract.balanceOf(wallet.accounts[0].address)
-        : 0;
-      p1Rate = BN(
-        (
-          await routerContract.getRate(tokens["token1"].contract.address)
-        ).toString()
-      ).dividedBy(BN(10).pow(18));
-    }
-
-    let priceHistory = [];
-    let poolBalances = null;
-    let transactions = [];
-    if (tokens["token1"].contract.address !== wbnb) {
-      poolBalances = await routerContract.getPoolBalances(
-        tokens["token1"].contract.address
-      );
-      transactions = (
-        await getTransanctionHistory(tokens["token1"].contract.address)
-      ).data;
-    } else {
-      poolBalances = [BN(0), BN(0)];
-      priceHistory = (
-        await getHistory(tokens["token0"].contract.address)
-      ).data.map((item, index) => {
-        return {
-          rate: BN(item.rate).toString(),
-          time: item.bucket,
-        };
-      });
-    }
-
-    let pool1Balances = null;
-
-    if (tokens["token0"].contract.address !== wbnb) {
-      pool1Balances = await routerContract.getPoolBalances(
-        tokens["token0"].contract.address
-      );
-      transactions = [
-        ...transactions,
-        ...(await getTransanctionHistory(tokens["token0"].contract.address))
-          .data,
-      ];
-    } else {
-      pool1Balances = [new BN(0), new BN(0)];
-      priceHistory = (
-        await getHistory(tokens["token1"].contract.address)
-      ).data.map((item, index) => {
-        return {
-          rate: BN(10).pow(36).dividedBy(BN(item.rate)).toString(),
-          time: item.bucket,
-        };
-      });
-    }
-
-    if (priceHistory.length === 0) {
-      let p0 = await getHistory(tokens["token0"].contract.address);
-      let p1 = await getHistory(tokens["token1"].contract.address);
-
-      priceHistory = p0.data.map((item, index) => {
-        return {
-          rate: BN(item.rate)
-            .dividedBy(BN(p1.data[index].rate).dividedBy(BN(10).pow(18)))
-
-            .toString(),
-          time: item.bucket,
-        };
-      });
-    }
-
-    const token0Allowance = wallet
-      ? await tokens["token0"].contract.allowance(
-          wallet.accounts[0].address,
-          router
-        )
-      : 0;
-
-    const token1Allowance = wallet
-      ? await tokens["token1"].contract.allowance(
-          wallet.accounts[0].address,
-          router
-        )
-      : 0;
-    setBlockData({
-      token0Balance: _scaleDown(t0Balance),
-      token1Balance: _scaleDown(t1Balance),
-      poolBalances: await poolBalances,
-      pool1Balances: await pool1Balances,
-      token0Allowance: _scaleDown(token0Allowance),
-      token1Allowance: _scaleDown(token1Allowance),
-      p0Rate: p0Rate,
-      p1Rate: p1Rate,
-      priceHistory: priceHistory.reverse(),
-      transactionHistory: transactions,
-    });
-    handleToken0AmountChange(state.token0Amount);
+    setBlockData(
+      await fetchBlockData({ tokens, wallet, ethersProvider, routerContract })
+    );
+    //handleToken0AmountChange(state.token0Amount);
     setLoading(false);
   }
 
@@ -428,7 +301,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
 
   return (
     <>
-    <LoadingSpinner loading={loading}></LoadingSpinner>
+      <LoadingSpinner loading={loading}></LoadingSpinner>
       <div
         style={{
           display: !loading ? "flex" : "none",
@@ -548,7 +421,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
             <CurrencySelector
               provider={ethersProvider}
               initialToken={tokens}
-              onChange={(tokens, poolHop) => {
+              onChange={async (tokens, poolHop) => {
                 setState({ ...state, poolHop: poolHop });
                 setTokens(tokens);
               }}

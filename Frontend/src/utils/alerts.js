@@ -32,7 +32,7 @@ const theme = {
   color: background,
 };
 
-export function transaction(message, exec, options) {
+export function transaction(message, exec, options, getBlockData) {
   return Swal.fire({
     ...theme,
     position: "center",
@@ -47,7 +47,7 @@ export function transaction(message, exec, options) {
       try {
         let tx = await exec(...options);
         await tx.wait();
-        success();
+        success(getBlockData);
       } catch (e) {
         console.log(e);
         if (e.data) {
@@ -62,7 +62,7 @@ export function transaction(message, exec, options) {
   });
 }
 
-export function success() {
+export function success(getBlockData) {
   toast.success("Success", {
     position: "top-left",
     autoClose: 3000,
@@ -73,28 +73,28 @@ export function success() {
     progress: undefined,
     theme: "colored",
   });
-  // Swal.fire({
-  //  ...theme,
-  //  //icon:"success",
-  //  timer: 1500,
-  //  text: "Success",
-  //});
+  setTimeout(() => {
+    getBlockData(false);
+  }, 7000);
 }
 
 export function error(message) {
-  toast.error(<div>
-    <h4>Error</h4>
-    <p style={{fontSize:"small"}}>{message}</p>
-  </div>, {
-    position: "top-left",
-    autoClose: 3000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    progress: undefined,
-    theme: "colored",
-  });
+  toast.error(
+    <div>
+      <h4>Error</h4>
+      <p style={{ fontSize: "small" }}>{message}</p>
+    </div>,
+    {
+      position: "top-left",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+    }
+  );
   //return Swal.fire({
   //  ...theme,
   //  timer: 1500,

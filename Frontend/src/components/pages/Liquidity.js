@@ -1,38 +1,27 @@
-import { useConnectWallet, useWallets } from "@web3-onboard/react";
-import { ethers, utils } from "ethers";
+import { useConnectWallet } from "@web3-onboard/react";
+import { ethers } from "ethers";
 import { useEffect, useState } from "react";
-import { token0, router, token1, wbnb } from "../../contracts/addresses";
+import { router, wbnb } from "../../contracts/addresses";
 import erc20 from "../..//contracts/build/IERC20.json";
-import routerMeta from "../../contracts/build/JupyterRouterV1.json";
 import BN from "bignumber.js";
 import { numericFormat, validate } from "../../utils/inputValidations";
 import { Container, ContainerTitle, GradientDiv } from "../../theme";
-import {
-  LargeButton,
-  MediumButton,
-  MediumButtonInverted,
-} from "../../theme/buttons";
-import { Input } from "../../theme/inputs";
-import { ColorFrame, Label, P } from "../../theme/outputs";
-import { error, success, transaction } from "../../utils/alerts";
-import { ToastContainer } from "react-toastify";
+import { LargeButton, MediumButtonInverted } from "../../theme/buttons";
+import { P } from "../../theme/outputs";
+import { transaction } from "../../utils/alerts";
 import "react-toastify/dist/ReactToastify.css";
 import PoolSelector from "../liquidity/PoolSelector";
-import { background, primary, secondary } from "../../theme/theme";
+import { primary } from "../../theme/theme";
 
-import CurrencyDisplay from "../liquidity/CurrencyDisplay";
 import Balances from "../liquidity/Balances";
 import Chart from "../liquidity/Chart";
 import LabeledInput from "../LabeledInput";
 import { getAPY } from "../../utils/requests";
 import { initTokens } from "../../initialValues";
 import LoadingSpinner from "../LoadingSpinner";
-const routerAbi = routerMeta.abi;
+import { _scaleDown } from "../../utils/mathHelper";
+import { fetchBlockData } from "../liquidity/blockData";
 const erc20Abi = erc20.abi;
-//Add this to a Math file later
-function _scaleDown(value) {
-  return BN(value.toString()).div(BN(10).pow(18)).toString();
-}
 
 export default function Liquidity({ block, ethersProvider, routerContract }) {
   const [
@@ -194,9 +183,9 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       [
         tokens["token1"].contract.address,
         BN(state.lpAmount).multipliedBy(BN(10).pow(36)).toFixed(0),
-      ]
+      ],
+      getBlockData
     );
-    getBlockData();
     await routerContract.createLiquidityPool(
       createWidgetState.address,
       BN(createWidgetState.tokenAmount)
@@ -232,9 +221,9 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             .toFixed(0)
             .toString(),
         },
-      ]
+      ],
+      getBlockData
     );
-    getBlockData();
   }
 
   async function removeLiquidity() {
@@ -245,9 +234,9 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         tokens["token1"].contract.address,
         BN(state.lpAmount).multipliedBy(BN(10).pow(36)).toFixed(0),
         deadline(),
-      ]
+      ],
+      getBlockData
     );
-    getBlockData();
   }
 
   async function getToken1AmountFromToken0Amount(amount) {
@@ -285,6 +274,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       return true;
     }
     setLoading(true);
+    /*
     const t0Balance = wallet
       ? await ethersProvider.getBalance(wallet.accounts[0].address)
       : 0;
@@ -327,7 +317,10 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         )
         .multipliedBy(100)
         .toString(),
-    });
+    });*/
+    setBlockData(
+      await fetchBlockData({ wallet, tokens, ethersProvider, routerContract })
+    );
     setLoading(false);
   }
   return (

@@ -151,7 +151,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             borderRadius: 5,
             width: 120,
             height: 70,
-            zIndex:1
+            zIndex: 1,
           }}
         >
           <img

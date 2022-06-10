@@ -8,6 +8,7 @@ node_modules/
 dist/
 /Contracts/build/contracts/
 
+build/
 # Compiled Java class files
 *.class
 
