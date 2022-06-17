@@ -38,7 +38,7 @@ export async function fetchBlockData(data) {
     pool1Balances = [new BN(0), new BN(0)];
     console.log("TOKEN0 = WBNB");
     priceHistory = (
-      await getHistoryOHLC(data.tokens["token1"].contract.address)
+      await getHistoryOHLC(data.tokens["token1"].contract.address,data.timeBucket)
     ).data.map((item, index) => {
       return {
         open: BN(10).pow(36).dividedBy(BN(item.open)),
@@ -104,7 +104,7 @@ export async function fetchBlockData(data) {
     poolBalances = [BN(0), BN(0)];
     console.log("TOKEN1 === WBNB");
     priceHistory = (
-      await getHistoryOHLC(data.tokens["token0"].contract.address)
+      await getHistoryOHLC(data.tokens["token0"].contract.address,data.timeBucket)
     ).data.map((item, index) => {
       return {
         open:BN(item.open),
@@ -139,8 +139,8 @@ export async function fetchBlockData(data) {
     data.tokens["token0"].contract.address !== wbnb &&
     data.tokens["token1"].contract.address !== wbnb
   ) {
-    let p0 = await getHistoryOHLC(data.tokens["token0"].contract.address);
-    let p1 = await getHistoryOHLC(data.tokens["token1"].contract.address);
+    let p0 = await getHistoryOHLC(data.tokens["token0"].contract.address,data.timeBucket);
+    let p1 = await getHistoryOHLC(data.tokens["token1"].contract.address,data.timeBucket);
 
     priceHistory = p0.data.map((item, index) => {
       return {

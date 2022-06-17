@@ -5,6 +5,7 @@ import {
   secondary,
   highlight,
   backgroundGradient,
+  highlightGradient,
 } from "./theme";
 const fadeIn = keyframes`
   from {
@@ -74,4 +75,16 @@ export const ContainerInverted = styled.div`
 `;
 export const Loader = styled.div`
   animation: ${fadeIn} 1s linear infinite;
+`;
+
+export const ContainerButton = styled.button`
+  background:none;
+  outline:none;
+  border:none;
+  font-size:medium;
+  margin-top:-10px;
+  &:hover{
+    color:${highlight};
+  }
+  
 `;

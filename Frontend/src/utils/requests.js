@@ -19,7 +19,7 @@ export async function getAPY(tokenAddress) {
   return res.data;
 }
 
-export async function getHistoryOHLC(tokenAddress) {
-  let res = await axios.get(`http://127.0.0.1:3001/historyOHLC/${tokenAddress}`);
+export async function getHistoryOHLC(tokenAddress,bucket) {
+  let res = await axios.get(`http://127.0.0.1:3001/historyOHLC/${tokenAddress}/${bucket}`);
   return res;
 }

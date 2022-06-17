@@ -50,7 +50,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     poolHop: false,
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [firstLoad, setFirstLoad] = useState(true);
   const [
     {
       wallet, // the wallet that has been connected or null if not yet connected
@@ -62,6 +63,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
 
   const [maxSlippage, setMaxSlippage] = useState(new BN(0.5));
   const [timeout, setTimeoutTime] = useState(900000);
+
+  const [timeBucket, setTimeBucket] = useState(15);
 
   const [blockData, setBlockData] = useState({
     poolBalances: [new BN(0), new BN(0)],
@@ -138,10 +141,10 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         setState({ ...state, poolHop: true });
       }
     }
-    if (!loading) {
+    if (!loading || firstLoad) {
       asyncRun();
     }
-  }, [block, tokens, maxSlippage]);
+  }, [block, tokens, maxSlippage,timeBucket]);
 
   //newBlockData
   useEffect(() => {
@@ -283,14 +286,12 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   }
 
   async function getBlockData(loaderVisible = true) {
-    if (loading) {
-      return true;
-    }
+    setFirstLoad(false);
     if (loaderVisible) {
       setLoading(true);
     }
     setBlockData(
-      await fetchBlockData({ tokens, wallet, ethersProvider, routerContract })
+      await fetchBlockData({ tokens, wallet, ethersProvider, routerContract,timeBucket })
     );
     //handleToken0AmountChange(state.token0Amount);
     setLoading(false);
@@ -303,15 +304,16 @@ export default function Swap({ block, ethersProvider, routerContract }) {
 
   return (
     <>
-      <LoadingSpinner loading={loading}></LoadingSpinner>
+      {loading || firstLoad ? <LoadingSpinner></LoadingSpinner> : <></>}
       <div
         style={{
-          display: !loading ? "flex" : "none",
+          visibility: loading ? "hidden" : "visible",
+          display: loading ? "none" : "flex",
           flexWrap: "wrap",
           justifyContent: "center",
         }}
       >
-        <LightChart blockData={blockData} tokens={tokens}></LightChart>
+        <LightChart blockData={blockData} onBucketChange={(bucket)=>{setTimeBucket(bucket)}}></LightChart>
 
         <Container>
           <div style={{ borderRadius: 7, overflow: "hidden" }}>

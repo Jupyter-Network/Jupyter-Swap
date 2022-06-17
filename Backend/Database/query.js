@@ -119,8 +119,9 @@ module.exports = {
       GROUP BY bucket
       ORDER BY bucket DESC LIMIT 20;`;
   },
-  getHistoryOHLC: async (tokenAddress) => {
-    return await sql`SELECT time_bucket_gapfill('15 minutes', time,now() - INTERVAL '1 day',now() at time zone 'utc') AS bucket, 
+  getHistoryOHLC: async (tokenAddress,bucketMinutes) => {
+    console.log(bucketMinutes)
+    return await sql`SELECT time_bucket_gapfill(${bucketMinutes + " minutes"}, time,now() - INTERVAL '1 day',now() at time zone 'utc') AS bucket, 
     locf(first(rate,time)) as open,
     max(rate) as high,
     min(rate) as low,
@@ -136,7 +137,7 @@ module.exports = {
     GROUP BY bucket
     ORDER BY bucket DESC LIMIT 50;`;
   },
-  getTransanctionHistory: async (tokenAddress) => {
+  getTransanctionHistory: async (tokenAddress,bucketMinutes) => {
     return await sql`SELECT from_address,
     from_token.token_symbol as from_symbol,
     from_token.token_icon as from_icon,

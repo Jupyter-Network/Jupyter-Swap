@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { LoaderObject, Rocket } from "../theme/loader";
 import { background, highlightGradient } from "../theme/theme";
 
@@ -15,42 +16,36 @@ const rotate = `p {
     transform:rotate(180deg);
   }
 }`;
-let planetWidth = "150px"
+let planetWidth = "150px";
 
-
-export default function LoadingSpinner({ loading }) {
-  return (
-    <>
-      {loading ? (
-        <div style={{ display:"flex",justifyContent:"center",}}>
-          <div
-            style={{
-              zIndex: 1000,
-              backgroundColor: background,
-              marginTop:100,
-              width:planetWidth,
-              padding:40,
-              overflow:"hidden"
-            }}
-          >
-            <LoaderObject
-              type="image/svg+xml"
-              data="drawing.svg"
-              style={{ width:"100%"}}
-
-            ></LoaderObject>
-            <Rocket
-              type="image/svg+xml"
-              height="100%"
-              width="100%"
-              data="rocket.svg"
-              style={{ position:"relative",top:"-75%",left:0}}
-            ></Rocket>
+export default function LoadingSpinner({ loading = false }) {
+    return (
+     
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <div
+              style={{
+                zIndex: 1000,
+                marginTop: 100,
+                width: planetWidth,
+                padding: 40,
+                overflow: "hidden",
+              }}
+            >
+              <LoaderObject
+                type="image/svg+xml"
+                data="drawing.svg"
+                style={{ width: "100%" }}
+              ></LoaderObject>
+              <Rocket
+                type="image/svg+xml"
+                height="100%"
+                width="100%"
+                data="rocket.svg"
+                style={{ position: "relative", top: "-75%", left: 0 }}
+              ></Rocket>
+            </div>
           </div>
-        </div>
-      ) : (
-        <></>
-      )}
-    </>
-  );
+        ) 
+    
+  
 }

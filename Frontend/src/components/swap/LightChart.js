@@ -1,4 +1,4 @@
-import { Container, ContainerTitle } from "../../theme";
+import { Container, ContainerButton, ContainerTitle } from "../../theme";
 import {
   background,
   primary,
@@ -11,7 +11,8 @@ import { useEffect, useState, useI, Component, createRef, useRef } from "react";
 import equal from "fast-deep-equal";
 import { _scaleDown } from "../../utils/mathHelper";
 import { createChart, CrosshairMode } from "lightweight-charts";
-export default function LightChart({ blockData, tokens }) {
+import ChartTitleMenu from "./ChartTitleMenu";
+export default function LightChart({ blockData, onBucketChange}) {
   const chartContainerRef = useRef();
   const chart = useRef();
   const resizeObserver = useRef();
@@ -79,7 +80,7 @@ export default function LightChart({ blockData, tokens }) {
                   .toString()
               : BN(item.high).dividedBy(BN(10).pow(18)).toString(),
           low:
-           item.low === null || isNaN(item.low)
+            item.low === null || isNaN(item.low)
               ? BN(blockData.priceHistory[i - 1].close)
                   .dividedBy(BN(10).pow(18))
                   .toString()
@@ -154,7 +155,11 @@ export default function LightChart({ blockData, tokens }) {
           zIndex: 1,
         }}
       >
-        <ContainerTitle style={{ marginBottom: 0 }}> Chart</ContainerTitle>
+        <ContainerTitle style={{ marginBottom: 0 }}>
+          {" "}
+          Chart &nbsp;
+         <ChartTitleMenu onChange={onBucketChange}/>
+        </ContainerTitle>
         <div
           ref={chartContainerRef}
           className="chart-container"

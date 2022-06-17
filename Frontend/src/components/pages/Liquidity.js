@@ -39,7 +39,8 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     allowanceCheck: new BN(0),
     lpAmount: "0.0",
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [firstLoad, setFirstLoad] = useState(true);
 
   const [createWidgetState, setCreateWidgetState] = useState({
     bnbAmount: new BN(0),
@@ -143,7 +144,9 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       await getBlockData();
       handleToken0AmountChange(state.token0Amount.toString());
     }
-    asyncRun();
+    if (!loading || firstLoad) {
+      asyncRun();
+    }
   }, [block, tokens]);
 
   useEffect(() => {
@@ -269,55 +272,9 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
 
   async function getBlockData() {
     console.log("Fetch Block Data");
-    if (loading) {
-      console.log("Loading in progress");
-      return true;
-    }
+
+    setFirstLoad(false);
     setLoading(true);
-    /*
-    const t0Balance = wallet
-      ? await ethersProvider.getBalance(wallet.accounts[0].address)
-      : 0;
-    const t1Balance = wallet
-      ? await tokens["token1"].contract.balanceOf(wallet.accounts[0].address)
-      : 0;
-    const userBalance = wallet
-      ? await routerContract.getBalance(tokens["token1"].contract.address)
-      : 0;
-    const rate = await routerContract.getRate(
-      tokens["token1"].contract.address
-    );
-
-    const poolBalances = await routerContract.getPoolBalances(
-      tokens["token1"].contract.address
-    );
-
-    const lpTotalSupply = await routerContract.getLPTotalSupply(
-      tokens["token1"].contract.address
-    );
-
-    const apy = await getAPY(tokens.token1.contract.address);
-    console.log(
-      BN(apy)
-        .dividedBy(BN(poolBalances[1].toString()).dividedBy(BN(10).pow(18)))
-        .toString()
-    );
-    setBlockData({
-      token0Balance: _scaleDown(t0Balance),
-      token1Balance: _scaleDown(t1Balance),
-      rate: _scaleDown(rate),
-      userBalance: userBalance,
-      poolBalances: poolBalances,
-      lpTotalSupply: lpTotalSupply,
-      apy: BN(apy)
-        .dividedBy(
-          BN(poolBalances[1].toString())
-            .multipliedBy(2)
-            .dividedBy(BN(10).pow(18))
-        )
-        .multipliedBy(100)
-        .toString(),
-    });*/
     setBlockData(
       await fetchBlockData({ wallet, tokens, ethersProvider, routerContract })
     );
@@ -325,11 +282,12 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
   }
   return (
     <>
-      <LoadingSpinner loading={loading}></LoadingSpinner>
+      {loading || firstLoad ? <LoadingSpinner></LoadingSpinner> : <></>}
       <div
         style={{
           margin: "0 auto",
           display: !loading ? "flex" : "none",
+          visibility: loading ? "hidden" : "visible",
           flexWrap: "wrap",
           justifyContent: "center",
           maxWidth: 1200,
