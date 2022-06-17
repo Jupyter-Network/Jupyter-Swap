@@ -11,6 +11,10 @@ fastify.get("/history/:tokenAddress", async (request, reply) => {
   return await query.getHistory(request.params.tokenAddress);
 });
 
+fastify.get("/historyOHLC/:tokenAddress", async (request, reply) => {
+  return await query.getHistoryOHLC(request.params.tokenAddress);
+});
+
 fastify.get("/transactionHistory/:tokenAddress", async (request, reply) => {
   return await query.getTransanctionHistory(request.params.tokenAddress);
 });

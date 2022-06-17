@@ -284,6 +284,8 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             border: "solid",
             borderWidth: 1,
             borderRadius: 5,
+            zIndex: 1000,
+
           }}
         >
           <h4>Search Token :</h4>

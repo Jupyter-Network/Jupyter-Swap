@@ -119,6 +119,23 @@ module.exports = {
       GROUP BY bucket
       ORDER BY bucket DESC LIMIT 20;`;
   },
+  getHistoryOHLC: async (tokenAddress) => {
+    return await sql`SELECT time_bucket_gapfill('15 minutes', time,now() - INTERVAL '1 day',now() at time zone 'utc') AS bucket, 
+    locf(first(rate,time)) as open,
+    max(rate) as high,
+    min(rate) as low,
+    locf(last(rate,time)) as close
+    FROM (
+    SELECT * FROM public."Swaps" 
+    WHERE from_address = ${tokenAddress} AND to_address = ${wbnb}
+    UNION
+    SELECT * FROM public."Swaps"
+    WHERE from_address = ${wbnb} AND to_address  = ${tokenAddress} 
+    ) 
+    AS trades
+    GROUP BY bucket
+    ORDER BY bucket DESC LIMIT 50;`;
+  },
   getTransanctionHistory: async (tokenAddress) => {
     return await sql`SELECT from_address,
     from_token.token_symbol as from_symbol,

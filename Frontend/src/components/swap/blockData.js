@@ -1,6 +1,10 @@
 import { router, wbnb } from "../../contracts/addresses";
 import BN from "bignumber.js";
-import { getHistory, getTransanctionHistory } from "../../utils/requests";
+import {
+  getHistory,
+  getTransanctionHistory,
+  getHistoryOHLC,
+} from "../../utils/requests";
 import { _scaleDown } from "../../utils/mathHelper";
 const data = {
   tokens: ["tokenarray"],
@@ -32,12 +36,16 @@ export async function fetchBlockData(data) {
       )
     );
     pool1Balances = [new BN(0), new BN(0)];
+    console.log("TOKEN0 = WBNB");
     priceHistory = (
-      await getHistory(data.tokens["token1"].contract.address)
+      await getHistoryOHLC(data.tokens["token1"].contract.address)
     ).data.map((item, index) => {
       return {
-        rate: BN(10).pow(36).dividedBy(BN(item.rate)).toString(),
-        time: item.bucket,
+        open: BN(10).pow(36).dividedBy(BN(item.open)),
+        high: BN(10).pow(36).dividedBy(BN(item.high)),
+        low: BN(10).pow(36).dividedBy(BN(item.low)),
+        close: BN(10).pow(36).dividedBy(BN(item.close)),
+        bucket: item.bucket,
       };
     });
   } else {
@@ -94,16 +102,20 @@ export async function fetchBlockData(data) {
     ).data;
   } else {
     poolBalances = [BN(0), BN(0)];
+    console.log("TOKEN1 === WBNB");
     priceHistory = (
-      await getHistory(data.tokens["token0"].contract.address)
+      await getHistoryOHLC(data.tokens["token0"].contract.address)
     ).data.map((item, index) => {
       return {
-        rate: BN(item.rate).toString(),
-        time: item.bucket,
+        open:BN(item.open),
+        high: BN(item.high),
+        low: BN(item.low),
+        close: BN(item.close),
+        bucket: item.bucket,
       };
     });
   }
-
+  /*
   if (priceHistory.length === 0) {
     let p0 = await getHistory(data.tokens["token0"].contract.address);
     let p1 = await getHistory(data.tokens["token1"].contract.address);
@@ -117,7 +129,36 @@ export async function fetchBlockData(data) {
         time: item.bucket,
       };
     });
+  
+  }*/
+
+  // priceHistory = (await getHistoryOHLC(data.tokens["token0"].contract.address))
+  //   .data;
+  console.log("PRICEHOSTORY: ", data.tokens["token0"], data.tokens["token1"]);
+  if (
+    data.tokens["token0"].contract.address !== wbnb &&
+    data.tokens["token1"].contract.address !== wbnb
+  ) {
+    let p0 = await getHistoryOHLC(data.tokens["token0"].contract.address);
+    let p1 = await getHistoryOHLC(data.tokens["token1"].contract.address);
+
+    priceHistory = p0.data.map((item, index) => {
+      return {
+        open: BN(1).dividedBy(BN(item.open).dividedBy(BN(p1.data[index].open))),
+        high: BN(item.high).dividedBy(
+          BN(p1.data[index].high).dividedBy(BN(10).pow(18))
+        ),
+        low: BN(item.low).dividedBy(
+          BN(p1.data[index].low).dividedBy(BN(10).pow(18))
+        ),
+        close: BN(item.close).dividedBy(
+          BN(p1.data[index].close).dividedBy(BN(10).pow(18))
+        ),
+        bucket: item.bucket,
+      };
+    });
   }
+  console.log("PRRRHHH:", priceHistory);
 
   const token0Allowance = data.wallet
     ? await data.tokens["token0"].contract.allowance(
@@ -132,6 +173,7 @@ export async function fetchBlockData(data) {
         router
       )
     : 0;
+  console.log("History", priceHistory);
   return {
     token0Balance: _scaleDown(t0Balance),
     token1Balance: _scaleDown(t1Balance),

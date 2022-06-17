@@ -18,3 +18,8 @@ export async function getAPY(tokenAddress) {
   let res = await axios.get(`http://127.0.0.1:3001/apy/${tokenAddress}`);
   return res.data;
 }
+
+export async function getHistoryOHLC(tokenAddress) {
+  let res = await axios.get(`http://127.0.0.1:3001/historyOHLC/${tokenAddress}`);
+  return res;
+}

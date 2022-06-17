@@ -34,6 +34,8 @@ import { initTokens } from "../../initialValues";
 import LoadingSpinner from "../LoadingSpinner";
 import { _scaleDown } from "../../utils/mathHelper";
 import { fetchBlockData } from "../swap/blockData";
+import Chart from "../swap/Chart";
+import LightChart from "../swap/LightChart";
 
 const erc20Abi = erc20.abi;
 BN.config({ DECIMAL_PLACES: 18 });
@@ -139,7 +141,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     if (!loading) {
       asyncRun();
     }
-  }, [block,tokens, maxSlippage]);
+  }, [block, tokens, maxSlippage]);
 
   //newBlockData
   useEffect(() => {
@@ -309,59 +311,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
           justifyContent: "center",
         }}
       >
-        <Container style={{ width: "100vw", maxWidth: "775px" }}>
-          <ContainerTitle>Chart</ContainerTitle>
-          {blockData.priceHistory ? (
-            <div>
-              <Line
-                height={220}
-                options={{
-                  tension: 0.3,
-                  scales: {
-                    x: {
-                      ticks: {
-                        color: primary,
-                      },
-                    },
-                    y: {
-                      ticks: {
-                        color: primary,
-                      },
-                    },
-                  },
-                  plugins: {
-                    legend: {
-                      display: false,
-                    },
-                  },
-                }}
-                data={{
-                  labels: blockData.priceHistory.map((item) => {
-                    const date = new Date(item.time);
-                    return `${date.getHours()}:${date.getMinutes()}`;
-                  }),
-                  datasets: [
-                    {
-                      fill: false,
-                      pointBorderColor: secondary,
-                      label:
-                        tokens["token0"].symbol +
-                        " / " +
-                        tokens["token1"].symbol,
-                      backgroundColor: background,
-                      borderColor: primary,
-                      data: blockData.priceHistory.map((item) =>
-                        BN(item.rate).dividedBy(BN(10).pow(18)).toString()
-                      ),
-                    },
-                  ],
-                }}
-              ></Line>
-            </div>
-          ) : (
-            <p></p>
-          )}
-        </Container>
+        <LightChart blockData={blockData} tokens={tokens}></LightChart>
+
         <Container>
           <div style={{ borderRadius: 7, overflow: "hidden" }}>
             <ContainerTitle>
