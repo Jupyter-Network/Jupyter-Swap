@@ -79,6 +79,7 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
     <div>
       <div style={{ display: "flex", justifyContent: "center" }}>
         <MediumButtonInverted
+        title={"Select pool"}
           onClick={() =>
             activeSelector === 1
               ? setActiveSelector(null)

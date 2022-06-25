@@ -394,7 +394,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
 
           <br />
           <LargeButton onClick={() => removeLiquidity()}>
-            RemoveLiquidity
+            Remove Liquidity
           </LargeButton>
         </Container>
         <div style={{ width: "100%" }}>

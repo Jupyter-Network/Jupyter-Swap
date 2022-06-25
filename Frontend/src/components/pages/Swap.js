@@ -23,7 +23,13 @@ import { P } from "../../theme/outputs";
 import { transaction } from "../../utils/alerts";
 import "chart.js/auto";
 import { Line } from "react-chartjs-2";
-import { background, primary, secondary } from "../../theme/theme";
+import {
+  background,
+  highlight,
+  primary,
+  secondary,
+  tintedBackground,
+} from "../../theme/theme";
 import { getHistory, getTransanctionHistory } from "../../utils/requests";
 import TransactionList from "../swap/TransactionList";
 import MaxSlippageSelector from "../swap/MaxSlippageSelector";
@@ -144,7 +150,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     if (!loading || firstLoad) {
       asyncRun();
     }
-  }, [block, tokens, maxSlippage,timeBucket]);
+  }, [block, tokens, maxSlippage, timeBucket]);
 
   //newBlockData
   useEffect(() => {
@@ -291,7 +297,13 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       setLoading(true);
     }
     setBlockData(
-      await fetchBlockData({ tokens, wallet, ethersProvider, routerContract,timeBucket })
+      await fetchBlockData({
+        tokens,
+        wallet,
+        ethersProvider,
+        routerContract,
+        timeBucket,
+      })
     );
     //handleToken0AmountChange(state.token0Amount);
     setLoading(false);
@@ -313,7 +325,12 @@ export default function Swap({ block, ethersProvider, routerContract }) {
           justifyContent: "center",
         }}
       >
-        <LightChart blockData={blockData} onBucketChange={(bucket)=>{setTimeBucket(bucket)}}></LightChart>
+        <LightChart
+          blockData={blockData}
+          onBucketChange={(bucket) => {
+            setTimeBucket(bucket);
+          }}
+        ></LightChart>
 
         <Container>
           <div style={{ borderRadius: 7, overflow: "hidden" }}>
@@ -341,6 +358,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                   </td>
                   <td colspan={4}>
                     <LabeledInput
+                      title={`Sell Amount`}
                       name={tokens["token0"].symbol}
                       onChange={(e) => handleToken0AmountChange(e.target.value)}
                       onFocus={() => handleToken0AmountChange("")}
@@ -356,6 +374,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                   <td colSpan={1}></td>
                   <td colSpan={5}>
                     <LabeledInput
+                      title={`Buy Amount`}
                       name={tokens["token1"].symbol}
                       onChange={(e) => handleToken1AmountChange(e.target.value)}
                       onFocus={() => handleToken1AmountChange("")}
@@ -379,8 +398,15 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                 setTokens(tokens);
               }}
             ></CurrencySelector>
-            <br />
-            <p>
+            <p
+              style={{
+                backgroundColor: tintedBackground,
+                width: "50%",
+                margin: "5px auto",
+                padding: 10,
+                borderRadius: 10,
+              }}
+            >
               Price: &nbsp;
               {state.poolHop && blockData.p0Rate ? (
                 <P>
@@ -416,7 +442,15 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               Swap <br />
               {tokens["token0"].symbol} to {tokens["token1"].symbol}
             </LargeButton>
-            <ContainerInverted>
+            <ContainerInverted
+              style={{
+                backgroundColor: tintedBackground,
+                margin: "5px auto",
+                padding: "3px 10px",
+                borderRadius: 10,
+                marginBottom: 2,
+              }}
+            >
               <p style={{ fontSize: "small" }}>
                 You will receive min.{" "}
                 <span style={{ color: primary }}>
@@ -434,17 +468,24 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                   {state.impact.toString()}%
                 </span>
               </p>
-              <div style={{ display: "flex", justifyContent: "space-around" }}>
-                <MaxSlippageSelector
-                  maxSlippage={0.5}
-                  setMaxSlippage={setMaxSlippage}
-                ></MaxSlippageSelector>
-                <TransactionTimeoutSelector
-                  initTimeout={timeout}
-                  setTime={setTimeoutTime}
-                ></TransactionTimeoutSelector>
-              </div>
             </ContainerInverted>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: 10,
+                marginBottom: 12,
+              }}
+            >
+              <MaxSlippageSelector
+                maxSlippage={0.5}
+                setMaxSlippage={setMaxSlippage}
+              ></MaxSlippageSelector>
+              <TransactionTimeoutSelector
+                initTimeout={timeout}
+                setTime={setTimeoutTime}
+              ></TransactionTimeoutSelector>
+            </div>
 
             <GradientDiv style={{ height: 90 }}>
               <br />

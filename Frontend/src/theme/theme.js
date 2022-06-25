@@ -1,7 +1,7 @@
 const night = true;
 module.exports = {
   background: night ? "#423E37" : "white",
-  tintedBackground: night ? "#373F42" : "#b7c0c4",
+  tintedBackground: night ? "#38342d" : "#b7c0c4",
   primary: night ? "#25ced1" : "#2176AE",
   secondary: night ? "#E3B23C" : "#FF8A5B",
   highlight: night ? "#FF8A5B" : "#FE7F2D",

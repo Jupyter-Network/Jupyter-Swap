@@ -7,6 +7,7 @@ export default function LabeledInput({
   value,
   icon,
   info,
+  title="",
   onFocus=()=>{},
 }) {
   return (
@@ -48,6 +49,7 @@ export default function LabeledInput({
       </div>
 
       <Input
+      title={title}
         placeholder={name}
         value={value}
         onChange={(e) => {

@@ -15,32 +15,18 @@ export default function TransactionList({ transactions }) {
           borderCollapse: "collapse",
         }}
       >
-      <tr>
-          <th>
-              From Amount
-              </th>
-    
-              <th style={{textAlign:"right"}}>
-              
-              </th>
-              <th style={{textAlign:"center"}}>
-              </th>
-              <th>
-              
-              </th>
-              <th style={{textAlign:"right"}}>
-              To Amount
-              </th>
-              <th style={{textAlign:"center"}}>
-              Rate
-              </th>
-              <th style={{textAlign:"right"}}>Scan</th>
+        <tr>
+          <th>From</th>
 
-              <th style={{textAlign:"right"}}>
-              Time
-              </th>
-  
-              </tr>
+          <th></th>
+          <th></th>
+          <th>To</th>
+          <th></th>
+          <th>Rate</th>
+          <th>Scan</th>
+
+          <th>Time</th>
+        </tr>
         {transactions.map((transaction, index) => {
           return <ListItem transaction={transaction} index={index}></ListItem>;
         })}
@@ -54,38 +40,63 @@ function ListItem({ transaction, index }) {
   return (
     <tr
       style={{
-          fontSize:"0.7em",
+        fontSize: "0.7em",
         backgroundColor: index % 2 === 0 ? tintedBackground : background,
-
       }}
     >
-      <td style={{ padding: 8 }}>
-        {numericFormat(BN(transaction.from_amount).dividedBy(BN(10).pow(18)),18)}{" "}
+      <td style={{ padding: 5 }}>
+        <img
+          style={{ height: 25 }}
+          src={"/tokenlogos/" + transaction.from_icon}
+        ></img>
+      </td>
+      <td>
+        {numericFormat(
+          BN(transaction.from_amount).dividedBy(BN(10).pow(18)),
+          18
+        )}{" "}
         &nbsp;
         {transaction.from_symbol}
       </td>
-      <td style={{ textAlign: "right" }}>
-        <img style={{ height: 25 }} src={"/tokenlogos/"+transaction.from_icon}></img>
-      </td>
-      <td style={{minWidth:30,textAlign:"center"}}>{"< - >"}</td>
+
+      <td style={{ minWidth: 30 }}>{"< - >"}</td>
       <td>
         {" "}
-        <img style={{ height: 25 }} src={"/tokenlogos/" + transaction.to_icon}></img>
+        <img
+          style={{ height: 25 }}
+          src={"/tokenlogos/" + transaction.to_icon}
+        ></img>
       </td>
-      <td style={{textAlign:"right"}}>
-        {numericFormat(BN(transaction.to_amount).dividedBy(BN(10).pow(18)),18)} &nbsp;
+      <td>
+        &nbsp;
+        {numericFormat(
+          BN(transaction.to_amount).dividedBy(BN(10).pow(18)),
+          18
+        )}{" "}
+        &nbsp;
         {transaction.to_symbol}
       </td>
-      <td style={{textAlign:"right"}}>
-        {numericFormat(BN(transaction.to_amount).dividedBy(transaction.from_amount),18)} &nbsp;
+      <td>
+        {numericFormat(
+          BN(transaction.to_amount).dividedBy(transaction.from_amount),
+          18
+        )}{" "}
+        &nbsp;
       </td>
-      <td style={{textAlign:"right"}}><a target="_blank" href={"http://bscscan.com/tx/"+transaction.transaction_hash}><img style={{height:21,paddingRight:5}} src="/chain.svg"></img></a></td>
-
-      <td style={{ textAlign: "right", padding: 8 }}>
-        {new Date(transaction.time).toLocaleString()}
+      <td>
+        <a
+          title="View transaction on bscscan"
+          target="_blank"
+          href={"http://bscscan.com/tx/" + transaction.transaction_hash}
+        >
+          <img
+            style={{ height: 21, paddingRight: 5, paddingLeft: 9 }}
+            src="/chain.svg"
+          ></img>
+        </a>
       </td>
 
+      <td>{new Date(transaction.time).toLocaleString()}</td>
     </tr>
   );
 }
-

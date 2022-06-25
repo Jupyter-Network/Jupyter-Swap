@@ -24,7 +24,7 @@ export default function TokenInfo({ tokens }) {
           <h4>
             {tokens.token0.name} : {tokens.token0.symbol}
           </h4>
-          <a style={{color:highlight}}  href={`https://bscscan.com/token/${tokens.token0.address}`}>
+          <a title={"View token on bscscan"} style={{color:highlight}}  href={`https://bscscan.com/token/${tokens.token0.address}`}>
             {tokens.token0.address.slice(0, 5) +
               "..." +
               tokens.token0.address.slice(38)}
@@ -43,7 +43,7 @@ export default function TokenInfo({ tokens }) {
           <h4>
             {tokens.token1.name} : {tokens.token1.symbol}
           </h4>
-          <a style={{color:highlight}}  href={`https://bscscan.com/token/${tokens.token1.address}`}>
+          <a title={"View token on bscscan"} style={{color:highlight}}  href={`https://bscscan.com/token/${tokens.token1.address}`}>
             {tokens.token1.address.slice(0, 5) +
               "..." +
               tokens.token1.address.slice(38)}

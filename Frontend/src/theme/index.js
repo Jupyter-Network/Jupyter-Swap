@@ -33,7 +33,7 @@ export const ContainerTitle = styled.p`
   color: ${background};
   margin-top: 0px;
   font-size: large;
-  padding: 5px;
+  padding: 3px;
   text-align: start;
   background: ${backgroundGradient};
 `;

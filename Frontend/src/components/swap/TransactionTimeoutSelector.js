@@ -19,6 +19,7 @@ export default function TransactionTimeoutSelector({ initTimeout, setTime }) {
         </div>
       ) : (
         <SmallSecondaryButton
+        title={`Cancel transaction if not executed after timeout`}
           onClick={() => {
             setOpen(true);
             setTimeout(() => {

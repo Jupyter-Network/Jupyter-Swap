@@ -3,8 +3,6 @@ import { primary,background, secondary, highlight, backgroundGradient, highlight
 const borderWidth = "5px"
 export const P = styled.span`
 font-size:medium;
-  background-color:${background};
-  border-bottom:solid;
   color:${highlight};
   padding:5px 3px;
   text-align:center;

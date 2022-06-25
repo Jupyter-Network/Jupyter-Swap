@@ -138,6 +138,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
     <div>
       <div style={{ display: "flex", justifyContent: "center" }}>
         <MediumButtonInverted
+          title="Token to sell"
           onClick={() => {
             setTimeout(() => {
               activeSelector === 0
@@ -162,6 +163,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
           <p style={{ lineHeight: 0.2 }}>{tokens["token0"].symbol}</p>
         </MediumButtonInverted>
         <MediumButtonInverted
+          title="Switch trade direction"
           style={{ height: 70 }}
           onClick={() => switchTokens()}
         >
@@ -169,6 +171,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
         </MediumButtonInverted>
 
         <MediumButtonInverted
+          title="Token to buy"
           onClick={() =>
             setTimeout(() => {
               activeSelector === 1
@@ -285,7 +288,6 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             borderWidth: 1,
             borderRadius: 5,
             zIndex: 1000,
-
           }}
         >
           <h4>Search Token :</h4>

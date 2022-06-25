@@ -36,10 +36,11 @@ export default function MaxSlippageSelector({ maxSlippage, setMaxSlippage }) {
         </div>
       ) : (
         <SmallSecondaryButton
+          title={`Cancel transaction if slippage is too high`}
           onClick={() => {
-            setTimeout(()=>{
+            setTimeout(() => {
               setOpen(!open);
-            },50)
+            }, 50);
             setTimeout(() => setOpen(false), 10000);
           }}
         >
