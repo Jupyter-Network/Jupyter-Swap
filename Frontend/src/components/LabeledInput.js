@@ -9,6 +9,7 @@ export default function LabeledInput({
   info,
   title="",
   onFocus=()=>{},
+  onBlur=()=>{}
 }) {
   return (
     <div style={{ width: "90%" }}>
@@ -57,6 +58,9 @@ export default function LabeledInput({
         }}
         onFocus={(e) => {
           onFocus(e);
+        }}
+        onBlur={(e)=>{
+          onBlur(e)
         }}
         type={"tel"}
       ></Input>

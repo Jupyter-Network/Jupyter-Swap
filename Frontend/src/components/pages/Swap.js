@@ -39,7 +39,7 @@ import TokenInfo from "../swap/TokenInfo";
 import { initTokens } from "../../initialValues";
 import LoadingSpinner from "../LoadingSpinner";
 import { _scaleDown } from "../../utils/mathHelper";
-import { fetchBlockData } from "../swap/blockData";
+import { fetchBlockData,fetchBlockDataNew } from "../swap/blockData";
 import Chart from "../swap/Chart";
 import LightChart from "../swap/LightChart";
 
@@ -105,31 +105,30 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   function deadline() {
     return Date.now() + timeout / 1000;
   }
-
+  //TODO: Change this two methods, instead of calculating quotes in js get quote from contract
   function handleToken0AmountChange(value) {
-    console.log("Token 0 Amount change Handler", "value:", value);
-    value = validate(value);
-    if (blockData.poolBalances[1].toString()) {
-      if (state.poolHop) {
-        setState(quotes.token0ToToken1(blockData, maxSlippage, value));
-        return;
-      }
-
-      setState({
-        ...quotes.ETHToToken(blockData, maxSlippage, value),
-        poolHop: state.poolHop,
-      });
-    }
+    //console.log("Token 0 Amount change Handler", "value:", value);
+    //value = validate(value);
+    //if (blockData.poolBalances[1].toString()) {
+    //  if (state.poolHop) {
+    //    setState(quotes.token0ToToken1(blockData, maxSlippage, value));
+    //    return;
+    //  }
+//
+    //  setState({
+    //    ...quotes.ETHToToken(blockData, maxSlippage, value),
+    //    poolHop: state.poolHop,
+    //  });
+    //}
   }
-
   function handleToken1AmountChange(value) {
-    console.log("Token 1 Amount change Handler:", "value:", value);
-    value = validate(value);
-    if (state.poolHop) {
-      setState(quotes.token1ToToken0(blockData, maxSlippage, value));
-      return;
-    }
-    setState(quotes.TokenToETH(blockData, maxSlippage, value));
+    //console.log("Token 1 Amount change Handler:", "value:", value);
+    //value = validate(value);
+    //if (state.poolHop) {
+    //  setState(quotes.token1ToToken0(blockData, maxSlippage, value));
+    //  return;
+    //}
+    //setState(quotes.TokenToETH(blockData, maxSlippage, value));
   }
 
   //New Block
@@ -292,12 +291,13 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   }
 
   async function getBlockData(loaderVisible = true) {
+    console.log(tokens)
     setFirstLoad(false);
     if (loaderVisible) {
       setLoading(true);
     }
     setBlockData(
-      await fetchBlockData({
+      await fetchBlockDataNew({
         tokens,
         wallet,
         ethersProvider,
@@ -408,16 +408,14 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               }}
             >
               Price: &nbsp;
-              {state.poolHop && blockData.p0Rate ? (
+              { blockData.price ? (
                 <P>
                   {numericFormat(
-                    BN(blockData.p0Rate.toString())
-                      .dividedBy(BN(blockData.p1Rate.toString()))
-                      .toString()
+                   blockData.price.toString()
                   )}
                 </P>
               ) : (
-                <P>{numericFormat(BN(blockData.p0Rate).toString())}</P>
+                <P>{0}</P>
               )}
             </p>
 

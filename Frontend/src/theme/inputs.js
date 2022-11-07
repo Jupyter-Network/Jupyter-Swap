@@ -36,7 +36,7 @@ font-size:medium;
 export const ListOption = styled.p`
   cursor:pointer;
   transition: 0.3s;
-  width:50px;
+  width:120px;
   margin:5px auto;
   &:hover{
     background:${background};

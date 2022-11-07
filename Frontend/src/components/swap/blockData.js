@@ -38,7 +38,10 @@ export async function fetchBlockData(data) {
     pool1Balances = [new BN(0), new BN(0)];
     console.log("TOKEN0 = WBNB");
     priceHistory = (
-      await getHistoryOHLC(data.tokens["token1"].contract.address,data.timeBucket)
+      await getHistoryOHLC(
+        data.tokens["token1"].contract.address,
+        data.timeBucket
+      )
     ).data.map((item, index) => {
       return {
         open: BN(10).pow(36).dividedBy(BN(item.open)),
@@ -104,10 +107,13 @@ export async function fetchBlockData(data) {
     poolBalances = [BN(0), BN(0)];
     console.log("TOKEN1 === WBNB");
     priceHistory = (
-      await getHistoryOHLC(data.tokens["token0"].contract.address,data.timeBucket)
+      await getHistoryOHLC(
+        data.tokens["token0"].contract.address,
+        data.timeBucket
+      )
     ).data.map((item, index) => {
       return {
-        open:BN(item.open),
+        open: BN(item.open),
         high: BN(item.high),
         low: BN(item.low),
         close: BN(item.close),
@@ -139,8 +145,14 @@ export async function fetchBlockData(data) {
     data.tokens["token0"].contract.address !== wbnb &&
     data.tokens["token1"].contract.address !== wbnb
   ) {
-    let p0 = await getHistoryOHLC(data.tokens["token0"].contract.address,data.timeBucket);
-    let p1 = await getHistoryOHLC(data.tokens["token1"].contract.address,data.timeBucket);
+    let p0 = await getHistoryOHLC(
+      data.tokens["token0"].contract.address,
+      data.timeBucket
+    );
+    let p1 = await getHistoryOHLC(
+      data.tokens["token1"].contract.address,
+      data.timeBucket
+    );
 
     priceHistory = p0.data.map((item, index) => {
       return {
@@ -185,5 +197,53 @@ export async function fetchBlockData(data) {
     p1Rate: p1Rate,
     priceHistory: priceHistory.reverse(),
     transactionHistory: transactions,
+  };
+}
+
+async function getBalance(data, zeroOrOne) {
+  if (data.tokens[zeroOrOne ? "token0" : "token1"].contract.address === wbnb) {
+    return data.wallet
+      ? await data.ethersProvider.getBalance(data.wallet.accounts[0].address)
+      : 0;
+  } else {
+    return data.wallet
+      ? await data.tokens[zeroOrOne ? "token0" : "token1"].contract.balanceOf(
+          data.wallet.accounts[0].address
+        )
+      : 0;
+  }
+}
+export async function fetchBlockDataNew(data) {
+  console.log("Fetch Data: ", data);
+  //Get users token balances
+  const t0Balance = await getBalance(data, true);
+  const t1Balance = await getBalance(data, false);
+
+  //Get Sqrt Price
+  const sqrtPrice = data.routerContract.getPool(
+    data.tokens["token0"].address,
+    data.tokens["token1"].address
+  );
+
+  //Get users allowances
+  const token0Allowance = data.wallet
+    ? await data.tokens["token0"].contract.allowance(
+        data.wallet.accounts[0].address,
+        router
+      )
+    : 0;
+
+  const token1Allowance = data.wallet
+    ? await data.tokens["token1"].contract.allowance(
+        data.wallet.accounts[0].address,
+        router
+      )
+    : 0;
+  return {
+    token0Balance: _scaleDown(t0Balance),
+    token1Balance: _scaleDown(t1Balance),
+    token0Allowance: _scaleDown(token0Allowance),
+    token1Allowance: _scaleDown(token1Allowance),
+    price: 1251515222, // TODO get actual sqrtPrice
   };
 }

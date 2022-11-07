@@ -1,5 +1,5 @@
 const ethers = require("ethers");
-const routerMetadata = require("../Contracts/build/contracts/JupyterRouterV1.json");
+const routerMetadata = require("../Contracts/build/contracts/Router.json");
 const erc20Metadata = require("../Contracts/build/contracts/ERC20.json");
 const erc20Abi = erc20Metadata.abi;
 const addresses = require("./addresses.json");
@@ -9,8 +9,9 @@ const { createPoolEvent } = require("./Database/query");
 const { lpValue } = require("./utils/Math");
 const routerAbi = routerMetadata.abi;
 const routerAddress = addresses.router;
-const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545");
+const provider = new ethers.providers.WebSocketProvider("ws://127.0.0.1:8545");
 const routerContract = new ethers.Contract(routerAddress, routerAbi, provider);
+console.log(routerAddress);
 const BN = require("bignumber.js");
 let lastBlock = 1000;
 routerContract.queryFilter("*", lastBlock);
@@ -19,35 +20,49 @@ routerContract.queryFilter("*", lastBlock);
 routerContract.on("*", async (tx) => {
   lastBlock = tx.blockNumber;
   switch (tx.event) {
-    case "CreateLiquidityPool":
+    case "Pool_Created":
       console.log(tx);
-      let token = new ethers.Contract(tx.args.token, erc20Abi, provider);
-      const symbol = await token.symbol();
-      const name = await token.name();
+      let token = new ethers.Contract(tx.args.Token0, erc20Abi, provider);
+      let token1 = new ethers.Contract(tx.args.Token1, erc20Abi, provider);
+      const pool = {
+        poolAddress: tx.args.Pool,
+        token0: {
+          address: tx.args.Token0,
+          symbol: await token.symbol(),
+          name: await token.name(),
+          icon: "placeholder.svg",
+        },
+        token1: {
+          address: tx.args.Token1,
+          symbol: await token1.symbol(),
+          name: await token1.name(),
+          icon: "placeholder.svg",
+        },
+        tx_id:tx.transactionHash
+      };
       try {
-        await query.createPool(tx.args.token, symbol, name, tx.args.pool);
+        await query.createPool(pool)//tx.args.token, symbol, name, tx.args.pool);
       } catch (e) {
         console.log(e);
       }
       break;
 
-    case "AddLiquidity":
+    case "Liquidity_Added":
       console.log(tx);
-      var lpv = lpValue(
-        BN(tx.args.lpTotalSupply.toString()),
-        BN(tx.args.token0Balance.toString()),
-        BN(tx.args.token1Balance.toString())
-      );
-
-      await query.createPoolEvent(
-        tx.args.pool,
-        tx.args.token0Balance.toString(),
-        tx.args.token1Balance.toString(),
-        tx.args.lpTotalSupply.toString(),
-        lpv.toString(),
-        "addLiquidity"
+      let event = {
+        poolAddress:tx.args.Pool,
+        liquidity:tx.args.Liquidity.toString(),
+        lowerTick:tx.args.LowerTick,
+        upperTick:tx.args.UpperTick,
+        tx_id:tx.transactionHash,
+        lp_id:tx.args.Id,
+        type:"addLiquidity"
+      }
+      await query.createLiquidityPosition(
+        event
       );
       break;
+
     case "ClosePool":
       console.log(tx);
       await query.deletePool(tx.args.pool);

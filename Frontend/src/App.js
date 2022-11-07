@@ -7,10 +7,7 @@ import {
 } from "@web3-onboard/react";
 import { ethers } from "ethers";
 import injectedModule from "@web3-onboard/injected-wallets";
-import { router, token0, token1 } from "./contracts/addresses";
-import routerAbi from "./contracts/build/JupyterRouterV1.json";
-import erc20Abi from "./contracts/build/ERC20.json";
-import Frame from "./components/layout/Frame";
+
 import ContractWrapper from "./components/ContractWrapper";
 import { ToastContainer } from "react-toastify";
 

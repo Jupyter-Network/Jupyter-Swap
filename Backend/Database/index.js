@@ -1,5 +1,5 @@
 const process = require("process");
-const { token0, wbnb } = require("../../Frontend/src/contracts/addresses");
+const { token0, wbnb,token1 } = require("../../Frontend/src/contracts/addresses");
 const query = require("./query");
 
 initDB();
@@ -9,8 +9,8 @@ async function initDB() {
   await query.createPoolsTable();
   await query.createSwapsTable();
   await query.createPoolEventsTable();
+  await query.createLiquidityPositionsTable();
   //Add wbnb
-  await query.createPool(wbnb, "BNB", "BNB", "0x0");
 
 /*
   await query.createPool("0x0", "IOM", "Jupyter", "0x02");

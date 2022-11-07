@@ -2,8 +2,7 @@ import { useConnectWallet, useWallets } from "@web3-onboard/react";
 import { ethers, utils } from "ethers";
 import { useEffect, useState } from "react";
 import { token0, router, token1, wbnb } from "../../contracts/addresses";
-import erc20 from "../..//contracts/build/DynamicToken.json";
-import routerMeta from "../../contracts/build/JupyterRouterV1.json";
+import erc20 from "../../contracts/build/DynamicToken.json";
 import BN from "bignumber.js";
 import { numericFormat, validate } from "../../utils/inputValidations";
 import { Container, ContainerTitle, GradientDiv } from "../../theme";
@@ -12,8 +11,7 @@ import { Input } from "../../theme/inputs";
 import { Label, P } from "../../theme/outputs";
 import { transaction } from "../../utils/alerts";
 import LabeledInput from "../LabeledInput";
-const routerAbi = routerMeta.abi;
-const erc20Abi = erc20.abi;
+
 //Add this to a Math file later
 function _scaleDown(value) {
   return BN(value.toString()).div(BN(10).pow(18)).toString();
@@ -88,8 +86,7 @@ export default function Build({ block, ethersProvider, routerContract }) {
                 let token = await factory.deploy(
                   state.name,
                   state.symbol,
-                  BN(state.supply).toString()
-                );
+                  state.supply                );
                 console.log("Token created: ", token.address);
                 console.log(await token.totalSupply());
               }}

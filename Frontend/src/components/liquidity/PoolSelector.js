@@ -43,18 +43,27 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
     });
   }, [provider]);
   console.log(tokens);
-  function checkValidityAndSetTokens(newAddress, newName, icon) {
+  function checkValidityAndSetTokens(item) {
     setTokens({
-      ...tokens,
-      token1: {
-        symbol: newName,
+      token0: {
+        symbol: item.token0.name,
         contract: new ethers.Contract(
-          newAddress,
+          item.token0.address,
           erc20Abi,
           provider.getSigner()
         ),
-        icon: icon,
-        address: newAddress,
+        icon: item.token0.icon,
+        address: item.token0.address,
+      },
+      token1: {
+        symbol: item.token1.name,
+        contract: new ethers.Contract(
+          item.token1.address,
+          erc20Abi,
+          provider.getSigner()
+        ),
+        icon: item.token1.icon,
+        address: item.token1.address,
       },
     });
   }
@@ -65,9 +74,17 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
       setCurrencies(
         res.map((item) => {
           return {
-            name: item.token_symbol,
-            address: item.token_address,
-            icon: item.token_icon,
+            token0:{
+              name: item.token0_symbol,
+              address: item.token0_address,
+              icon: item.token0_icon,
+            },
+            token1:{
+              name: item.token1_symbol,
+              address: item.token1_address,
+              icon: item.token1_icon,
+            }
+   
           };
         })
       );
@@ -97,7 +114,7 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
             style={{ width: 22 }}
             src={"/tokenlogos/" + tokens.token1.icon}
           ></img>
-          <p style={{ lineHeight: 0.2 }}>{tokens.token1.symbol}</p>{" "}
+          <p style={{ lineHeight: 0.2 }}>{tokens.token0.symbol} / {tokens.token1.symbol}</p>{" "}
         </MediumButtonInverted>
       </div>
 
@@ -138,12 +155,11 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
             style={{ width: "50px", textAlign: "center" }}
           ></Input>
           {currencies.map((item) =>
-            item.address === wbnb ? null : (
               <ListOption
-                key={item.address}
+                key={item.token0.address + item.token1.address}
                 tabIndex={0}
                 onClick={() => {
-                  checkValidityAndSetTokens(item.address, item.name, item.icon);
+                  checkValidityAndSetTokens(item)// item.address, item.name, item.icon);
                   setActiveSelector(null);
                 }}
               >
@@ -152,15 +168,17 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
                 >
                   <img
                     style={{ width: 15 }}
-                    src={`/tokenlogos/${item.icon}`}
+                    src={`/tokenlogos/${item.token0.icon}`}
                   ></img>
-                  <div style={{ minWidth: 10 }}>
-                    <p> </p>
-                  </div>{" "}
-                  {item.name}
+                    <img
+                    style={{ width: 15 }}
+                    src={`/tokenlogos/${item.token1.icon}`}
+                  ></img>
+          
+                  {item.token0.name} / {item.token1.name}
                 </div>
               </ListOption>
-            )
+            
           )}
           <br style={{ lineHeight: 0.2 }} />
         </div>

@@ -7,7 +7,7 @@ import ContractWrapper from "../ContractWrapper";
 import Liquidity from "../pages/Liquidity";
 import Swap from "../pages/Swap";
 import MainMenu from "./MainMenu";
-import routerMeta from "../../contracts/build/JupyterRouterV1.json";
+import routerMeta from "../../contracts/build/Router.json";
 import Build from "../pages/Build";
 import { ToastContainer } from "react-toastify";
 import Header from "./Header";

@@ -1,4 +1,4 @@
-const { token1, wbnb } = require("./contracts/addresses");
+const { token1, token0 } = require("./contracts/addresses");
 
 module.exports = {
   initTokens: (ethers, ethersProvider, erc20Abi) => {
@@ -17,12 +17,12 @@ module.exports = {
       token0: {
         symbol: "BNB",
         contract: new ethers.Contract(
-          wbnb,
+          token0,
           erc20Abi,
           ethersProvider.getSigner()
         ),
         icon: "/bnb-bnb-logo.svg",
-        address: wbnb,
+        address: token0,
         name: "Build and Build",
       },
     };

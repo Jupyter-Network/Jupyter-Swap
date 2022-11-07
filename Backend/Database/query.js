@@ -2,17 +2,39 @@ const { wbnb } = require("../../Frontend/src/contracts/addresses");
 const sql = require("./db");
 
 module.exports = {
+  createLiquidityPositionsTable: async () => {
+    await sql`CREATE TABLE IF NOT EXISTS public."LiquidityPositions"
+    (
+        pool character varying(64) COLLATE pg_catalog."default" NOT NULL,
+        lp_id bigint NOT NULL,
+        type character varying(64) COLLATE pg_catalog."default" NOT NULL,
+        liquidity numeric(78) NOT NULL,
+        lowerTick integer NOT NULL,
+        upperTick integer NOT NULL,
+        tx_id character varying(128) COLLATE pg_catalog."default" NOT NULL,
+        time timestamp NOT NULL,
+        UNIQUE(tx_id,time)
+    )`;
+    await sql`SELECT create_hypertable('public."LiquidityPositions"','time')`;
+  },
   createPoolsTable: async () => {
     await sql`CREATE TABLE IF NOT EXISTS public."Pools"
         (
-            token_address character varying(64) COLLATE pg_catalog."default" NOT NULL UNIQUE,
-            token_name character varying(64) COLLATE pg_catalog."default" NOT NULL UNIQUE,
-            token_symbol character varying(16) COLLATE pg_catalog."default" NOT NULL,
-            token_icon character varying(64) COLLATE pg_catalog."default" NOT NULL,
+            token0_address character varying(64) COLLATE pg_catalog."default" NOT NULL,
+            token0_name character varying(64) COLLATE pg_catalog."default" NOT NULL,
+            token0_symbol character varying(16) COLLATE pg_catalog."default" NOT NULL,
+            token0_icon character varying(64) COLLATE pg_catalog."default" NOT NULL,
+            token1_address character varying(64) COLLATE pg_catalog."default" NOT NULL,
+            token1_name character varying(64) COLLATE pg_catalog."default" NOT NULL,
+            token1_symbol character varying(16) COLLATE pg_catalog."default" NOT NULL,
+            token1_icon character varying(64) COLLATE pg_catalog."default" NOT NULL,
             pool_address character varying(64) COLLATE pg_catalog."default" NOT NULL,
-            token_verified boolean DEFAULT false,
+            pool_verified boolean DEFAULT false,
             token_description text COLLATE pg_catalog."default",
-            CONSTRAINT "Pools_pkey" PRIMARY KEY (token_address)
+            tx_id character varying(128) COLLATE pg_catalog."default" NOT NULL UNIQUE,
+            CONSTRAINT "Pools_pkey" PRIMARY KEY (pool_address),
+            CONSTRAINT "Tokens_unique" UNIQUE(token0_address,token1_address)
+
         )`;
   },
   createSwapsTable: async () => {
@@ -27,34 +49,33 @@ module.exports = {
         time timestamp NOT NULL,
         UNIQUE(time,from_address,to_address)
     )`;
-    await sql`SELECT create_hypertable('public."Swaps"','time');`;
+    await sql`SELECT create_hypertable('public."Swaps"','time')`;
   },
   createPoolEventsTable: async () => {
     await sql`CREATE TABLE IF NOT EXISTS public."PoolEvents"
     (
         pool character varying(64) COLLATE pg_catalog."default" NOT NULL,
+        lp_id bigint NOT NULL,
         type character varying(64) COLLATE pg_catalog."default" NOT NULL,
-        bnb_balance double precision,
-        token_balance double precision,
-        lp_total_supply double precision,
-        lp_value double precision,
+        liquidity numeric(78) NOT NULL,
+        lowerTick integer NOT NULL,
+        upperTick integer NOT NULL,
+        tx_id character varying(128) COLLATE pg_catalog."default" NOT NULL,
         time timestamp NOT NULL,
-        UNIQUE(time,pool,bnb_balance)
+        UNIQUE(tx_id,time)
     )`;
-    await sql`SELECT create_hypertable('public."PoolEvents"','time');`;
+    await sql`SELECT create_hypertable('public."PoolEvents"','time')`;
   },
 
   //Pool
-  createPool: async (
-    tokenAddress,
-    tokenSymbol,
-    tokenName,
-    poolAddress,
-    tokenIcon = "placeholder.svg"
-  ) => {
+  createPool: async (pool) => {
     await sql`INSERT INTO public."Pools"(
-            token_address, token_name, token_symbol, token_icon, pool_address)
-            VALUES (${tokenAddress}, ${tokenName}, ${tokenSymbol}, ${tokenIcon}, ${poolAddress});`;
+            token0_address, token0_name, token0_symbol, token0_icon,
+            token1_address, token1_name, token1_symbol, token1_icon,
+            pool_address,tx_id)
+            VALUES (${pool.token0.address}, ${pool.token0.name}, ${pool.token0.symbol}, ${pool.token0.icon},
+              ${pool.token1.address}, ${pool.token1.name}, ${pool.token1.symbol}, ${pool.token1.icon},
+              ${pool.poolAddress},${pool.tx_id});`;
   },
   getPool: async (queryObject) => {
     if (queryObject.tokenAddress) {
@@ -62,24 +83,28 @@ module.exports = {
     } else if (queryObject.poolAddress) {
       return await sql`SELECT * FROM public."Pools" WHERE pool_address = ${queryObject.poolAddress}`;
     } else if (queryObject.tokenSymbol) {
-      return await sql`SELECT * FROM public."Pools" WHERE token_symbol LIKE '%' || ${queryObject.tokenSymbol} || '%'`;
+      console.log(queryObject.tokenSymbol);
+      return await sql`SELECT * FROM public."Pools" WHERE token0_symbol ILIKE '%' || ${queryObject.tokenSymbol} || '%' or token1_symbol ILIKE '%' || ${queryObject.tokenSymbol} || '%'`;
     }
   },
   deletePool: async (poolAddress) => {
     await sql`DELETE from public."Pools" WHERE pool_address = ${poolAddress}`;
   },
 
-  createPoolEvent: async (
-    poolAddress,
-    bnbBalance,
-    tokenBalance,
-    lpTotalSupply,
-    lpValue,
-    type
+  createLiquidityPosition: async (
+    event
+    //poolAddress,
+    //bnbBalance,
+    //tokenBalance,
+    //lpTotalSupply,
+    //lpValue,
+    //type
   ) => {
-    await sql`INSERT INTO public."PoolEvents" (
-      pool,type,bnb_balance,token_balance,lp_total_supply,lp_value,time
-    )VALUES (${poolAddress},${type},${bnbBalance},${tokenBalance},${lpTotalSupply},${lpValue},${Date.now()})`;
+    await sql`INSERT INTO public."LiquidityPositions" (
+      pool,lp_id,type,liquidity,lowerTick,upperTick,time,tx_id
+    )VALUES (${event.poolAddress},${event.lp_id},${event.type},${
+      event.liquidity
+    },${event.lowerTick},${event.upperTick},${Date.now()},${event.tx_id})`;
   },
 
   getPoolProfit: async (tokenAddress) => {
@@ -119,9 +144,11 @@ module.exports = {
       GROUP BY bucket
       ORDER BY bucket DESC LIMIT 20;`;
   },
-  getHistoryOHLC: async (tokenAddress,bucketMinutes) => {
-    console.log(bucketMinutes)
-    return await sql`SELECT time_bucket_gapfill(${bucketMinutes + " minutes"}, time,now() - INTERVAL '1 day',now() at time zone 'utc') AS bucket, 
+  getHistoryOHLC: async (tokenAddress, bucketMinutes) => {
+    console.log(bucketMinutes);
+    return await sql`SELECT time_bucket_gapfill(${
+      bucketMinutes + " minutes"
+    }, time,now() - INTERVAL '1 day',now() at time zone 'utc') AS bucket, 
     locf(first(rate,time)) as open,
     max(rate) as high,
     min(rate) as low,
@@ -137,7 +164,7 @@ module.exports = {
     GROUP BY bucket
     ORDER BY bucket DESC LIMIT 50;`;
   },
-  getTransanctionHistory: async (tokenAddress,bucketMinutes) => {
+  getTransanctionHistory: async (tokenAddress, bucketMinutes) => {
     return await sql`SELECT from_address,
     from_token.token_symbol as from_symbol,
     from_token.token_icon as from_icon,

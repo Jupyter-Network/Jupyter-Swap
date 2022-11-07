@@ -5,8 +5,8 @@
  * them to suit your project as necessary.
  *
  * More information about configuration can be found at:
- *
- * trufflesuite.com/docs/advanced/configuration
+ * 
+ * https://trufflesuite.com/docs/truffle/reference/configuration
  *
  * To deploy via Infura you'll need a wallet provider (like @truffle/hdwallet-provider)
  * to sign your transactions before they're sent to a remote public node. Infura accounts
@@ -44,7 +44,9 @@ module.exports = {
     development: {
      host: "127.0.0.1",     // Localhost (default: none)
      port: 8545,            // Standard Ethereum port (default: none)
-     network_id: "5777"      // Any network (default: none)
+     network_id: "*",   
+     gas:30000000,
+     // Any network (default: none)
     },
     // Another network with more advanced options...
     // advanced: {
@@ -75,22 +77,20 @@ module.exports = {
 
   // Set default mocha options here, use special reporters etc.
   mocha: {
-    reporter: 'eth-gas-reporter',
-    reporterOptions : {  } // See options below
+    //reporter: 'eth-gas-reporter',
   },
-  plugins:["truffle-contract-size"],
 
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.8.7",    // Fetch exact version from solc-bin (default: truffle's version)
+      version: "pragma",     // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
        settings: {          // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
           enabled: true,
           runs: 200
         },
-        evmVersion: "byzantium"
+        evmVersion: "constantinople"
        }
     }
   },
@@ -102,7 +102,7 @@ module.exports = {
   // NOTE: It is not possible to migrate your contracts to truffle DB and you should
   // make a backup of your artifacts to a safe location before enabling this feature.
   //
-  // After you backed up your artifacts you can utilize db by running migrate as follows: 
+  // After you backed up your artifacts you can utilize db by running migrate as follows:
   // $ truffle migrate --reset --compile-all
   //
   // db: {

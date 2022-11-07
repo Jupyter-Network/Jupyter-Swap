@@ -1,23 +1,10 @@
 {
-  "name": "dev",
-  "version": "1.0.0",
-  "description": "",
-  "main": "truffle-config.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.5.0",
-    "ganache": "^7.1.0",
-    "truffle-contract-size": "^2.0.1"
+    "@openzeppelin/contracts": "^4.7.3",
+    "@prb/math": "^2.5.0",
+    "bn.js": "^5.2.1"
   },
   "devDependencies": {
-    "eth-gas-reporter": "^0.2.24"
+    "eth-gas-reporter": "^0.2.25"
   }
 }
