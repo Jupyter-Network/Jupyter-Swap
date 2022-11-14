@@ -12,15 +12,24 @@ fastify.get("/history/:tokenAddress", async (request, reply) => {
 });
 
 fastify.get("/historyOHLC/:tokenAddress/:bucket", async (request, reply) => {
-  return await query.getHistoryOHLC(request.params.tokenAddress,request.params.bucket.toString());
+  return await query.getHistoryOHLC(
+    request.params.tokenAddress,
+    request.params.bucket.toString()
+  );
 });
 
 fastify.get("/transactionHistory/:tokenAddress", async (request, reply) => {
   return await query.getTransanctionHistory(request.params.tokenAddress);
 });
 
-fastify.get("/tokens/:token_symbol", async (request, reply) => {
-  return await query.getPool({ tokenSymbol: request.params.token_symbol });
+fastify.get("/tokens/:tokenSymbol", async (request, reply) => {
+  return await query.getPool({ tokenSymbol: request.params.tokenSymbol });
+});
+
+fastify.get("/lp/:ownerAddress", async (request, reply) => {
+  return await query.getLiquidityPositionsForAddress({
+    owner: request.params.ownerAddress,
+  });
 });
 
 fastify.get("/apy/:tokenAddress", async (request, reply) => {

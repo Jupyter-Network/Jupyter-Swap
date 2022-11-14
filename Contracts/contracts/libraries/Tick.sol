@@ -104,7 +104,7 @@ library Tick {
         return (result >> 32) + (result % 0x100000000 == 0 ? 0 : 1);
     }
 
-    
+    /*
     function getTickFromPrice(uint160 _sqrtPrice)
         internal
         pure
@@ -236,7 +236,7 @@ library Tick {
             ? tickHi
             : tickLow;
     }
-
+*/
     function mostSignificantBit(uint256 x) public pure returns (uint8 msb) {
         assembly {
             if or(
@@ -275,7 +275,7 @@ library Tick {
             }
         }
     }
-/*
+
     function getTickFromPrice(uint256 _sqrtPrice) public pure returns (int256) {
         require(
             _sqrtPrice >= MIN_SQRT_RATIO && _sqrtPrice < MAX_SQRT_RATIO,
@@ -391,5 +391,5 @@ library Tick {
                 ? high
                 : low;
     }
-    */
+    
 }

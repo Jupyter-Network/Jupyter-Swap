@@ -4,14 +4,29 @@ import { useEffect, useState } from "react";
 import { router, wbnb } from "../../contracts/addresses";
 import erc20 from "../../contracts/build/ERC20.json";
 import BN from "bignumber.js";
-import { numericFormat, validate } from "../../utils/inputValidations";
-import { Container, ContainerTitle, GradientDiv } from "../../theme";
-import { LargeButton, MediumButtonInverted } from "../../theme/buttons";
+import { Slider } from "../liquidity/Slider";
+import {
+  addressFormat,
+  numericFormat,
+  txHashFormat,
+  validate,
+} from "../../utils/inputValidations";
+import {
+  Container,
+  ContainerInverted,
+  ContainerTitle,
+  GradientDiv,
+} from "../../theme";
+import {
+  LargeButton,
+  MediumButtonInverted,
+  SmallButton,
+} from "../../theme/buttons";
 import { P } from "../../theme/outputs";
 import { transaction } from "../../utils/alerts";
 import "react-toastify/dist/ReactToastify.css";
 import PoolSelector from "../liquidity/PoolSelector";
-import { primary } from "../../theme/theme";
+import { primary, tintedBackground } from "../../theme/theme";
 
 import Balances from "../liquidity/Balances";
 import Chart from "../liquidity/Chart";
@@ -20,14 +35,24 @@ import { getAPY } from "../../utils/requests";
 import { initTokens } from "../../initialValues";
 import LoadingSpinner from "../LoadingSpinner";
 import {
+  calcNewPosition,
+  getAmount0,
+  getAmount1,
+  getNextPriceFromAmount0,
+  getNextPriceFromAmount1,
   priceFromSqrtPrice,
+  priceFromTick,
   sqrtPriceFromPrice,
   sqrtPriceFromTick,
   tickAtSqrtPrice,
   _scaleDown,
 } from "../../utils/mathHelper";
 import { fetchBlockData, fetchBlockDataNew } from "../liquidity/blockData";
+import { AddLpPositionComponent } from "../liquidity/AddLpPositionComponent";
 const erc20Abi = erc20.abi;
+const formatter = new Intl.NumberFormat("en-US", {
+  maximumSignificantDigits: 5,
+});
 
 export default function Liquidity({ block, ethersProvider, routerContract }) {
   const [
@@ -43,10 +68,10 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     token1Amount: "0.0",
     token1AmountMin: new BN(0),
     allowanceCheck: new BN(0),
-    lpAmount: "0.0",
     lowerBoundary: 0,
     upperBoundary: 0,
-    liquidity: 0,
+    liquidity: 100,
+    lpId: 0,
   });
 
   const [lpQuote, setLpQuote] = useState({
@@ -71,6 +96,10 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         .toString()
     );
   }, [createWidgetState]);
+  //useEffect(()=>{
+  //  console.log(state)
+  //  loadLpQuote(state);
+  //},[state])
 
   const [maxSlippage, setMaxSlippage] = useState(new BN(0.5));
 
@@ -80,53 +109,56 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     return Date.now() + 900;
   }
 
-  function handleToken0AmountChange(value) {
-    console.log("Token 0 Amount change Handler", value);
-    value = value;
-    let t1Amount = new BN(0);
-    if (blockData) {
-      t1Amount = BN(value).dividedBy(BN(blockData.rate));
-    }
-    setState({
-      ...state,
-      token0Amount: validate(value),
-      token1Amount: validate(t1Amount),
-      token1AmountMin: subtractSlippage(t1Amount.multipliedBy(BN(10).pow(18))),
-    });
-  }
   function handleBoundaryChange(value, lower) {
     if (lower) {
+      console.log("Set Lower",value)
+
       setState({
         ...state,
         lowerBoundary: value,
       });
+      //await loadLpQuote({ ...state, lowerBoundary: value });
     } else {
+      console.log("Set Upper",value)
       setState({
         ...state,
-        upperBoundary: value,
+        upperBoundary: value
       });
+      //await loadLpQuote({ ...state, upperBoundary: value });
     }
   }
-  function handleLiquidityChange(value) {
+  async function handleLiquidityChange(value) {
     setState({
       ...state,
       liquidity: validate(value),
     });
+    await loadLpQuote({ ...state, liquidity: validate(value) });
   }
 
-  async function loadLpQuote() {
-    let quote = await routerContract.addPositionView(
-      tokens["token0"].contract.address,
-      tokens["token1"].contract.address,
-      tickAtSqrtPrice(sqrtPriceFromPrice(state.lowerBoundary)),
-      tickAtSqrtPrice(sqrtPriceFromPrice(state.upperBoundary)),
-      new BN(state.liquidity)
-        .multipliedBy(new BN(10).pow(new BN(18)))
-        .toFixed(0)
-    );
-    console.log("Get Quote: ", quote);
+  async function loadLpQuote(currentState) {
+    //Fetch from blockchain
+    //let quote = await routerContract.addPositionView(
+    //  tokens["token0"].contract.address,
+    //  tokens["token1"].contract.address,
+    //  tickAtSqrtPrice(sqrtPriceFromPrice(state.lowerBoundary)),
+    //  tickAtSqrtPrice(sqrtPriceFromPrice(state.upperBoundary)),
+    //  new BN(state.liquidity)
+    //    .multipliedBy(new BN(10).pow(new BN(18)))
+    //    .toFixed(0)
+    //);
+    if (blockData) {
+      let quote = calcNewPosition(
+        tickAtSqrtPrice(sqrtPriceFromPrice(currentState.lowerBoundary)),
+        tickAtSqrtPrice(sqrtPriceFromPrice(currentState.upperBoundary)),
+        blockData.currentTick,
+        new BN(currentState.liquidity)
+          .multipliedBy(new BN(10).pow(new BN(18)))
+          .toFixed(0),
+        BigInt(blockData.currentSqrtPrice)
+      );
 
-    setLpQuote({ amount0: quote[0], amount1: quote[1] });
+      setLpQuote({ amount0: quote[0], amount1: quote[1] });
+    }
   }
   function handleToken1AmountChange(value) {
     console.log("Token 1 Amount change Handler:", "value:", value);
@@ -174,69 +206,74 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
   );
 
   //New Block
-  useEffect(() => {
-    async function asyncRun() {
-      console.log("Block changed in swap");
-      await getBlockData();
-      handleToken0AmountChange(state.token0Amount.toString());
-    }
-    if (!loading || firstLoad) {
-      asyncRun();
-    }
-  }, [block, tokens]);
+  // useEffect(() => {
+  //   async function asyncRun() {
+  //     console.log("Block changed in swap");
+  //     await getBlockData();
+  //     //handleToken0AmountChange(state.token0Amount.toString());
+  //   }
+  //
+  //     asyncRun();
+  //
+  // }, []);
 
   useEffect(() => {
-    setTokens({
-      token0: {
-        symbol: "BNB",
-        contract: new ethers.Contract(
-          wbnb,
-          erc20Abi,
-          ethersProvider.getSigner()
-        ),
-        icon: "bnb-bnb-logo.svg",
-      },
-      token1: {
-        ...tokens.token1,
-        contract: new ethers.Contract(
-          tokens.token1.contract.address,
-          erc20Abi,
-          ethersProvider.getSigner()
-        ),
-      },
-    });
+    console.log(ethersProvider.getCode());
+    //setTokens({
+    //  token0: {
+    //    ...tokens.token0,
+    //    contract: new ethers.Contract(
+    //      tokens.token0.contract.address,
+    //      erc20Abi,
+    //      ethersProvider.getSigner()
+    //    ),
+    //  },
+    //  token1: {
+    //    ...tokens.token1,
+    //    contract: new ethers.Contract(
+    //      tokens.token1.contract.address,
+    //      erc20Abi,
+    //      ethersProvider.getSigner()
+    //    ),
+    //  },
+    //});
 
     //getBlockData();
   }, [wallet]);
 
   useEffect(() => {
-    //getBlockData();
+    console.log("Tokens changed");
+    getBlockData();
   }, [tokens]);
+  useEffect(() => {
+    setLoading(false);
+  }, [blockData]);
 
   //Router
 
   async function createLiquidityPool() {
-    console.log(
-      createWidgetState.token0Address,
-      createWidgetState.token1Address
-    );
+    if (!wallet) {
+      connect();
+      return;
+    }
     let [token0Address, token1Address] =
       BigInt(createWidgetState.token0Address) <
       BigInt(createWidgetState.token1Address)
         ? [createWidgetState.token0Address, createWidgetState.token1Address]
         : [createWidgetState.token1Address, createWidgetState.token0Address];
 
-    let token0 = await new ethers.Contract(
+    console.log(token0Address, token1Address);
+    let token0 = new ethers.Contract(
       token0Address,
       erc20Abi,
       ethersProvider.getSigner()
     );
-    let token1 = await new ethers.Contract(
+    let token1 = new ethers.Contract(
       token1Address,
       erc20Abi,
       ethersProvider.getSigner()
     );
-
+    console.log(await token0.symbol());
     let token0Symbol = await token0.symbol();
     let token1Symbol = await token1.symbol();
 
@@ -246,9 +283,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     startTick = Math.round(startTick.toString() / 64) * 64;
     const startPrice = priceFromSqrtPrice(sqrtPriceFromTick(startTick));
     await transaction(
-      `Start Price: 1 ${token0Symbol} = ${numericFormat(
-        startPrice
-      )} ${token1Symbol}`,
+      `Start Price: 1 ${token0Symbol} = ${startPrice} ${token1Symbol}`,
       routerContract.createPool,
       [
         createWidgetState.token0Address,
@@ -274,41 +309,30 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     //);
   }
 
-  async function addLiquidity() {
-    console.log(
-      tokens["token0"].contract.address,
-      tokens["token1"].contract.address,
-      Math.round(
-        tickAtSqrtPrice(sqrtPriceFromPrice(state.lowerBoundary)).toString() / 64
-      ) * 64,
-      Math.round(
-        tickAtSqrtPrice(sqrtPriceFromPrice(state.upperBoundary)).toString() / 64
-      ) * 64,
-      BN(state.liquidity.toString())
-        .multipliedBy(BN(10).pow(BN(18)))
-        .toString()
-    );
+  async function addLiquidity(lpQuote,lowerBoundary,upperBoundary,liquidity) {
+    if (!wallet) {
+      connect();
+      return;
+    }
     await transaction(
-      `Add Liquidity ${numericFormat(_scaleDown(lpQuote.amount0).toString())}${
+      `Add Liquidity ${numericFormat(lpQuote.amount0.toString())}${
         tokens.token0.symbol
-      } ${numericFormat(_scaleDown(lpQuote.amount1).toString())}${
-        tokens["token1"].symbol
-      }`,
+      } ${numericFormat(lpQuote.amount1.toString())}${tokens["token1"].symbol}`,
       routerContract.addPosition,
       [
         tokens["token0"].contract.address,
         tokens["token1"].contract.address,
         Math.round(
-          tickAtSqrtPrice(sqrtPriceFromPrice(state.lowerBoundary)).toString() /
+          tickAtSqrtPrice(sqrtPriceFromPrice(lowerBoundary)).toString() /
             64
         ) * 64,
         Math.round(
-          tickAtSqrtPrice(sqrtPriceFromPrice(state.upperBoundary)).toString() /
+          tickAtSqrtPrice(sqrtPriceFromPrice(upperBoundary)).toString() /
             64
         ) * 64,
-        BN(state.liquidity.toString())
+        BN(liquidity)
           .multipliedBy(BN(10).pow(BN(18)))
-          .toString(),
+          .toFixed(0),
 
         //deadline(),
         //{
@@ -323,13 +347,18 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
   }
 
   async function removeLiquidity() {
+    if (!wallet) {
+      connect();
+      return;
+    }
     await transaction(
-      `Remove Liquidity ${numericFormat(state.lpAmount)} LP`,
-      routerContract.removeLiquidity,
+      `Remove Liquidity Position number ${state.lpId}`,
+      routerContract.removePosition,
       [
+        tokens["token0"].contract.address,
         tokens["token1"].contract.address,
-        BN(state.lpAmount).multipliedBy(BN(10).pow(36)).toFixed(0),
-        deadline(),
+        BigInt(state.lpId),
+        //deadline(),
       ],
       getBlockData
     );
@@ -345,6 +374,10 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
 
   //BEP-20
   async function approveToken(contract, amount) {
+    if (!wallet) {
+      connect();
+      return;
+    }
     await transaction(
       `Approve ${BN(amount).dividedBy(BN(10).pow(18))}`,
       contract.approve,
@@ -363,7 +396,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
 
   async function getBlockData() {
     console.log("Fetch Block Data");
-    setFirstLoad(false);
     setLoading(true);
     setBlockData(
       await fetchBlockDataNew({
@@ -373,11 +405,12 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         routerContract,
       })
     );
-    setLoading(false);
+    //setLoading(false);
   }
+
   return (
     <>
-      {loading || firstLoad ? <LoadingSpinner></LoadingSpinner> : <></>}
+      {loading || !blockData ? <LoadingSpinner></LoadingSpinner> :
       <div
         style={{
           margin: "0 auto",
@@ -395,6 +428,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
           <PoolSelector
             provider={ethersProvider}
             onChange={(tokens) => {
+              console.log("PoolSelectro loaded");
               setTokens(tokens);
             }}
             initialTokens={tokens}
@@ -412,10 +446,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             <div style={{ display: "flex", justifyContent: "center" }}>
               <MediumButtonInverted
                 onClick={() => {
-                  if (!wallet) {
-                    connect();
-                    return;
-                  }
                   approveToken(
                     tokens["token0"].contract,
                     "100000000000000000000000"
@@ -430,10 +460,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
               </MediumButtonInverted>
               <MediumButtonInverted
                 onClick={() => {
-                  if (!wallet) {
-                    connect();
-                    return;
-                  }
                   approveToken(
                     tokens["token1"].contract,
                     "100000000000000000000000"
@@ -449,109 +475,25 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             </div>
           </GradientDiv>
         </Container>
-        <Chart blockData={blockData}></Chart>
-        <Container>
-          <ContainerTitle>Add Liquidity</ContainerTitle>
-          <p>
-            {tokens["token0"].symbol} / {tokens["token1"].symbol}
-          </p>
-          <div style={{ width: "80%", margin: "0 auto" }}>
-            <LabeledInput
-              name={tokens["token0"].symbol}
-              onChange={(e) => handleToken0AmountChange(e.target.value)}
-              value={state.token0Amount.toString()}
-              icon={tokens["token0"].icon}
-              onFocus={(e) => setState({ ...state, token0Amount: "" })}
-            ></LabeledInput>
 
-            <LabeledInput
-              name={tokens["token1"].symbol}
-              onChange={(e) => handleToken1AmountChange(e.target.value)}
-              value={state.token1Amount.toString()}
-              icon={tokens["token1"].icon}
-              onFocus={(e) => setState({ ...state, token1Amount: "" })}
-            ></LabeledInput>
-          </div>
-
-          <br />
-          <LargeButton
-            onClick={() => {
-              addLiquidity();
-            }}
-          >
-            Add Liquidity
-          </LargeButton>
-        </Container>
-        <Container>
-          <ContainerTitle>Add Liquidity Position</ContainerTitle>
-          <p>
-            {tokens["token0"].symbol} / {tokens["token1"].symbol}
-          </p>
-          <div style={{ width: "80%", margin: "0 auto" }}>
-            <LabeledInput
-              name={"Lower Boundary"}
-              onChange={(e) => handleBoundaryChange(e.target.value, true)}
-              value={state.lowerBoundary.toString()}
-              onFocus={(e) => setState({ ...state, lowerBoundary: "" })}
-              onBlur={async () => {
-                await loadLpQuote();
-              }}
-            ></LabeledInput>
-            <LabeledInput
-              name={"Upper Boundary"}
-              onChange={(e) => handleBoundaryChange(e.target.value, false)}
-              value={state.upperBoundary.toString()}
-              onFocus={(e) => setState({ ...state, upperBoundary: "" })}
-              onBlur={async () => {
-                await loadLpQuote();
-              }}
-            ></LabeledInput>
-            <LabeledInput
-              name={"Liquidity"}
-              onChange={(e) => handleLiquidityChange(e.target.value, false)}
-              value={Math.floor(state.liquidity.toString())}
-              onFocus={async (e) => {
-                setState({ ...state, liquidity: "" });
-              }}
-              onBlur={async () => {
-                await loadLpQuote();
-              }}
-            ></LabeledInput>
-            <p>
-              Amount {tokens.token0.symbol}:{" "}
-              <b>{numericFormat(_scaleDown(lpQuote.amount0))}</b>
-            </p>
-            <p>
-              Amount {tokens.token1.symbol}:{" "}
-              <b>{numericFormat(_scaleDown(lpQuote.amount1))}</b>
-            </p>
-          </div>
-
-          <br />
-          <LargeButton
-            onClick={() => {
-              addLiquidity();
-            }}
-          >
-            Add Liquidity
-          </LargeButton>
-        </Container>
+    
+        <AddLpPositionComponent  onAddLiquidity={(lpQuote,lowerBoundary,upperBoundary,liquidity)=>addLiquidity(lpQuote,lowerBoundary,upperBoundary,liquidity)} blockData={blockData} tokens={tokens}></AddLpPositionComponent>
         <Container style={{ maxHeight: 192 }}>
-          <ContainerTitle>Remove Liquidity</ContainerTitle>
+          <ContainerTitle>Remove Liquidity Position</ContainerTitle>
           <span>
             {tokens["token0"].symbol} / {tokens["token1"].symbol}
           </span>
           <br />
           <div style={{ width: "80%", margin: "0 auto" }}>
             <LabeledInput
-              name={"LP"}
+              name={"Position ID"}
               onChange={(e) => {
                 let v = BN(validate(e.target.value));
-                setState({ ...state, lpAmount: validate(e.target.value) });
+                setState({ ...state, lpId: isNaN(v) ? 0 : v });
               }}
-              value={state.lpAmount}
+              value={state.lpId}
               icon={""}
-              onFocus={(e) => setState({ ...state, lpAmount: "" })}
+              onFocus={(e) => setState({ ...state, lpId: "" })}
             ></LabeledInput>
           </div>
 
@@ -565,10 +507,8 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             Open a new liquidty pool:
           </h3>
         </div>
-        <Container style={{ maxHeight: 440 }}>
-          <ContainerTitle>
-            Create New Liquidity Pool Concentrated
-          </ContainerTitle>
+        <Container style={{ maxHeight: 290 }}>
+          <ContainerTitle>Create New Pool</ContainerTitle>
           <div style={{ width: "80%", margin: "0 auto" }}>
             <LabeledInput
               name={"Token 0 Address"}
@@ -627,7 +567,134 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             Create Pool
           </LargeButton>
         </Container>
+        <Container style={{ maxHeight: 1200, width: "100%" }}>
+          <ContainerTitle>Your Positions</ContainerTitle>
+          {blockData
+            ? LiquidityPositions(blockData.liquidityPositions.data)
+            : 0}
+        </Container>
       </div>
+}
+
+
     </>
   );
+}
+
+function LiquidityPositions(data) {
+  if (data) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-evenly",
+        }}
+      >
+        {data.map((e) => {
+          return LiquidityPosition(e);
+        })}
+      </div>
+    );
+  }
+
+  function LiquidityPosition(data) {
+    return (
+      <Container style={{ width: 190 }}>
+        <div
+          style={{
+            textAlign: "start",
+            padding: 5,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "1px",
+            justifyContent: "space-between",
+          }}
+        >
+          <div
+            style={{
+              borderRadius: 5,
+              padding: 5,
+              backgroundColor: tintedBackground,
+              width: "100%",
+              overflow: "hidden",
+            }}
+          >
+            ID: <b>{data.lp_id.toLocaleString()}</b>
+          </div>
+
+          <div
+            style={{
+              borderRadius: 5,
+              padding: 5,
+              backgroundColor: tintedBackground,
+              width: "fit-content",
+              flexGrow: 2,
+              overflow: "hidden",
+            }}
+          >
+            From:{" "}
+            <p style={{ padding: 0, textAlign: "center", fontWeight: "bold" }}>
+              {formatter.format( priceFromTick(data.lowertick))}
+            </p>
+          </div>
+          <div
+            style={{
+              borderRadius: 5,
+              padding: 5,
+              backgroundColor: tintedBackground,
+              width: "fit-content",
+              flexGrow: 2,
+            }}
+          >
+            To:
+            <p style={{ padding: 0, textAlign: "center", fontWeight: "bold" }}>
+              {formatter.format(priceFromTick(data.uppertick))}
+            </p>
+          </div>
+
+          <div
+            style={{
+              borderRadius: 5,
+              padding: 5,
+              backgroundColor: tintedBackground,
+              width: "fit-content",
+              flexGrow: 2,
+            }}
+          >
+            Liquidity:{" "}
+            <p style={{ padding: 0, textAlign: "center", fontWeight: "bold" }}>
+              {(BigInt(data.liquidity) / 10n ** 18n).toLocaleString()}
+            </p>
+          </div>
+          <div
+            style={{
+              borderRadius: 5,
+              padding: 5,
+              backgroundColor: tintedBackground,
+              width: "fit-content",
+              flexGrow: 2,
+            }}
+          >
+            <span>Tx: </span>
+            <p style={{ padding: 0, textAlign: "center", fontWeight: "bold" }}>
+              {txHashFormat(data.tx_id)}
+            </p>
+          </div>
+        </div>
+        <GradientDiv
+          style={{
+            height: 50,
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <MediumButtonInverted style={{ margin: 5 }}>
+            Remove
+          </MediumButtonInverted>
+        </GradientDiv>
+      </Container>
+    );
+  }
 }

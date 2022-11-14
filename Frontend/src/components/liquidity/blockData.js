@@ -1,6 +1,6 @@
 import BN from "bignumber.js";
 import { _scaleDown } from "../../utils/mathHelper";
-import { getAPY } from "../../utils/requests";
+import { getAPY, getLiquidityPositionsForAddress } from "../../utils/requests";
 import { wbnb } from "../../contracts/addresses";
 
 const data = {
@@ -81,6 +81,16 @@ export async function fetchBlockDataNew(data) {
         data.wallet.accounts[0].address
       )
     : 0;
+  const liquidityPositions = data.wallet
+    ? await getLiquidityPositionsForAddress(data.wallet.accounts[0].address)
+    : [];
+
+  const poolInfo = await data.routerContract.poolInfo(
+    data.tokens["token0"].contract.address,
+    data.tokens["token1"].contract.address
+  );
+
+  console.log(poolInfo[0], poolInfo[1].toString(), poolInfo[2].toString());
   //  ? await data.tokens["token1"].contract.balanceOf(
   //      data.wallet.accounts[0].address
   //    )
@@ -109,11 +119,12 @@ export async function fetchBlockDataNew(data) {
   //    .toString()
   //);
   return {
-    token0Balance: _scaleDown(t0Balance),
-    token1Balance: _scaleDown(t1Balance),
-    userBalance: 10, //userBalance,
-    poolBalances: [10, 10], //poolBalances,
-    lpTotalSupply: [10, 10], //lpTotalSupply,
+    token0Balance: BigInt(t0Balance),
+    token1Balance: BigInt(t1Balance),
+    liquidityPositions: liquidityPositions,
+    currentTick: poolInfo[0], //userBalance,
+    currentLiquidity: poolInfo[2], //poolBalances,
+    currentSqrtPrice: poolInfo[1], //lpTotalSupply,
     apy: 10, // BN(apy)
     //.dividedBy(
     //  BN(poolBalances[1].toString()).multipliedBy(2).dividedBy(BN(10).pow(18))

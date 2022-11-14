@@ -13,9 +13,11 @@ module.exports = {
         upperTick integer NOT NULL,
         tx_id character varying(128) COLLATE pg_catalog."default" NOT NULL,
         time timestamp NOT NULL,
-        UNIQUE(tx_id,time)
+        removed boolean DEFAULT false,
+        owner character varying(64) COLLATE pg_catalog."default" NOT NULL,
+        UNIQUE(tx_id)
     )`;
-    await sql`SELECT create_hypertable('public."LiquidityPositions"','time')`;
+    //await sql`SELECT create_hypertable('public."LiquidityPositions"','time')`;
   },
   createPoolsTable: async () => {
     await sql`CREATE TABLE IF NOT EXISTS public."Pools"
@@ -91,22 +93,20 @@ module.exports = {
     await sql`DELETE from public."Pools" WHERE pool_address = ${poolAddress}`;
   },
 
-  createLiquidityPosition: async (
-    event
-    //poolAddress,
-    //bnbBalance,
-    //tokenBalance,
-    //lpTotalSupply,
-    //lpValue,
-    //type
-  ) => {
+  createLiquidityPosition: async (event) => {
     await sql`INSERT INTO public."LiquidityPositions" (
-      pool,lp_id,type,liquidity,lowerTick,upperTick,time,tx_id
-    )VALUES (${event.poolAddress},${event.lp_id},${event.type},${
+      pool,lp_id,type,liquidity,lowerTick,upperTick,time,tx_id,owner
+    )VALUES (${event.poolAddress.toLowerCase()},${event.lp_id},${event.type},${
       event.liquidity
-    },${event.lowerTick},${event.upperTick},${Date.now()},${event.tx_id})`;
+    },${event.lowerTick},${event.upperTick},${Date.now()},${event.tx_id.toLowerCase()} , ${event.owner.toLowerCase()})`;
   },
-
+  removeLiquidityPosition: async (event) => {
+    await sql`UPDATE public."LiquidityPositions" SET removed=true
+    WHERE lp_id = ${event.lp_id}`;
+  },
+  getLiquidityPositionsForAddress:async(event)=>{
+    return await sql`SELECT * FROM public."LiquidityPositions" where owner=${event.owner}`
+  },
   getPoolProfit: async (tokenAddress) => {
     return await sql`
       select sum(from_amount / rate * 0.003)  from "Swaps" where from_address=${tokenAddress} and

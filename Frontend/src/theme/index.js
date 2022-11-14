@@ -61,7 +61,6 @@ export const MainMenuItem = styled.div`
 
 export const GradientDiv = styled.div`
   box-shadow: 0px -2px 5px -4 black;
-
   background: ${backgroundGradient};
 `;
 

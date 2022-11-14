@@ -35,9 +35,10 @@ contract Router is IRouter, IPositionCallback {
         uint256 Liquidity,
         int24 LowerTick,
         int24 UpperTick,
-        uint256 Id
+        uint256 Id,
+        address owner
     );
-    event Liquidity_Removed(address Pool, uint256 RemovedLiquidity);
+    event Liquidity_Removed(address Pool, uint256 Id);
 
     constructor(address _WETH, address _factory) {
         require(_WETH != address(0), "WETH address must be defined");
@@ -50,6 +51,20 @@ contract Router is IRouter, IPositionCallback {
         // React to receiving ether
     }
 
+    function poolInfo(
+        address _token0Address,
+        address _token1Address
+    ) external view returns (int24 tick,uint256 price,uint128 liquidity) {
+        (_token0Address, _token1Address) = _orderPools(
+            _token0Address,
+            _token1Address
+        );
+        poolExists(_token0Address, _token1Address);
+        tick = IJupyterSwapPool(payable(pools[_token0Address][_token1Address])).currentTick();
+        price = IJupyterSwapPool(payable(pools[_token0Address][_token1Address])).currentSqrtPrice();
+        liquidity = IJupyterSwapPool(payable(pools[_token0Address][_token1Address])).liquidity();
+    }
+
     //Transfer Callbacks
     function addPositionCallback(
         uint256 _amount0,
@@ -58,9 +73,6 @@ contract Router is IRouter, IPositionCallback {
         address _token1Address,
         address _sender
     ) external override validPool {
-        require(_amount0 >  0,"amount0 = 0");
-                require(_amount1 >  0,"amount1 = 0")
-;
         if (_amount0 > 0)
             if (_token0Address == WETH) {
                 require(
@@ -142,7 +154,8 @@ contract Router is IRouter, IPositionCallback {
             _amount,
             _startTick,
             _endTick,
-            lp_id
+            lp_id,
+            msg.sender
         );
         //Send remaining ETH value back to user
         //if (address(this).balance > 0) {
@@ -179,6 +192,8 @@ contract Router is IRouter, IPositionCallback {
         poolExists(_token0Address, _token1Address);
         IJupyterSwapPool(payable(pools[_token0Address][_token1Address]))
             .removePosition(_positionId, msg.sender);
+        emit Liquidity_Removed(pools[_token0Address][_token1Address], _positionId);
+
     }
 
     function createPool(

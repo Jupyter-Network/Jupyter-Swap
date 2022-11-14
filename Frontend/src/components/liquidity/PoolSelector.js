@@ -18,10 +18,10 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
 
   const [activeSelector, setActiveSelector] = useState();
 
-  useEffect(() => {
-    onChange(tokens);
-  }, [tokens]);
-
+  //useEffect(() => {
+  //  onChange(tokens);
+  //}, [tokens]);
+//
   useEffect(() => {
     setTokens({
       token0: {
@@ -42,7 +42,6 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
       },
     });
   }, [provider]);
-  console.log(tokens);
   function checkValidityAndSetTokens(item) {
     setTokens({
       token0: {
@@ -66,6 +65,29 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
         address: item.token1.address,
       },
     });
+        onChange({
+          token0: {
+            symbol: item.token0.name,
+            contract: new ethers.Contract(
+              item.token0.address,
+              erc20Abi,
+              provider.getSigner()
+            ),
+            icon: item.token0.icon,
+            address: item.token0.address,
+          },
+          token1: {
+            symbol: item.token1.name,
+            contract: new ethers.Contract(
+              item.token1.address,
+              erc20Abi,
+              provider.getSigner()
+            ),
+            icon: item.token1.icon,
+            address: item.token1.address,
+          },
+        });
+
   }
 
   async function queryTokens(value) {
@@ -91,7 +113,6 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
     }
   }
 
-  console.log(tokens.token1);
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "center" }}>

@@ -19,7 +19,13 @@ export async function getAPY(tokenAddress) {
   return res.data;
 }
 
-export async function getHistoryOHLC(tokenAddress,bucket) {
-  let res = await axios.get(`http://127.0.0.1:3001/historyOHLC/${tokenAddress}/${bucket}`);
+export async function getHistoryOHLC(tokenAddress, bucket) {
+  let res = await axios.get(
+    `http://127.0.0.1:3001/historyOHLC/${tokenAddress}/${bucket}`
+  );
+  return res;
+}
+export async function getLiquidityPositionsForAddress(token0Address) {
+  let res = await axios.get(`http://127.0.0.1:3001/lp/${token0Address}`);
   return res;
 }

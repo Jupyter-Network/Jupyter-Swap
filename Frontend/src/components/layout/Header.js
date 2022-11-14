@@ -5,6 +5,7 @@ import {
   MediumButtonInverted,
 } from "../../theme/buttons";
 import { highlight, primary, secondary } from "../../theme/theme";
+import { addressFormat, txHashFormat } from "../../utils/inputValidations";
 export default function Header() {
   const [
     {
@@ -38,9 +39,8 @@ export default function Header() {
             disconnect(wallet);
           }}
         >
-          {wallet.accounts[0].address.slice(0, 4) +
-            "..." +
-            wallet.accounts[0].address.slice(39)}
+          {addressFormat(wallet.accounts[0].address)}
+  
         </LargeButton>
       )}
     </div>
