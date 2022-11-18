@@ -32,6 +32,7 @@ fastify.get("/lp/:ownerAddress", async (request, reply) => {
   });
 });
 
+
 fastify.get("/apy/:tokenAddress", async (request, reply) => {
   let d = await query.getPoolProfit(request.params.tokenAddress);
   if (d[0].sum) {

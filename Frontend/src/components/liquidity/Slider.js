@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { scaleLinear, scaleSqrt } from "d3";
+import { rgb, scaleLinear, scaleSqrt } from "d3";
 import { numericFormat } from "../../utils/inputValidations";
 
 export function Slider(props) {
@@ -19,20 +19,21 @@ export function Slider(props) {
     props.onMoveLeft(myScale(xPosLeft));
   }, [xPosLeft]);
 
-
-
-  let myScale = scaleSqrt()
+  const myScale = scaleSqrt()
     .range([0, props.currentPrice * 2])
-    .domain([0, 300]);
+    .domain([0, props.width]);
   let yScale = scaleLinear()
-    .domain([0, props.positions.reduce((acc, item) => acc + item.lp, 0)])
-    .range([0, props.height]);
+    .range([0, props.height])
+    .domain([
+      props.positions.reduce((acc, item) => (item.lp < acc ? item.lp : acc), 0),
+      props.positions.reduce((acc, item) => (item.lp > acc ? item.lp : acc), 0),
+    ]);
   function move(e) {
     const clientX = e.clientX - self.current.offsetLeft;
     if (clientX > 0 && clientX < props.width && drag) {
-      if (selected == 0 && clientX < xPosRight) {
+      if (selected == 0 && clientX < xPosRight - 20) {
         setXPosLeft(clientX);
-      } else if (selected == 1 && clientX > xPosLeft) {
+      } else if (selected == 1 && clientX > xPosLeft + 20) {
         setXPosRight(clientX);
       }
     }
@@ -46,7 +47,6 @@ export function Slider(props) {
         e.clientX < xPosLeft + 20 + self.current.offsetLeft
     );
     let correctedX = e.clientX - self.current.offsetLeft;
-    console.log(correctedX);
     correctedX = correctedX > 0 ? correctedX : 0;
     if (correctedX > xPosLeft - 20 && correctedX < xPosLeft + 20) {
       setSelected(0);
@@ -63,25 +63,41 @@ export function Slider(props) {
     if (props.positions && props.positions.length > 0) {
       const step = 10;
       let out = [];
+      let sum = 0;
+      let sums = [];
       for (let i = 0; i < props.width; i += step) {
-        let sum = props.positions.reduce(
-          (acc, current) =>
-            current.lt >= myScale(i) && current.ut > myScale(i + step)
-              ? acc + current.lp
-              : acc,
-          0
-        );
-        out.push(
+        sum += props.positions.reduce((acc, current) => {
+          let c =
+            current.lt >= myScale(i) && current.lt < myScale(i + step)
+              ? +current.lp
+              : 0;
+          let b =
+            current.ut >= myScale(i) && current.ut < myScale(i + step)
+              ? -current.lp
+              : 0;
+          acc = acc + c + b;
+          return acc;
+        }, 0);
+        sums.push(sum);
+      }
+      yScale.domain([
+        sums.reduce((acc, item) => (item < acc ? item : acc), 0),
+        sums.reduce((acc, item) => (item > acc ? item : acc), 0),
+      ]);
+
+      out = sums.map((e, i) => {
+        return (
           <rect
-            key={i}
+            key={i * step}
             fill={"gray"}
-            x={i}
+            x={i * step}
             width={step}
-            y={props.height - yScale(sum)}
-            height={yScale(sum)}
+            y={props.height - yScale(e)} //props.height - yScale(sum)}
+            height={yScale(e)}
           ></rect>
         );
-      }
+      });
+
       return out;
     }
   }
@@ -108,6 +124,13 @@ export function Slider(props) {
         }}
       >
         {liquidityProfile()}
+        <rect
+          x={xPosLeft}
+          width={xPosRight - xPosLeft}
+          height={300}
+          fill={"rgba(12,12,12,0.2)"}
+        ></rect>
+
         <rect
           x={myScale.invert(props.currentPrice)}
           style={{ fill: "orange" }}

@@ -101,8 +101,10 @@ module.exports = {
     },${event.lowerTick},${event.upperTick},${Date.now()},${event.tx_id.toLowerCase()} , ${event.owner.toLowerCase()})`;
   },
   removeLiquidityPosition: async (event) => {
-    await sql`UPDATE public."LiquidityPositions" SET removed=true
-    WHERE lp_id = ${event.lp_id}`;
+    await sql`DELETE FROM public."LiquidityPositions" WHERE lp_id = ${event.lp_id}`;
+    //If updating
+    //await sql`UPDATE public."LiquidityPositions" SET removed=true
+    //WHERE lp_id = ${event.lp_id}`;
   },
   getLiquidityPositionsForAddress:async(event)=>{
     return await sql`SELECT * FROM public."LiquidityPositions" where owner=${event.owner}`

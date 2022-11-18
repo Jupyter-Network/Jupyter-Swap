@@ -88,7 +88,8 @@ export function tickAtSqrtPrice(sqrtPrice) {
 }
 
 export function sqrtPriceFromTick(tick) {
-  let absTick = tick < 0 ? BigInt(-tick) : BigInt(tick);
+  let absTick = BigInt(tick);
+  absTick = tick > 0 ? absTick : -absTick;
   let ratio =
     (absTick & 0x1n) != 0n
       ? 0xfffcb933bd6fad37aa2d162d1a594001n
@@ -132,19 +133,18 @@ export function sqrtPriceFromTick(tick) {
   if ((absTick & 0x80000n) != 0)
     ratio = (ratio * 0x48a170391f7dc42444e8fa2n) >> 128n;
 
-  if (tick > 0)
-    ratio =
-      115792089237316195423570985008687907853269984665640564039457584007913129639935n /
-      ratio;
+  if(tick > 0) ratio =
+    115792089237316195423570985008687907853269984665640564039457584007913129639935n /
+    ratio;
 
   return (ratio >> 32n) + (ratio % (1n << 32n) == 0 ? 0n : 1n);
 }
 
 export function priceFromSqrtPrice(sqrtPrice) {
-  let num = (sqrtPrice ** 2n / 2n ** 64n).toString()
+  let num = (sqrtPrice ** 2n / 2n ** 64n).toString();
   //let frac = num.slice(-18)
   //num = num.split(frac)[0] + "." +  frac
-  return num / 2**128
+  return num / 2 ** 128;
 }
 export function sqrtPriceFromPrice(price) {
   return BigInt(Math.round(Math.sqrt(price) * 2 ** 96));
@@ -155,23 +155,30 @@ export function priceFromTick(tick) {
 }
 
 export function getAmount0(lowerPrice, upperPrice, liquidity) {
-  [lowerPrice,upperPrice] = lowerPrice < upperPrice ? [lowerPrice,upperPrice]: [upperPrice,lowerPrice]
+  [lowerPrice, upperPrice] =
+    lowerPrice < upperPrice
+      ? [lowerPrice, upperPrice]
+      : [upperPrice, lowerPrice];
   const lp = sqrtPriceFromTick(tickAtSqrtPrice(lowerPrice));
   const up = sqrtPriceFromTick(tickAtSqrtPrice(upperPrice));
   liquidity = BigInt(liquidity) << 96n;
   let delta = up - lp;
-  return ((liquidity * delta) / BigInt(lp*up));
+
+  return (liquidity * delta) / BigInt(lp * up);
 }
 
 export function getAmount1(lowerPrice, upperPrice, liquidity) {
   const lp = BigInt(lowerPrice);
   const up = BigInt(upperPrice);
-  liquidity = BigInt(liquidity)
+
+  console.log(lp, up);
+  liquidity = BigInt(liquidity);
+  console.log(liquidity);
   let delta = up - lp;
+  console.log(delta);
+
   return (liquidity * delta) / 79228162514264337593543950336n;
 }
-
-
 
 export function calcNewPosition(
   _startTick,
@@ -182,23 +189,37 @@ export function calcNewPosition(
 ) {
   let amount0;
   let amount1;
+  _currentTick = BigInt(_currentTick);
 
-
+  console.log(_startTick, _endTick, _currentTick);
+  console.log(_startTick < _currentTick);
   if (_currentTick >= _startTick && _currentTick < _endTick) {
-    amount0 = getAmount0(_currentPrice, sqrtPriceFromTick(_endTick), _liquidity);
+    console.log(
+      "Tick Inside position",
+      sqrtPriceFromTick(_startTick)
+    );
+
+    amount0 = getAmount0(
+      _currentPrice,
+      sqrtPriceFromTick(_endTick),
+      _liquidity
+    );
     amount1 = getAmount1(
-        sqrtPriceFromTick(_startTick),
-        _currentPrice,
-        _liquidity
+      sqrtPriceFromTick(_startTick),
+      _currentPrice,
+      _liquidity
     );
   } else if (_currentTick >= _endTick) {
+    console.log("Tick > _endTick");
     amount0 = 0;
     amount1 = getAmount1(
-        sqrtPriceFromTick(_startTick),
-        sqrtPriceFromTick(_endTick),
-        _liquidity
+      sqrtPriceFromTick(_startTick),
+      sqrtPriceFromTick(_endTick),
+      _liquidity
     );
   } else if (_currentTick < _startTick) {
+    console.log("Tick < _endTick");
+
     amount1 = 0;
     amount0 = getAmount0(
       sqrtPriceFromTick(_startTick),
@@ -206,34 +227,23 @@ export function calcNewPosition(
       _liquidity
     );
   }
-  return [amount0,amount1];
+  console.log(amount0, amount1);
+  return [amount0, amount1];
 }
-
-
-
 
 //Get next price from token 1 amount always rounding down
-export function getNextPriceFromAmount1(
-  currentPrice,
-  liquidity,
-  amount
-){
-      let priceChange = (BigInt(amount) << 96n) / BigInt(liquidity)
-      return BigInt(currentPrice) + priceChange / 10n**18n;
+export function getNextPriceFromAmount1(currentPrice, liquidity, amount) {
+  let priceChange = (BigInt(amount) << 96n) / BigInt(liquidity);
+  return BigInt(currentPrice) + priceChange / 10n ** 18n;
 }
 
-export function getNextPriceFromAmount0(
-  currentPrice,
-  liquidity,
-  amount
-) {
-  amount = BigInt(amount)
-  currentPrice = BigInt(currentPrice)
+export function getNextPriceFromAmount0(currentPrice, liquidity, amount) {
+  amount = BigInt(amount);
+  currentPrice = BigInt(currentPrice);
   if (amount == 0n) return currentPrice;
   const numerator1 = BigInt(liquidity) << 96n;
-  const product = amount *currentPrice;
+  const product = amount * currentPrice;
   const denominator = numerator1 + product;
 
-  return (numerator1 * currentPrice) / denominator
-
+  return (numerator1 * currentPrice) / denominator;
 }

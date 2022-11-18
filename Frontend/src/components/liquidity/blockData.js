@@ -81,9 +81,14 @@ export async function fetchBlockDataNew(data) {
         data.wallet.accounts[0].address
       )
     : 0;
-  const liquidityPositions = data.wallet
+  let liquidityPositions = data.wallet
     ? await getLiquidityPositionsForAddress(data.wallet.accounts[0].address)
-    : [];
+    : { data: [] };
+
+  console.log(liquidityPositions);
+  liquidityPositions.data = liquidityPositions.data.map((e, i) => {
+    return { ...e };
+  });
 
   const poolInfo = await data.routerContract.poolInfo(
     data.tokens["token0"].contract.address,
