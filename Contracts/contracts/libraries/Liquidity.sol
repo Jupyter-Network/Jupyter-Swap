@@ -5,22 +5,12 @@ import "./Fees.sol";
 import "./PriceMath.sol";
 import "./BitMap.sol";
 import "./Tick.sol";
-
+import "./Shared.sol";
 library LiquidityManager {
     uint256 internal constant FEE_SCALE_FACTOR =
         0x100000000000000000000000000000000;
     using BitMap for mapping(int16 => uint256);
 
-    struct Position {
-        uint128 liquidity;
-        uint256 token0Amount;
-        uint256 token1Amount;
-        int24 lowerTick;
-        int24 upperTick;
-        address owner;
-        uint256 globalFees0;
-        uint256 globalFees1;
-    }
     struct TickState {
         uint256 liquidity;
         int128 liquidityNet;
@@ -30,14 +20,14 @@ library LiquidityManager {
     }
 
     function getCollectedFees(
-        mapping(uint256 => Position) storage self,
+        mapping(uint256 => Shared.Position) storage self,
         mapping(int24 => TickState) storage _ticks,
         uint256 _positionId,
         uint256 _feeGlobal0,
         uint256 _feeGlobal1,
         int24 _currentTick
     ) internal view returns (uint256, uint256) {
-        Position memory pos = self[_positionId];
+        Shared.Position memory pos = self[_positionId];
         return (
             Math.mulDiv(
                 Fees.feesInRange(
@@ -82,7 +72,7 @@ library LiquidityManager {
     }
 
     function addPositionView(
-        mapping(uint256 => Position) storage self,
+        mapping(uint256 => Shared.Position) storage self,
         mapping(int24 => TickState) storage _ticks,
         mapping(int16 => uint256) storage _map,
         NewPositionParameter memory param
@@ -106,7 +96,7 @@ library LiquidityManager {
     }
 
     function addPosition(
-        mapping(uint256 => Position) storage self,
+        mapping(uint256 => Shared.Position) storage self,
         mapping(int24 => TickState) storage _ticks,
         mapping(int16 => uint256) storage _map,
         NewPositionParameter memory param
@@ -164,7 +154,7 @@ library LiquidityManager {
             newLiquidity = param.liquidity;
         }
 
-        self[param.positionId] = Position(
+        self[param.positionId] = Shared.Position(
             param.amount,
             amount0,
             amount1,
@@ -187,7 +177,7 @@ library LiquidityManager {
     }
 
     function removePosition(
-        mapping(uint256 => Position) storage self,
+        mapping(uint256 => Shared.Position) storage self,
         mapping(int24 => TickState) storage _ticks,
         mapping(int16 => uint256) storage _map,
         RemovePositionParameter memory param
@@ -203,7 +193,7 @@ library LiquidityManager {
             self[param.positionId].owner == param.owner,
             "Not owner of the position"
         );
-        Position memory pos = self[param.positionId];
+        Shared.Position memory pos = self[param.positionId];
 
         _ticks[pos.lowerTick].liquidity -= uint128(pos.liquidity);
         _ticks[pos.lowerTick].liquidityNet -= int128(pos.liquidity);

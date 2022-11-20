@@ -93,18 +93,34 @@ contract("Router", ([owner, testAddress]) => {
   });
   it("Add Position", async () => {
     await router.createPool(token0.address, token1.address, 1024);
-    //let res = await router.getPool(token0.address, token1.address);
-    //console.log(res);
-    //await router.addPosition(
-    //  token0.address,
-    //  token1.address,
-    //  -64000,
-    //  64000,
-    //  100000000,   {
-    //    from: owner,
-    //    value: 100000000000000,
-    //  }
-    //);
+    let amounts = await router.addPositionView(
+      token0.address,
+      token1.address,
+      -5120,
+      5120,
+      100000000000000
+    );
+    console.log(
+      "AMOUNTS:",
+      amounts.token0Amount.toString(),
+      amounts.token1Amount.toString()
+    );
+
+    await router.addPosition(
+      token1.address,
+      token0.address,
+      -5120,
+      5120,
+      100000000000000,
+      {
+        from: owner,
+        value: amounts.token0Amount,
+      }
+    );
+  });
+
+  it("View Position", async () => {
+    await router.createPool(token0.address, token1.address, 1024);
     let amounts = await router.addPositionView(
       token0.address,
       token1.address,
@@ -130,11 +146,7 @@ contract("Router", ([owner, testAddress]) => {
       }
     );
 
-    //await testSending(
-    //  router.addPosition,
-    //  [token0.address, token1.address, -64000, 64000, 100000000],
-    //  owner
-    //);
+    console.log(await router.positionInfo(token0.address, token1.address, 1));
   });
   it("Remove Position", async () => {
     await router.createPool(token0.address, token1.address, 1024);
@@ -149,8 +161,9 @@ contract("Router", ([owner, testAddress]) => {
     await testSending(
       router.addPosition,
       [token0.address, token1.address, -5120, 5120, 100000000000000],
-      owner,{
-        from:owner
+      owner,
+      {
+        from: owner,
       }
     );
     await testReceiving(

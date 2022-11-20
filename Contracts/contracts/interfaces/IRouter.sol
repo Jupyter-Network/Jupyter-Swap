@@ -1,4 +1,5 @@
 pragma solidity ^0.8.13;
+import "./IPool.sol";
 
 interface IRouter {
     ///@notice Adds a new liquidity position
@@ -54,5 +55,34 @@ interface IRouter {
         address _token1Address,
         uint256 _amount,
         int24 _limitTick
+    ) external payable;
+
+    function positionInfo(
+        address _token0Address,
+        address _token1Address,
+        uint256 _positionId
+    )
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        );
+
+    function poolInfo(address _token0Address, address _token1Address)
+        external
+        view
+        returns (
+            int24 tick,
+            uint256 price,
+            uint128 liquidity
+        );
+
+    function collectFees(
+        address _token0Address,
+        address _token1Address,
+        uint256 _positionId
     ) external payable;
 }

@@ -6,8 +6,10 @@ import "./interfaces/IWETH.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IFactory.sol";
 import "./test/WBNB.sol";
+import "./libraries/Lock.sol";
+import "./libraries/Shared.sol";
 
-contract Router is IRouter, IPositionCallback {
+contract Router is IRouter, IPositionCallback, Lock {
     int24 internal constant MAX_TICK = 887272;
     int24 internal constant MIN_TICK = -MAX_TICK;
     address internal immutable WETH;
@@ -51,18 +53,64 @@ contract Router is IRouter, IPositionCallback {
         // React to receiving ether
     }
 
-    function poolInfo(
-        address _token0Address,
-        address _token1Address
-    ) external view returns (int24 tick,uint256 price,uint128 liquidity) {
+    function poolInfo(address _token0Address, address _token1Address)
+        external
+        view
+        override
+        returns (
+            int24 tick,
+            uint256 price,
+            uint128 liquidity
+        )
+    {
         (_token0Address, _token1Address) = _orderPools(
             _token0Address,
             _token1Address
         );
         poolExists(_token0Address, _token1Address);
-        tick = IJupyterSwapPool(payable(pools[_token0Address][_token1Address])).currentTick();
-        price = IJupyterSwapPool(payable(pools[_token0Address][_token1Address])).currentSqrtPrice();
-        liquidity = IJupyterSwapPool(payable(pools[_token0Address][_token1Address])).liquidity();
+        tick = IJupyterSwapPool(payable(pools[_token0Address][_token1Address]))
+            .currentTick();
+        price = IJupyterSwapPool(payable(pools[_token0Address][_token1Address]))
+            .currentSqrtPrice();
+        liquidity = IJupyterSwapPool(
+            payable(pools[_token0Address][_token1Address])
+        ).liquidity();
+    }
+
+    function positionInfo(
+        address _token0Address,
+        address _token1Address,
+        uint256 _positionId
+    )
+        external
+        view
+        override
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        (_token0Address, _token1Address) = _orderPools(
+            _token0Address,
+            _token1Address
+        );
+        poolExists(_token0Address, _token1Address);
+        (
+            int24 lowerTick,
+            int24 upperTick,
+            uint128 liquidity
+        ) = IJupyterSwapPool(payable(pools[_token0Address][_token1Address]))
+                .position(_positionId);
+        (uint256 token0Amount, uint256 token1Amount) = IJupyterSwapPool(
+            payable(pools[_token0Address][_token1Address])
+        ).addPositionView(lowerTick, upperTick, liquidity);
+        (uint256 fee0, uint256 fee1) = IJupyterSwapPool(
+            payable(pools[_token0Address][_token1Address])
+        ).getCollectedFees(_positionId);
+
+        return (token0Amount, token1Amount, fee0, fee1);
     }
 
     //Transfer Callbacks
@@ -133,7 +181,7 @@ contract Router is IRouter, IPositionCallback {
         int24 _startTick,
         int24 _endTick,
         uint256 _amount
-    ) external payable override {
+    ) external payable override locked {
         (_token0Address, _token1Address) = _orderPools(
             _token0Address,
             _token1Address
@@ -184,7 +232,7 @@ contract Router is IRouter, IPositionCallback {
         address _token0Address,
         address _token1Address,
         uint256 _positionId
-    ) external override {
+    ) external override locked {
         (_token0Address, _token1Address) = _orderPools(
             _token0Address,
             _token1Address
@@ -192,8 +240,10 @@ contract Router is IRouter, IPositionCallback {
         poolExists(_token0Address, _token1Address);
         IJupyterSwapPool(payable(pools[_token0Address][_token1Address]))
             .removePosition(_positionId, msg.sender);
-        emit Liquidity_Removed(pools[_token0Address][_token1Address], _positionId);
-
+        emit Liquidity_Removed(
+            pools[_token0Address][_token1Address],
+            _positionId
+        );
     }
 
     function createPool(
@@ -234,7 +284,7 @@ contract Router is IRouter, IPositionCallback {
         address _token1Address,
         uint256 _amount,
         int24 _limitTick
-    ) external payable override {
+    ) external payable override locked {
         (_token0Address, _token1Address) = _orderPools(
             _token0Address,
             _token1Address
@@ -245,6 +295,21 @@ contract Router is IRouter, IPositionCallback {
             _limitTick,
             msg.sender
         );
+    }
+
+    function collectFees(
+        address _token0Address,
+        address _token1Address,
+        uint256 _positionId
+
+    ) external payable override locked {
+        (_token0Address, _token1Address) = _orderPools(
+            _token0Address,
+            _token1Address
+        );
+        poolExists(_token0Address, _token1Address);
+        IJupyterSwapPool(payable(pools[_token0Address][_token1Address]))
+            .withdrawUncollectedFees(_positionId);
     }
 
     function swapQuote(

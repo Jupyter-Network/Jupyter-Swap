@@ -8,6 +8,7 @@ import "./libraries/PositionCallback.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IWETH.sol";
 import "./interfaces/IPool.sol";
+import "./libraries/Shared.sol";
 
 contract JupyterSwapPool is IJupyterSwapPool {
     int24 public currentTick;
@@ -52,8 +53,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
     using BitMap for mapping(int16 => uint256);
     mapping(int16 => uint256) map;
 
-    using LiquidityManager for mapping(uint256 => LiquidityManager.Position);
-    mapping(uint256 => LiquidityManager.Position) public positions;
+    using LiquidityManager for mapping(uint256 => Shared.Position);
+    mapping(uint256 => Shared.Position) public positions;
     mapping(int24 => LiquidityManager.TickState) public ticks;
     uint128 public liquidity = 0;
 
@@ -643,6 +644,20 @@ contract JupyterSwapPool is IJupyterSwapPool {
             //IERC20(_token).transfer(_to,_amount);
             Transfer.safeTransferOut(_token, _amount, _to);
         }
+    }
+
+    function position(uint256 _positionId)
+        external
+        view
+        override
+        returns (
+            int24,
+            int24,
+            uint128
+        )
+    {
+        Shared.Position memory pos = positions[_positionId];
+        return (pos.lowerTick, pos.upperTick, pos.liquidity);
     }
 
     receive() external payable {}

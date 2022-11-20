@@ -31,17 +31,11 @@ import { primary, tintedBackground } from "../../theme/theme";
 import Balances from "../liquidity/Balances";
 import Chart from "../liquidity/Chart";
 import LabeledInput from "../LabeledInput";
-import { getAPY } from "../../utils/requests";
 import { initTokens } from "../../initialValues";
 import LoadingSpinner from "../LoadingSpinner";
 import {
   calcNewPosition,
-  getAmount0,
-  getAmount1,
-  getNextPriceFromAmount0,
-  getNextPriceFromAmount1,
   priceFromSqrtPrice,
-  priceFromTick,
   sqrtPriceFromPrice,
   sqrtPriceFromTick,
   tickAtSqrtPrice,
@@ -97,10 +91,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         .toString()
     );
   }, [createWidgetState]);
-  //useEffect(()=>{
-  //  console.log(state)
-  //  loadLpQuote(state);
-  //},[state])
 
   const [maxSlippage, setMaxSlippage] = useState(new BN(0.5));
 
@@ -118,14 +108,12 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         ...state,
         lowerBoundary: value,
       });
-      //await loadLpQuote({ ...state, lowerBoundary: value });
     } else {
       console.log("Set Upper", value);
       setState({
         ...state,
         upperBoundary: value,
       });
-      //await loadLpQuote({ ...state, upperBoundary: value });
     }
   }
   async function handleLiquidityChange(value) {
@@ -137,16 +125,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
   }
 
   async function loadLpQuote(currentState) {
-    //Fetch from blockchain
-    //let quote = await routerContract.addPositionView(
-    //  tokens["token0"].contract.address,
-    //  tokens["token1"].contract.address,
-    //  tickAtSqrtPrice(sqrtPriceFromPrice(state.lowerBoundary)),
-    //  tickAtSqrtPrice(sqrtPriceFromPrice(state.upperBoundary)),
-    //  new BN(state.liquidity)
-    //    .multipliedBy(new BN(10).pow(new BN(18)))
-    //    .toFixed(0)
-    //);
     if (blockData) {
       let quote = calcNewPosition(
         tickAtSqrtPrice(sqrtPriceFromPrice(currentState.lowerBoundary)),
@@ -206,40 +184,8 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       : initTokens(ethers, ethersProvider, erc20Abi)
   );
 
-  //New Block
-  // useEffect(() => {
-  //   async function asyncRun() {
-  //     console.log("Block changed in swap");
-  //     await getBlockData();
-  //     //handleToken0AmountChange(state.token0Amount.toString());
-  //   }
-  //
-  //     asyncRun();
-  //
-  // }, []);
-
   useEffect(() => {
     console.log(ethersProvider.getCode());
-    //setTokens({
-    //  token0: {
-    //    ...tokens.token0,
-    //    contract: new ethers.Contract(
-    //      tokens.token0.contract.address,
-    //      erc20Abi,
-    //      ethersProvider.getSigner()
-    //    ),
-    //  },
-    //  token1: {
-    //    ...tokens.token1,
-    //    contract: new ethers.Contract(
-    //      tokens.token1.contract.address,
-    //      erc20Abi,
-    //      ethersProvider.getSigner()
-    //    ),
-    //  },
-    //});
-
-    //getBlockData();
   }, [wallet]);
 
   useEffect(() => {
@@ -293,21 +239,6 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       ],
       getBlockData
     );
-
-    //await routerContract.createLiquidityPool(
-    //  createWidgetState.address,
-    //  BN(createWidgetState.tokenAmount)
-    //    .multipliedBy(BN(10).pow(18))
-    //    .toFixed(0)
-    //    .toString(),
-    //  deadline(),
-    //  {
-    //    value: BN(createWidgetState.bnbAmount)
-    //      .multipliedBy(BN(10).pow(18))
-    //      .toFixed(0)
-    //      .toString(),
-    //  }
-    //);
   }
 
   async function addLiquidity(
@@ -350,6 +281,32 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
     );
   }
 
+  async function collectFees(_positionId) {
+    if (!wallet) {
+      connect();
+      return;
+    }
+    await transaction(
+      `Collect fees for Position n. ${_positionId} ?
+     `,
+      routerContract.collectFees,
+      [
+        tokens["token0"].contract.address,
+        tokens["token1"].contract.address,
+        _positionId,
+
+        //deadline(),
+        //{
+        //  value: BN(state.token0Amount)
+        //    .multipliedBy(BN(10).pow(18))
+        //    .toFixed(0)
+        //    .toString(),
+        //},
+      ],
+      getBlockData
+    );
+  }
+
   async function removeLiquidity() {
     if (!wallet) {
       connect();
@@ -362,6 +319,24 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         tokens["token0"].contract.address,
         tokens["token1"].contract.address,
         BigInt(state.lpId),
+        //deadline(),
+      ],
+      getBlockData
+    );
+  }
+
+  async function removeLiquidityById(id) {
+    if (!wallet) {
+      connect();
+      return;
+    }
+    await transaction(
+      `Remove Liquidity Position number ${id}`,
+      routerContract.removePosition,
+      [
+        tokens["token0"].contract.address,
+        tokens["token1"].contract.address,
+        BigInt(id),
         //deadline(),
       ],
       getBlockData
@@ -429,60 +404,53 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         >
           <Balances blockData={blockData} tokens={tokens}></Balances>
           <div style={{ width: "100%" }}>
-          <Container style={{ maxHeight: 260,margin:"0 auto" }}>
-            <ContainerTitle>Select Pool</ContainerTitle>
-            <PoolSelector
-              provider={ethersProvider}
-              onChange={(tokens) => {
-                console.log("PoolSelectro loaded");
-                setTokens(tokens);
-              }}
-              initialTokens={tokens}
-            ></PoolSelector>
-            {blockData ? (
-              <p>
-                APY: <b>{numericFormat(blockData.apy)} % </b>
-              </p>
-            ) : (
-              <p></p>
-            )}
-            <GradientDiv style={{ height: 90 }}>
+            <Container style={{ maxHeight: 260, margin: "0 auto" }}>
+              <ContainerTitle>Select Pool</ContainerTitle>
+              <PoolSelector
+                provider={ethersProvider}
+                onChange={(tokens) => {
+                  console.log("PoolSelectro loaded");
+                  setTokens(tokens);
+                }}
+                initialTokens={tokens}
+              ></PoolSelector>
               <br />
+              <GradientDiv style={{ height: 90 }}>
+                <br />
 
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <MediumButtonInverted
-                  onClick={() => {
-                    approveToken(
-                      tokens["token0"].contract,
-                      "100000000000000000000000"
-                    );
-                  }}
-                >
-                  Approve {tokens["token0"].symbol}{" "}
-                  <img
-                    style={{ height: 20, position: "relative", top: 2 }}
-                    src={`/tokenlogos/${tokens["token0"].icon}`}
-                  ></img>
-                </MediumButtonInverted>
-                <MediumButtonInverted
-                  onClick={() => {
-                    approveToken(
-                      tokens["token1"].contract,
-                      "100000000000000000000000"
-                    );
-                  }}
-                >
-                  Approve {tokens["token1"].symbol}{" "}
-                  <img
-                    style={{ height: 20, position: "relative", top: 2 }}
-                    src={`/tokenlogos/${tokens["token1"].icon}`}
-                  ></img>
-                </MediumButtonInverted>
-              </div>
-            </GradientDiv>
-          </Container>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <MediumButtonInverted
+                    onClick={() => {
+                      approveToken(
+                        tokens["token0"].contract,
+                        "100000000000000000000000"
+                      );
+                    }}
+                  >
+                    Approve {tokens["token0"].symbol}{" "}
+                    <img
+                      style={{ height: 20, position: "relative", top: 2 }}
+                      src={`/tokenlogos/${tokens["token0"].icon}`}
+                    ></img>
+                  </MediumButtonInverted>
+                  <MediumButtonInverted
+                    onClick={() => {
+                      approveToken(
+                        tokens["token1"].contract,
+                        "100000000000000000000000"
+                      );
+                    }}
+                  >
+                    Approve {tokens["token1"].symbol}{" "}
+                    <img
+                      style={{ height: 20, position: "relative", top: 2 }}
+                      src={`/tokenlogos/${tokens["token1"].icon}`}
+                    ></img>
+                  </MediumButtonInverted>
+                </div>
+              </GradientDiv>
+            </Container>
           </div>
-    
 
           <AddLpPositionComponent
             onAddLiquidity={(
@@ -494,37 +462,23 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             blockData={blockData}
             tokens={tokens}
           ></AddLpPositionComponent>
-                   <Container style={{ maxHeight: 600, width: "100%" }}>
-            <ContainerTitle>Your Positions</ContainerTitle>
-            {blockData
-              ? LiquidityPositions(blockData.liquidityPositions.data)
-              : 0}
-          </Container>
-
-          <Container style={{ maxHeight: 192 }}>
-            <ContainerTitle>Remove Liquidity Position</ContainerTitle>
-            <span>
-              {tokens["token0"].symbol} / {tokens["token1"].symbol}
-            </span>
-            <br />
-            <div style={{ width: "80%", margin: "0 auto" }}>
-              <LabeledInput
-                name={"Position ID"}
-                onChange={(e) => {
-                  let v = BN(validate(e.target.value));
-                  setState({ ...state, lpId: isNaN(v) ? 0 : v });
+          <div>
+            <Container style={{ maxWidth: "96vw", width: 400 }}>
+              <ContainerTitle>Your Positions</ContainerTitle>
+              <LiquidityPositions
+                blockData={blockData}
+                positionInfo={routerContract.positionInfo}
+                tokens={tokens}
+                onRemove={(e) => {
+                  removeLiquidityById(e);
                 }}
-                value={state.lpId}
-                icon={""}
-                onFocus={(e) => setState({ ...state, lpId: "" })}
-              ></LabeledInput>
-            </div>
+                onCollectFees={(e) => {
+                  collectFees(e);
+                }}
+              ></LiquidityPositions>
+            </Container>
+          </div>
 
-            <br />
-            <LargeButton onClick={() => removeLiquidity()}>
-              Remove Liquidity
-            </LargeButton>
-          </Container>
           <div style={{ width: "100%" }}>
             <h3 style={{ color: primary, textAlign: "center" }}>
               Open a new liquidty pool:
@@ -590,131 +544,8 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
               Create Pool
             </LargeButton>
           </Container>
- 
         </div>
       )}
-      
     </>
   );
 }
-
-//function LiquidityPositions(data) {
-//  if (data) {
-//    return (
-//      <div
-//        style={{
-//          display: "flex",
-//          flexWrap: "wrap",
-//          justifyContent: "space-evenly",
-//          overflowY:"scroll",
-//          maxHeight:"90%"
-//        }}
-//      >
-//        {data.map((e) => {
-//          return LiquidityPosition(e);
-//        })}
-//      </div>
-//    );
-//  }
-//
-//  function LiquidityPosition(data) {
-//    return (
-//      <Container style={{ width: 180 }}>
-//        <div
-//          style={{
-//            textAlign: "start",
-//            padding: 5,
-//            display: "flex",
-//            flexWrap: "wrap",
-//            gap: "1px",
-//            justifyContent: "space-between",
-//          }}
-//        >
-//          <div
-//            style={{
-//              borderRadius: 5,
-//              padding: 5,
-//              backgroundColor: tintedBackground,
-//              width: "100%",
-//              overflow: "hidden",
-//            }}
-//          >
-//            ID: <b>{data.lp_id.toLocaleString()}</b>
-//          </div>
-//
-//          <div
-//            style={{
-//              borderRadius: 5,
-//              padding: 5,
-//              backgroundColor: tintedBackground,
-//              width: "fit-content",
-//              flexGrow: 2,
-//              overflow: "hidden",
-//            }}
-//          >
-//            From:{" "}
-//            <p style={{ padding: 0, textAlign: "center", fontWeight: "bold" }}>
-//              {formatter.format(priceFromTick(data.lowertick))}
-//            </p>
-//          </div>
-//          <div
-//            style={{
-//              borderRadius: 5,
-//              padding: 5,
-//              backgroundColor: tintedBackground,
-//              width: "fit-content",
-//              flexGrow: 2,
-//            }}
-//          >
-//            To:
-//            <p style={{ padding: 0, textAlign: "center", fontWeight: "bold" }}>
-//              {formatter.format(priceFromTick(data.uppertick))}
-//            </p>
-//          </div>
-//
-//          <div
-//            style={{
-//              borderRadius: 5,
-//              padding: 5,
-//              backgroundColor: tintedBackground,
-//              width: "fit-content",
-//              flexGrow: 2,
-//            }}
-//          >
-//            Liquidity:{" "}
-//            <p style={{ padding: 0, textAlign: "center", fontWeight: "bold" }}>
-//              {(BigInt(data.liquidity) / 10n ** 18n).toLocaleString()}
-//            </p>
-//          </div>
-//          <div
-//            style={{
-//              borderRadius: 5,
-//              padding: 5,
-//              backgroundColor: tintedBackground,
-//              width: "fit-content",
-//              flexGrow: 2,
-//            }}
-//          >
-//            <span>Tx: </span>
-//            <p style={{ padding: 0, textAlign: "center", fontWeight: "bold" }}>
-//              {txHashFormat(data.tx_id)}
-//            </p>
-//          </div>
-//        </div>
-//        <GradientDiv
-//          style={{
-//            height: 50,
-//            width: "100%",
-//            display: "flex",
-//            justifyContent: "center"
-//          }}
-//        >
-//          <MediumButtonInverted style={{ margin: 5}}>
-//            Remove
-//          </MediumButtonInverted>
-//        </GradientDiv>
-//      </Container>
-//    );
-//    
-//  }
-//}

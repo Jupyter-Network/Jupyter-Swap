@@ -1,29 +1,55 @@
 import { Container, GradientDiv } from "../../theme";
-import { tintedBackground } from "../../theme/theme";
-import { priceFromTick } from "../../utils/mathHelper";
+import { background, backgroundGradient, highlight, highlightGradient, primary, secondary, tintedBackground } from "../../theme/theme";
+import {
+  calcNewPosition,
+  priceFromTick,
+  _scaleDown,
+} from "../../utils/mathHelper";
 import { MediumButton, MediumButtonInverted } from "../../theme/buttons";
-import { txHashFormat } from "../../utils/inputValidations";
+import {
+  currency,
+  currencyFormat,
+  numericFormat,
+  txHashFormat,
+} from "../../utils/inputValidations";
 import { useState } from "react";
 const formatter = new Intl.NumberFormat("en-US", {
   maximumSignificantDigits: 5,
 });
 
-export default function Position({ data }) {
+export default function Position({ data, blockData, positionInfo, tokens,onRemove,onCollectFees }) {
   const [open, setOpen] = useState(false);
+  const [positionData, setPositionData] = useState(false);
+
+  //const [lpQuote, setLpQuote] = useState(loadLpQuote());
   const card = {
     borderRadius: 5,
     padding: 5,
     backgroundColor: tintedBackground,
-    width: "fit-content",
     flexGrow: 2,
     margin: 1,
   };
+  console.log(tokens);
+  function loadLpQuote() {
+    if (blockData) {
+      let quote = calcNewPosition(
+        data.lowertick,
+        data.uppertick,
+        blockData.currentTick,
+        BigInt(data.liquidity) * 10n ** 18n,
+        BigInt(blockData.currentSqrtPrice)
+      );
+      return { amount0: quote[0], amount1: quote[1] };
+    }
+  }
+  let lpQuote = loadLpQuote();
+  console.log(lpQuote);
   return (
     <Container
       style={{
-        width: 180,
-        height: open ? 245 : 37,
-        transition: "height 0.5s ease",
+        height: "fit-content",
+        maxHeight: open ? 325 :37,
+        transition: "max-height 0.3s ease",
       }}
     >
       <div
@@ -40,16 +66,38 @@ export default function Position({ data }) {
           style={{
             borderRadius: 5,
             padding: 5,
-            backgroundColor: tintedBackground,
+            backgroundColor: open ? background :tintedBackground , 
+            color: open ? secondary :primary, 
             width: "100%",
             overflow: "hidden",
-            cursor:"pointer"
+            cursor: "pointer",
           }}
-          onClick={() => {
+          onClick={async () => {
+            if (!open) {
+              let res = await positionInfo(
+                tokens.token0.contract.address,
+                tokens.token1.contract.address,
+                data.lp_id
+              );
+              setPositionData({
+                token0Amount: res[0],
+                token1Amount: res[1],
+                fee0: res[2],
+                fee1: res[3],
+              });
+            }
             setOpen(!open);
           }}
         >
           ID: <b>{data.lp_id.toLocaleString()}</b>
+          &nbsp;{" "}
+          {lpQuote.amount1 == 0
+            ? 0
+            : numericFormat(lpQuote.amount1 / 10n ** 18n)}{" "}
+          : &nbsp;
+          {lpQuote.amount0 == 0
+            ? 0
+            : numericFormat(lpQuote.amount0 / 10n ** 18n)}
           <img
             src="/tokenlogos/placeholder.svg"
             style={{ margin: "auto", width: 17, float: "right" }}
@@ -57,7 +105,14 @@ export default function Position({ data }) {
         </div>
         {open ? (
           <>
-            <div style={{ display: "flex", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
               <div style={card}>
                 From:{" "}
                 <p
@@ -92,7 +147,7 @@ export default function Position({ data }) {
                     fontWeight: "bold",
                   }}
                 >
-                  {(BigInt(data.liquidity) / 10n ** 18n).toLocaleString()}
+                  {(BigInt(data.liquidity) / 10n ** 9n).toString() / 10 ** 9}
                 </p>
               </div>
               <div style={card}>
@@ -107,17 +162,40 @@ export default function Position({ data }) {
                   {txHashFormat(data.tx_id)}
                 </p>
               </div>
+              <div style={card}>
+                <span>Collected Fees 0: </span>
+                <p
+                  style={{
+                    padding: 0,
+                    textAlign: "center",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {numericFormat(positionData.fee0.toString())}
+                </p>
+              </div>
+              <div style={card}>
+                <span>Collected Fees 1: </span>
+                <p
+                  style={{
+                    padding: 0,
+                    textAlign: "center",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {numericFormat(positionData.fee1.toString())}
+                </p>
+              </div>
             </div>
-  
-              <MediumButton style={{ margin: 5 }}>
-                Remove
-              </MediumButton>
-          
+
           </>
         ) : (
           <div></div>
         )}
       </div>
+     
+            <MediumButton onClick={()=>onRemove(data.lp_id)} style={{ padding:10,margin: 10 }}>Remove Position</MediumButton>
+            <MediumButton onClick={()=>onCollectFees(data.lp_id)} style={{ padding:10,margin: 10 }}>Collect Position</MediumButton>
     </Container>
   );
 }

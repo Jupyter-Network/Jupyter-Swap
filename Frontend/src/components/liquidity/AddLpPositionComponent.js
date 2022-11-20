@@ -25,12 +25,12 @@ export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity }) {
   }, [lowerBoundary, upperBoundary, liquidity]);
 
   function getQuote() {
-
+    
     let quote = calcNewPosition(
-      tickAtSqrtPrice(sqrtPriceFromPrice(lowerBoundary)),
-      tickAtSqrtPrice(sqrtPriceFromPrice(upperBoundary)),
+      Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(lowerBoundary)).toString()/64)*64,
+      Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(upperBoundary)).toString()/64)*64,
       blockData.currentTick,
-      BigInt(liquidity) * 10n ** 18n,
+      BigInt(liquidity*10**9) * 10n ** 9n,
       BigInt(blockData.currentSqrtPrice)
     );
     console.log(
@@ -53,7 +53,7 @@ export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity }) {
   }
 
   return (
-    <Container>
+    <Container style={{height:"fit-content"}}>
       <ContainerTitle>Add Liquidity Position</ContainerTitle>
       <p>
         {tokens["token0"].symbol} / {tokens["token1"].symbol}
