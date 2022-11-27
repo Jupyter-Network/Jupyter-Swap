@@ -148,6 +148,37 @@ contract("Router", ([owner, testAddress]) => {
 
     console.log(await router.positionInfo(token0.address, token1.address, 1));
   });
+  it("View Reverse Position", async () => {
+    await router.createPool(token0.address, token1.address, 1024);
+    let amounts = await router.addPositionView(
+      token0.address,
+      token1.address,
+      -5120,
+      5120,
+      100000000000000
+    );
+    console.log(
+      "AMOUNTS:",
+      amounts.token0Amount.toString(),
+      amounts.token1Amount.toString()
+    );
+
+    await router.addPosition(
+      token1.address,
+      token0.address,
+      -64000,
+      64000,
+      100000000000000,
+      {
+        from: owner,
+        value: amounts.token0Amount,
+      }
+    );
+    console.log(await router.poolInfo(token0.address,token1.address));
+      let res = await router.swapQuote(token0.address,token1.address,1000000,-64000,false)
+  
+      console.log(res);
+  });
   it("Remove Position", async () => {
     await router.createPool(token0.address, token1.address, 1024);
     let amounts = await router.addPositionView(

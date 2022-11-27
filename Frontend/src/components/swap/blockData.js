@@ -5,7 +5,7 @@ import {
   getTransanctionHistory,
   getHistoryOHLC,
 } from "../../utils/requests";
-import { _scaleDown } from "../../utils/mathHelper";
+import { priceFromSqrtPrice, _scaleDown } from "../../utils/mathHelper";
 const data = {
   tokens: ["tokenarray"],
   wallet: "activeWallet",
@@ -121,25 +121,7 @@ export async function fetchBlockData(data) {
       };
     });
   }
-  /*
-  if (priceHistory.length === 0) {
-    let p0 = await getHistory(data.tokens["token0"].contract.address);
-    let p1 = await getHistory(data.tokens["token1"].contract.address);
 
-    priceHistory = p0.data.map((item, index) => {
-      return {
-        rate: BN(item.rate)
-          .dividedBy(BN(p1.data[index].rate).dividedBy(BN(10).pow(18)))
-
-          .toString(),
-        time: item.bucket,
-      };
-    });
-  
-  }*/
-
-  // priceHistory = (await getHistoryOHLC(data.tokens["token0"].contract.address))
-  //   .data;
   console.log("PRICEHOSTORY: ", data.tokens["token0"], data.tokens["token1"]);
   if (
     data.tokens["token0"].contract.address !== wbnb &&
@@ -220,11 +202,11 @@ export async function fetchBlockDataNew(data) {
   const t1Balance = await getBalance(data, false);
 
   //Get Sqrt Price
-  const sqrtPrice = data.routerContract.getPool(
+  const poolInfo = await data.routerContract.poolInfo(
     data.tokens["token0"].address,
     data.tokens["token1"].address
   );
-
+console.log(poolInfo)
   //Get users allowances
   const token0Allowance = data.wallet
     ? await data.tokens["token0"].contract.allowance(
@@ -239,11 +221,18 @@ export async function fetchBlockDataNew(data) {
         router
       )
     : 0;
+    const transactions = (
+      await getTransanctionHistory(poolInfo.pool)
+    ).data;
+
+  
   return {
     token0Balance: _scaleDown(t0Balance),
     token1Balance: _scaleDown(t1Balance),
     token0Allowance: _scaleDown(token0Allowance),
     token1Allowance: _scaleDown(token1Allowance),
-    price: 1251515222, // TODO get actual sqrtPrice
+    price: priceFromSqrtPrice(BigInt(poolInfo.price.toString())),
+    currentTick:poolInfo.tick,
+    transactionHistory:transactions
   };
 }

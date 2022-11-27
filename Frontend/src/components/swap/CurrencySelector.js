@@ -65,16 +65,9 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
     });
   }, [provider]);
 
-  function checkValidityAndSetTokens(
-    newAddress,
-    newName,
-    icon,
-    name,
-    description,
-    position
-  ) {
-    let other = position === 0 ? 1 : 0;
-
+  function checkValidityAndSetTokens(pool) {
+    //let other = position === 0 ? 1 : 0;
+    /*
     if (
       newAddress === wbnb ||
       tokens["token" + other].contract.address === wbnb
@@ -95,6 +88,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
       }
       setTokens({ token0: tokens["token1"], token1: tokens["token0"] });
     } else {
+
       setTokens({
         ...tokens,
         ["token" + position]: {
@@ -110,7 +104,33 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
           address: newAddress,
         },
       });
-    }
+    }*/
+    setTokens({
+      token0: {
+        symbol: pool.token0_symbol,
+        contract: new ethers.Contract(
+          pool.token0_address,
+          erc20Abi,
+          provider.getSigner()
+        ),
+        icon: pool.token0_icon,
+        name: pool.token0_name,
+        description: pool.token0_description,
+        address: pool.token0_address,
+      },
+      token1: {
+        symbol: pool.token1_symbol,
+        contract: new ethers.Contract(
+          pool.token1_address,
+          erc20Abi,
+          provider.getSigner()
+        ),
+        icon: pool.token1_icon,
+        name: pool.token1_name,
+        description: pool.token1_description,
+        address: pool.token1_address,
+      },
+    });
   }
 
   function switchTokens() {
@@ -120,15 +140,10 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
   async function queryTokens(value) {
     if (value) {
       let res = (await getPools(value.toUpperCase())).data;
+      console.log(res);
       setCurrencies(
         res.map((item) => {
-          return {
-            symbol: item.token_symbol,
-            address: item.token_address,
-            icon: item.token_icon,
-            name: item.token_name,
-            description: item.token_description,
-          };
+          return item;
         })
       );
     }
@@ -227,12 +242,10 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             }}
             onChange={async (e) => {
               await queryTokens(e.target.value);
+              console.log(currencies);
               setFilteredCurrencies(
                 currencies.filter((item) => {
-                  return (
-                    item.symbol.slice(0, e.target.value.length) ===
-                    e.target.value.toUpperCase()
-                  );
+                  return item.symbol;
                 })
               );
             }}
@@ -245,14 +258,16 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
               tabIndex={0}
               onClick={() => {
                 checkValidityAndSetTokens(
-                  item.address,
-                  item.symbol,
-                  item.icon,
-                  item.name,
-                  item.description,
-                  1
+                  item
+                  //item.address,
+                  //item.symbol,
+                  //item.icon,
+                  //item.name,
+                  //item.description,
+                  //1
                 );
                 setActiveSelector(null);
+                console.log(item);
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-evenly" }}>
@@ -322,12 +337,13 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
               tabIndex={0}
               onClick={() => {
                 checkValidityAndSetTokens(
-                  item.address,
-                  item.symbol,
-                  item.icon,
-                  item.name,
-                  item.description,
-                  0
+                  item
+                  //item.address,
+                  //item.symbol,
+                  //item.icon,
+                  //item.name,
+                  //item.description,
+                  //0
                 );
                 setActiveSelector(null);
               }}
@@ -335,12 +351,12 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
               <div style={{ display: "flex", justifyContent: "space-evenly" }}>
                 <img
                   style={{ width: 15 }}
-                  src={`/tokenlogos/${item.icon}`}
+                  src={`/tokenlogos/${item.token0_icon}`}
                 ></img>
                 <div style={{ minWidth: 10 }}>
                   <p> </p>
                 </div>{" "}
-                {item.symbol}
+                {item.token0_symbol} / {item.token1_symbol}
               </div>
             </ListOption>
           ))}

@@ -18,11 +18,9 @@ routerContract.queryFilter("*", lastBlock);
 //On router Events
 routerContract.on("*", async (tx) => {
   lastBlock = tx.blockNumber;
-  console.log(tx)
 try{
   switch (tx.event) {
     case "Pool_Created":
-      console.log(tx);
       let token = new ethers.Contract(tx.args.Token0, erc20Abi, provider);
       let token1 = new ethers.Contract(tx.args.Token1, erc20Abi, provider);
       const pool = {
@@ -49,7 +47,6 @@ try{
       break;
 
     case "Liquidity_Added":
-      console.log(tx);
       var event = {
         poolAddress:tx.args.Pool,
         liquidity:tx.args.Liquidity.toString(),
@@ -66,11 +63,9 @@ try{
       break;
 
     case "ClosePool":
-      console.log(tx);
       await query.deletePool(tx.args.pool);
       break;
     case "Liquidity_Removed":
-      console.log(tx);
       var event = {
         poolAddress:tx.args.Pool,
         lp_id:tx.args.Id,
@@ -78,29 +73,16 @@ try{
       }
 
       await query.removeLiquidityPosition(event);
-
-      //var lpv = lpValue(
-      //  BN(tx.args.lpTotalSupply.toString()),
-      //  BN(tx.args.token0Balance.toString()),
-      //  BN(tx.args.token1Balance.toString())
-      //);
-      //await query.createPoolEvent(
-      //  tx.args.pool,
-      //  tx.args.token0Balance.toString(),
-      //  tx.args.token1Balance.toString(),
-      //  tx.args.lpTotalSupply.toString(),
-      //  lpv.toString(),
-      //  "removeLiquidity"
-      //);
       break;
-    case "ExchangeTokens":
+    case "Swap":
       try {
+        console.log(tx)
         await query.createSwap(
-          tx.args.from,
-          tx.args.to,
-          tx.args.fromAmount.toString(),
-          tx.args.toAmount.toString(),
-          tx.args.rate,
+          tx.args.Pool,
+          tx.args.amountIn,
+          tx.args.sqrtPrice,
+          tx.args.currentTick,
+          tx.args.limitTick,
           tx.transactionHash
         );
       } catch (e) {

@@ -25,7 +25,7 @@ export function currencyFormat(value,currency){
   return BigInt(value).toLocaleString("en-GB",{ style: 'currency', currency: "USD" })
 }
 export function currency(value,currency){
-  const formatter = new Intl.NumberFormat('en-US', { maximumSignificantDigits:5 })
+  const formatter = new Intl.NumberFormat('en-US', { maximumSignificantDigits:10 })
 
   return (formatter.format(value))
 }

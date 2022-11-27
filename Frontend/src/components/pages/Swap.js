@@ -6,7 +6,12 @@ import erc20 from "../..//contracts/build/IERC20.json";
 import BN from "bignumber.js";
 import CurrencySelector from "../swap/CurrencySelector";
 import * as quotes from "../../utils/quotes.js";
-import { numericFormat, validate } from "../../utils/inputValidations";
+import {
+  currency,
+  currencyFormat,
+  numericFormat,
+  validate,
+} from "../../utils/inputValidations";
 import {
   Container,
   ContainerInverted,
@@ -20,7 +25,7 @@ import {
   SmallButton,
 } from "../../theme/buttons";
 import { P } from "../../theme/outputs";
-import { transaction } from "../../utils/alerts";
+import { error, transaction } from "../../utils/alerts";
 import "chart.js/auto";
 import { Line } from "react-chartjs-2";
 import {
@@ -39,7 +44,7 @@ import TokenInfo from "../swap/TokenInfo";
 import { initTokens } from "../../initialValues";
 import LoadingSpinner from "../LoadingSpinner";
 import { _scaleDown } from "../../utils/mathHelper";
-import { fetchBlockData,fetchBlockDataNew } from "../swap/blockData";
+import { fetchBlockData, fetchBlockDataNew } from "../swap/blockData";
 import Chart from "../swap/Chart";
 import LightChart from "../swap/LightChart";
 
@@ -106,29 +111,69 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     return Date.now() + timeout / 1000;
   }
   //TODO: Change this two methods, instead of calculating quotes in js get quote from contract
-  function handleToken0AmountChange(value) {
-    //console.log("Token 0 Amount change Handler", "value:", value);
-    //value = validate(value);
-    //if (blockData.poolBalances[1].toString()) {
-    //  if (state.poolHop) {
-    //    setState(quotes.token0ToToken1(blockData, maxSlippage, value));
-    //    return;
-    //  }
-//
-    //  setState({
-    //    ...quotes.ETHToToken(blockData, maxSlippage, value),
-    //    poolHop: state.poolHop,
-    //  });
-    //}
+  async function handleToken0AmountChange(value) {
+    let token0 = BigInt(tokens["token0"].contract.address);
+    let token1 = BigInt(tokens["token1"].contract.address);
+    let quote;
+    console.log(token0 < token1);
+    if (token0 < token1) {
+      quote = await routerContract.swapQuote(
+        tokens["token0"].contract.address,
+        tokens["token1"].contract.address,
+        BigInt(value * 10 ** 18),
+        -640000,
+        true
+      );
+    } else {
+      quote = await routerContract.swapQuote(
+        tokens["token0"].contract.address,
+        tokens["token1"].contract.address,
+        BigInt(value * 10 ** 18),
+        640000,
+        true
+      );
+    }
+    if (quote.amountIn != value * 10 ** 18) {
+      error("Liquidity is too low for this trade");
+      return;
+    }
+    setState({ ...state, token1Amount: quote.amountOut / 10 ** 18 });
   }
-  function handleToken1AmountChange(value) {
-    //console.log("Token 1 Amount change Handler:", "value:", value);
-    //value = validate(value);
-    //if (state.poolHop) {
-    //  setState(quotes.token1ToToken0(blockData, maxSlippage, value));
+  async function handleToken1AmountChange(value) {
+    let token0 = BigInt(tokens["token0"].contract.address);
+    let token1 = BigInt(tokens["token1"].contract.address);
+    let quote;
+    console.log(token0 < token1);
+    if (token0 < token1) {
+      console.log("T0 < T1");
+      quote = await routerContract.swapQuote(
+        tokens["token0"].contract.address,
+        tokens["token1"].contract.address,
+        BigInt(value * 10 ** 18),
+        640000,
+        false
+      );
+    } else {
+      console.log("T0 >= T1");
+      quote = await routerContract.swapQuote(
+        tokens["token0"].contract.address,
+        tokens["token1"].contract.address,
+        BigInt(value * 10 ** 18),
+        -640000,
+        false
+      );
+    }
+    console.log(
+      quote.amountOut.toString(),
+      value * 10 ** 18,
+      quote.amountIn.toString()
+    );
+
+    //if(quote.amountOut != value*10**18){
+    //  error("Liquidity is too low for this trade");
     //  return;
     //}
-    //setState(quotes.TokenToETH(blockData, maxSlippage, value));
+    setState({ ...state, token0Amount: quote.amountIn / 10 ** 18 });
   }
 
   //New Block
@@ -250,17 +295,22 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     });
   }
   async function swapTokens() {
+    console.log(state.token0Amount.toString());
     await transaction(
       `Swap ${new BN(state.token0Amount).toFixed(6)} ${
         tokens["token0"].symbol
       } to ${BN(state.token1Amount).toFixed(6)} ${tokens["token1"].symbol}`,
-      routerContract.swapTokens,
+      routerContract.swap,
       [
         tokens["token0"].contract.address,
         tokens["token1"].contract.address,
-        new BN(state.token0Amount).multipliedBy(new BN(10).pow(18)).toFixed(0),
-        state.token1AmountMin.toFixed(0),
-        deadline(),
+        BigInt(state.token0Amount * 10 ** 18).toString(),
+        tokens["token0"].contract.address < tokens["token1"].contract.address
+          ? -640000
+          : 640000,
+        //new BN(state.token0Amount).multipliedBy(new BN(10).pow(18)).toFixed(0),
+        //state.token1AmountMin.toFixed(0),
+        //deadline(),
       ],
       getBlockData
     );
@@ -291,7 +341,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   }
 
   async function getBlockData(loaderVisible = true) {
-    console.log(tokens)
+    console.log(tokens);
     setFirstLoad(false);
     if (loaderVisible) {
       setLoading(true);
@@ -347,11 +397,13 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                         marginRight: -10,
                         marginTop: 32,
                       }}
-                      onClick={() =>
+                      onClick={() => {
+                        console.log(blockData.token0Balance);
+
                         handleToken0AmountChange(
                           blockData.token0Balance - 0.002
-                        )
-                      }
+                        );
+                      }}
                     >
                       Max
                     </SmallButton>
@@ -360,13 +412,14 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                     <LabeledInput
                       title={`Sell Amount`}
                       name={tokens["token0"].symbol}
-                      onChange={(e) => handleToken0AmountChange(e.target.value)}
+                      onChange={(e) =>
+                        setState({ ...state, token0Amount: e.target.value })
+                      }
                       onFocus={() => handleToken0AmountChange("")}
+                      onBlur={(e) => handleToken0AmountChange(e.target.value)}
                       value={state.token0Amount}
                       icon={tokens["token0"].icon}
-                      info={`Bal: ${numericFormat(
-                        BN(blockData.token0Balance)
-                      )}`}
+                      info={`Bal: ${currency(blockData.token0Balance)}`}
                     ></LabeledInput>
                   </td>
                 </tr>
@@ -376,13 +429,14 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                     <LabeledInput
                       title={`Buy Amount`}
                       name={tokens["token1"].symbol}
-                      onChange={(e) => handleToken1AmountChange(e.target.value)}
+                      onChange={(e) =>
+                        setState({ ...state, token1Amount: e.target.value })
+                      }
                       onFocus={() => handleToken1AmountChange("")}
+                      onBlur={(e) => handleToken1AmountChange(e.target.value)}
                       value={state.token1Amount}
                       icon={tokens["token1"].icon}
-                      info={`Bal: ${numericFormat(
-                        BN(blockData.token1Balance)
-                      )}`}
+                      info={`Bal: ${currency(blockData.token1Balance)}`}
                     ></LabeledInput>
                   </td>
                 </tr>
@@ -408,12 +462,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               }}
             >
               Price: &nbsp;
-              { blockData.price ? (
-                <P>
-                  {numericFormat(
-                   blockData.price.toString()
-                  )}
-                </P>
+              {blockData.price ? (
+                <P>{currency(blockData.price.toString())}</P>
               ) : (
                 <P>{0}</P>
               )}
@@ -463,7 +513,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               <p style={{ fontSize: "small" }}>
                 Price Impact:{" "}
                 <span style={{ color: primary }}>
-                  {state.impact.toString()}%
+                  {(1-(state.token1Amount)/(state.token0Amount*0.998/blockData.price))*100}%
                 </span>
               </p>
             </ContainerInverted>
@@ -542,6 +592,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
             >
               <TransactionList
                 transactions={blockData.transactionHistory}
+                tokens={tokens}
               ></TransactionList>
             </div>
           </Container>

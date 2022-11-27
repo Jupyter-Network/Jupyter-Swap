@@ -18,7 +18,7 @@ gnome-terminal -- ganache -i 5777
 sleep 5
 
 echo "Contract migration"
-(cd ./Contracts && truffle migrate --reset)
+(cd ./Contracts && truffle migrate --reset  --network local)
 
 echo "Copy Contract JSON data"
 cp -v ./Contracts/build/contracts/* ./Frontend/src/contracts/build

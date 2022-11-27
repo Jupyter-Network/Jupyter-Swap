@@ -180,20 +180,19 @@ contract JupyterSwapPool is IJupyterSwapPool {
         //Swap ONE TO ZERO
         else {
             while (
-                currentSwap.remainingAmount > 0 && _currentTick <= _limitTick
+                currentSwap.remainingAmount > 1 && _currentTick <= _limitTick
             ) {
-                (int24 next, bool init) = getNextInitialized(
-                    tempTick == 0 ? _currentTick : tempTick,
+                (int24 next,bool init) = getNextInitialized(
+                    _currentTick,
                     Tick.SPACING,
                     false
                 );
-
-                tempTick = 0;
-
-                //check if tick is initialized else skip
+                tempTick = 1000000;
+//
+                ////check if tick is initialized else skip
                 if (!init) {
-                    //_currentTick += Tick.SPACING;
-                    tempTick = next;
+                    _currentTick += Tick.SPACING;
+                    //tempTick = next+64;
                     continue;
                 }
 
@@ -286,7 +285,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
         int24 _limitTick,
         bool _exactIn
     ) external view override returns (Quote memory) {
-        int24 tempTick = 0;
+        int24 tempTick = 1000000;
         int24 _currentTick = currentTick;
         int24 next;
         bool init;
@@ -312,6 +311,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
             ) {
                 _currentTick = getNextWhileNotInitialized(_currentTick);
                 nextPrice = Tick.getPriceFromTick(_currentTick);
+
                 cache = PriceMath.swaps(
                     PriceMath.SwapParams(
                         uint160(_currentSqrtPrice),
@@ -321,12 +321,18 @@ contract JupyterSwapPool is IJupyterSwapPool {
                     ),
                     _exactIn
                 );
+                //require(currentSwap.remainingAmount == 1000000,"Remaining wrong value");
+                //require(currentSwap.remainingAmount >= cache.amountOut,"Out amount bigger than remaining");
 
                 currentSwap.inAmount += cache.amountIn + cache.fees;
+                currentSwap.remainingAmount -= _exactIn
+                    ? cache.amountIn + cache.fees
+                    : cache.amountOut;
+                //require(currentSwap.remainingAmount == 0,"Wrong remain");
 
-                currentSwap.remainingAmount -= cache.amountIn + cache.fees;
                 currentSwap.outAmount += cache.amountOut;
                 currentSwap.feesPaid += cache.fees;
+            
 
                 if (cache.priceAfterSwap <= nextPrice) {
                     //Update fees
@@ -336,6 +342,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
                         _currentTick - Tick.SPACING
                     );
                 }
+
                 _currentSqrtPrice = cache.priceAfterSwap;
             }
         }
@@ -344,18 +351,17 @@ contract JupyterSwapPool is IJupyterSwapPool {
             while (
                 currentSwap.remainingAmount > 0 && _currentTick <= _limitTick
             ) {
-                (next, init) = getNextInitialized(
-                    tempTick == 0 ? _currentTick : tempTick,
+                (int24 next,bool init) = getNextInitialized(
+                    _currentTick,
                     Tick.SPACING,
                     false
                 );
-
-                tempTick = 0;
-
-                //check if tick is initialized else skip
+                tempTick = 1000000;
+//
+                ////check if tick is initialized else skip
                 if (!init) {
-                    //_currentTick += Tick.SPACING;
-                    tempTick = next;
+                    _currentTick += Tick.SPACING;
+                    //tempTick = next+64;
                     continue;
                 }
 
@@ -371,13 +377,17 @@ contract JupyterSwapPool is IJupyterSwapPool {
                     _exactIn
                 );
                 currentSwap.inAmount += cache.amountIn + cache.fees;
-                if (
-                    cache.amountIn + cache.fees <= currentSwap.remainingAmount
-                ) {
-                    currentSwap.remainingAmount -= cache.amountIn + cache.fees;
-                } else {
-                    currentSwap.remainingAmount = 0;
-                }
+                currentSwap.remainingAmount = _exactIn
+                    ?  cache.amountIn + cache.fees:
+                    cache.amountOut;
+                //if (
+                //    cache.amountIn + cache.fees <= currentSwap.remainingAmount
+                //) {
+                //    currentSwap.remainingAmount -= cache.amountIn + cache.fees;
+                //} else {
+                //    currentSwap.remainingAmount = 0;
+                //}
+                currentSwap.remainingAmount = 0;
                 currentSwap.outAmount += cache.amountOut;
                 currentSwap.feesPaid += cache.fees;
 
@@ -607,6 +617,25 @@ contract JupyterSwapPool is IJupyterSwapPool {
                 next - Tick.SPACING,
                 Tick.SPACING,
                 true
+            );
+        }
+        return next;
+    }
+        function getNextWhileNotInitializedFalse(int24 _currentTick)
+        internal
+        view
+        returns (int24)
+    {
+        (int24 next, bool init) = getNextInitialized(
+            _currentTick,
+            Tick.SPACING,
+            false
+        );
+        while (!init) {
+            (next, init) = getNextInitialized(
+                next,
+                Tick.SPACING,
+                false
             );
         }
         return next;

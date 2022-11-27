@@ -42,14 +42,14 @@ module.exports = {
   createSwapsTable: async () => {
     await sql`CREATE TABLE IF NOT EXISTS public."Swaps"
     (
-        from_address character varying(64) COLLATE pg_catalog."default" NOT NULL,
-        to_address character varying(64) COLLATE pg_catalog."default" NOT NULL,
-        from_amount double precision,
-        to_amount double precision,
+        pool_address character varying(64) COLLATE pg_catalog."default" NOT NULL,
+        amount_in numeric(78) NOT NULL,
+        sqrt_price numeric(78) NOT NULL,
+        current_tick integer NOT NULL,
+        limit_tick integer NOT NULL,
         transaction_hash character varying(128) COLLATE  pg_catalog."default" NOT NULL,
-        rate double precision,
         time timestamp NOT NULL,
-        UNIQUE(time,from_address,to_address)
+        UNIQUE(time,transaction_hash)
     )`;
     await sql`SELECT create_hypertable('public."Swaps"','time')`;
   },
@@ -98,7 +98,9 @@ module.exports = {
       pool,lp_id,type,liquidity,lowerTick,upperTick,time,tx_id,owner
     )VALUES (${event.poolAddress.toLowerCase()},${event.lp_id},${event.type},${
       event.liquidity
-    },${event.lowerTick},${event.upperTick},${Date.now()},${event.tx_id.toLowerCase()} , ${event.owner.toLowerCase()})`;
+    },${event.lowerTick},${
+      event.upperTick
+    },${Date.now()},${event.tx_id.toLowerCase()} , ${event.owner.toLowerCase()})`;
   },
   removeLiquidityPosition: async (event) => {
     await sql`DELETE FROM public."LiquidityPositions" WHERE lp_id = ${event.lp_id}`;
@@ -106,8 +108,8 @@ module.exports = {
     //await sql`UPDATE public."LiquidityPositions" SET removed=true
     //WHERE lp_id = ${event.lp_id}`;
   },
-  getLiquidityPositionsForAddress:async(event)=>{
-    return await sql`SELECT * FROM public."LiquidityPositions" where owner=${event.owner}`
+  getLiquidityPositionsForAddress: async (event) => {
+    return await sql`SELECT * FROM public."LiquidityPositions" where owner=${event.owner}`;
   },
   getPoolProfit: async (tokenAddress) => {
     return await sql`
@@ -119,16 +121,16 @@ module.exports = {
 
   //Swaps
   createSwap: async (
-    fromAddress,
-    toAddress,
-    fromAmount,
-    toAmount,
-    rate,
+    poolAddress,
+    amountIn,
+    sqrtPrice,
+    currentTick,
+    limitTick,
     transactionHash
   ) => {
     await sql`INSERT INTO public."Swaps"(
-        from_address,to_address, from_amount, to_amount, rate, time, transaction_hash)
-        VALUES (${fromAddress}, ${toAddress}, ${fromAmount},${toAmount} ,${rate}, ${Date.now()} , ${transactionHash});`;
+        pool_address,amount_in, sqrt_price, current_tick,limit_tick,transaction_hash, time)
+        VALUES (${poolAddress}, ${amountIn}, ${sqrtPrice},${currentTick},${limitTick}, ${transactionHash}, ${Date.now()});`;
   },
 
   //History
@@ -166,24 +168,22 @@ module.exports = {
     GROUP BY bucket
     ORDER BY bucket DESC LIMIT 50;`;
   },
-  getTransanctionHistory: async (tokenAddress, bucketMinutes) => {
-    return await sql`SELECT from_address,
-    from_token.token_symbol as from_symbol,
-    from_token.token_icon as from_icon,
-    from_amount,
-    to_address,
-    to_token.token_symbol as to_symbol,
-    to_token.token_icon as to_icon,
-    to_amount,
-    time,
-    transaction_hash
-    FROM  public."Swaps" 
-    INNER JOIN public."Pools" as from_token ON from_token.token_address = from_address
-    INNER JOIN public."Pools" as to_token ON to_token.token_address = to_address
-      WHERE (from_address = ${tokenAddress} AND to_address = ${wbnb}) 
-      OR (from_address = ${wbnb} AND to_address = ${tokenAddress} )
-    ORDER BY time DESC
-    LIMIT 10;
+  getTransanctionHistory: async (poolAddress, bucketMinutes) => {
+    return await sql`select "Swaps".amount_in ,"Swaps".sqrt_price ,"Swaps".limit_tick,"Swaps".current_tick,"Swaps".transaction_hash,"Swaps"."time"  from "Pools" 
+    inner join "Swaps" on "Swaps".pool_address = "Pools"."pool_address" 
+    where  "Pools"."pool_address" = ${poolAddress}
+    order by "Swaps"."time" desc
+    limit 30;
       `;
+
+    // return await sql`SELECT *
+    // FROM  public."Swaps"
+    // INNER JOIN public."Pools" as from_token ON from_token.token_address = from_address
+    // INNER JOIN public."Pools" as to_token ON to_token.token_address = to_address
+    //   WHERE (from_address = ${tokenAddress} AND to_address = ${wbnb})
+    //   OR (from_address = ${wbnb} AND to_address = ${tokenAddress} )
+    // ORDER BY time DESC
+    // LIMIT 10;
+    //   `;
   },
 };

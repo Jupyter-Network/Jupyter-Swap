@@ -77,7 +77,8 @@ interface IRouter {
         returns (
             int24 tick,
             uint256 price,
-            uint128 liquidity
+            uint128 liquidity,
+            address pool
         );
 
     function collectFees(

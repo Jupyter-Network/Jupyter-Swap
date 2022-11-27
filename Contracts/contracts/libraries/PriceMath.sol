@@ -199,10 +199,11 @@ library PriceMath {
                 );
     }
 
-    function swaps(
-        SwapParams memory params,
-        bool _exactIn
-    ) internal view returns (SwapCache memory) {
+    function swaps(SwapParams memory params, bool _exactIn)
+        internal
+        view
+        returns (SwapCache memory)
+    {
         return _exactIn ? swapExactIn(params) : swapExactOut(params);
     }
 
@@ -298,9 +299,11 @@ library PriceMath {
         }
     }
 
-    function swapExactIn(
-        SwapParams memory params
-    ) internal view returns (SwapCache memory cache) {
+    function swapExactIn(SwapParams memory params)
+        internal
+        view
+        returns (SwapCache memory cache)
+    {
         uint256 remaining = Math.mulDiv(params.amount, 1000000 - 2000, 1000000);
         cache = SwapCache(0, 0, 0, 0);
         //swap up or down
@@ -382,61 +385,67 @@ library PriceMath {
         }
     }
 
-    function swapExactOut(SwapParams memory params)
-        internal
+   
+    function swapExactOut(
+          SwapParams memory params
+        )
+        public
         view
         returns (SwapCache memory)
     {
-        uint256 amountIn;
+       uint256 amountIn;
         uint256 amountOut;
-        uint256 endPrice;
+        uint256 _endPrice;
         uint256 fees;
-        uint256 remaining = params.amount; //Math.mulDiv(params.amount, 1000000 - 2000, 1000000);
+        uint256 remaining = params.amount;//Math.mulDiv(amount, 1000000 - 2000, 1000000);
 
         //swap up or down
-        if (params.sqrtPrice <= params.endPrice) {
+        if (params.sqrtPrice > params.endPrice) {
+            
             //Get input amount
-            amountOut = PriceMath.getToken0Amount(
+            amountOut = PriceMath.getToken1Amount(
                 uint160(params.endPrice),
                 params.sqrtPrice,
                 params.liquidity,
                 false
             );
             if (remaining >= amountOut) {
-                endPrice = params.endPrice;
+                _endPrice = params.endPrice;
             } else {
-                endPrice = PriceMath.getNextPriceFromOutput(
+                _endPrice = PriceMath.getNextPriceFromOutput(
                     params.sqrtPrice,
                     params.liquidity,
                     remaining,
-                    false
+                    true
                 );
             }
-            if (params.endPrice != endPrice) {
-                amountOut = PriceMath.getToken0Amount(
+            if (params.endPrice != _endPrice) {
+                amountOut = PriceMath.getToken1Amount(
                     uint160(params.sqrtPrice),
-                    uint160(endPrice),
+                    uint160(_endPrice),
                     params.liquidity,
                     false
                 );
             }
-            amountIn = getToken1Amount(
-                uint160(endPrice),
+            amountIn = getToken0Amount(
+                uint160(_endPrice),
                 params.sqrtPrice,
                 params.liquidity,
                 true
             );
+            
         } else {
+            
             amountOut = PriceMath.getToken0Amount(
                 params.sqrtPrice,
                 uint160(params.endPrice),
                 params.liquidity,
-                true
+                false
             );
 
-            if (remaining >= amountOut) endPrice = params.endPrice;
+            if (remaining >= amountOut) _endPrice = params.endPrice;
             else {
-                endPrice = PriceMath.getNextPriceFromOutput(
+                _endPrice = PriceMath.getNextPriceFromOutput(
                     params.sqrtPrice,
                     params.liquidity,
                     remaining,
@@ -444,27 +453,31 @@ library PriceMath {
                 );
             }
 
-            if (params.endPrice != endPrice) {
+            if (params.endPrice != _endPrice) {
                 amountOut = PriceMath.getToken0Amount(
                     params.sqrtPrice,
-                    uint160(endPrice),
+                    uint160(_endPrice),
                     params.liquidity,
-                    true
+                    false
                 );
             }
             amountIn = getToken1Amount(
                 params.sqrtPrice,
-                uint160(endPrice),
+                uint160(_endPrice),
                 uint128(params.liquidity),
                 false
             );
+            
         }
 
-        //if (endPrice != params.endPrice) {
-        //    fees = params.amount - amountOut;
-        //
-
-        fees = Math.mulDivRoundingUp(amountIn, 2000, 1000000 - 2000);
-        return SwapCache(amountIn, amountOut, endPrice, fees);
+        //Add aftfer bug above is fixed
+        //if (_endPrice != params.endPrice) {
+        //   fees = params.amount - amountOut;
+        //} else {
+            fees = Math.mulDivRoundingUp(amountIn, 2000, 1000000 - 2000);
+        //}
+        //fees = 1000;
+        return SwapCache(amountIn, amountOut, _endPrice, fees);
     }
+    
 }

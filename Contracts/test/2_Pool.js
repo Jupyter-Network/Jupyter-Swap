@@ -263,6 +263,8 @@ contract("Pool", ([owner, testAddress]) => {
     assert(res1.lt(new BN(5)), "Calculation error res 1");
   });
 
+
+
   /*
   it("Positions tick inside down", async () => {
     const LIQUIDITY_AMOUNT = "100" + DEC;
