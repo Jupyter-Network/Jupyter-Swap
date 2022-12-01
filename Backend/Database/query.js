@@ -45,6 +45,7 @@ module.exports = {
         pool_address character varying(64) COLLATE pg_catalog."default" NOT NULL,
         amount_in numeric(78) NOT NULL,
         sqrt_price numeric(78) NOT NULL,
+        price DOUBLE PRECISION NOT NULL,
         current_tick integer NOT NULL,
         limit_tick integer NOT NULL,
         transaction_hash character varying(128) COLLATE  pg_catalog."default" NOT NULL,
@@ -129,42 +130,34 @@ module.exports = {
     transactionHash
   ) => {
     await sql`INSERT INTO public."Swaps"(
-        pool_address,amount_in, sqrt_price, current_tick,limit_tick,transaction_hash, time)
-        VALUES (${poolAddress}, ${amountIn}, ${sqrtPrice},${currentTick},${limitTick}, ${transactionHash}, ${Date.now()});`;
+        pool_address,amount_in, sqrt_price, price, current_tick,limit_tick,transaction_hash, time)
+        VALUES (${poolAddress}, ${amountIn}, ${sqrtPrice},${priceFromSqrtPrice(
+      BigInt(sqrtPrice)
+    )},${currentTick},${limitTick}, ${transactionHash}, ${Date.now()});`;
   },
 
   //History
   getHistory: async (tokenAddress) => {
     return await sql`SELECT time_bucket_gapfill('15 minutes', time,now() - INTERVAL '1 day',now()) AS bucket, 
       locf(last(rate,time)) as rate
-      FROM (
-      SELECT * FROM public."Swaps" 
-      WHERE from_address = ${tokenAddress} AND to_address = ${wbnb}
-      UNION
-      SELECT * FROM public."Swaps"
-      WHERE from_address = ${wbnb} AND to_address  = ${tokenAddress} 
-      ) 
-      AS trades
+      FROM public."Swaps" AS trades
       GROUP BY bucket
       ORDER BY bucket DESC LIMIT 20;`;
   },
-  getHistoryOHLC: async (tokenAddress, bucketMinutes) => {
+  getHistoryOHLC: async (poolAddress, bucketMinutes) => {
     console.log(bucketMinutes);
     return await sql`SELECT time_bucket_gapfill(${
       bucketMinutes + " minutes"
     }, time,now() - INTERVAL '1 day',now() at time zone 'utc') AS bucket, 
-    locf(first(rate,time)) as open,
-    max(rate) as high,
-    min(rate) as low,
-    locf(last(rate,time)) as close
-    FROM (
-    SELECT * FROM public."Swaps" 
-    WHERE from_address = ${tokenAddress} AND to_address = ${wbnb}
-    UNION
-    SELECT * FROM public."Swaps"
-    WHERE from_address = ${wbnb} AND to_address  = ${tokenAddress} 
-    ) 
-    AS trades
+    locf(first(price ,
+      time)) as open,
+      max(price) as high,
+      min(price) as low,
+      locf(last(price ,
+      time)) as close
+    from
+    (select * from public."Swaps" where pool_address=${poolAddress})
+      as trades
     GROUP BY bucket
     ORDER BY bucket DESC LIMIT 50;`;
   },
@@ -175,15 +168,11 @@ module.exports = {
     order by "Swaps"."time" desc
     limit 30;
       `;
-
-    // return await sql`SELECT *
-    // FROM  public."Swaps"
-    // INNER JOIN public."Pools" as from_token ON from_token.token_address = from_address
-    // INNER JOIN public."Pools" as to_token ON to_token.token_address = to_address
-    //   WHERE (from_address = ${tokenAddress} AND to_address = ${wbnb})
-    //   OR (from_address = ${wbnb} AND to_address = ${tokenAddress} )
-    // ORDER BY time DESC
-    // LIMIT 10;
-    //   `;
   },
 };
+function priceFromSqrtPrice(sqrtPrice) {
+  let num = (sqrtPrice ** 2n / 2n ** 64n).toString();
+  //let frac = num.slice(-18)
+  //num = num.split(frac)[0] + "." +  frac
+  return num / 2 ** 128;
+}

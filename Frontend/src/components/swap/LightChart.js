@@ -12,7 +12,7 @@ import equal from "fast-deep-equal";
 import { _scaleDown } from "../../utils/mathHelper";
 import { createChart, CrosshairMode } from "lightweight-charts";
 import ChartTitleMenu from "./ChartTitleMenu";
-export default function LightChart({ blockData, onBucketChange}) {
+export default function LightChart({ blockData, onBucketChange }) {
   const chartContainerRef = useRef();
   const chart = useRef();
   const resizeObserver = useRef();
@@ -60,48 +60,52 @@ export default function LightChart({ blockData, onBucketChange}) {
         wickUpColor: primary,
       });
 
-      let priceData = [];
-      for (let i = 0; i < blockData.priceHistory.length; i++) {
-        if (i === 0) continue;
-        let item = blockData.priceHistory[i];
-        console.log("Item: ", item.low.toString(), !isNaN(item.low));
+      var priceData = [];
+      let history = blockData.priceHistory;
+      history.reverse();
+      for (let i = 0; i < history.length; i++) {
+        if (i === 0) {
+          let item = history[0];
+
+          console.log("Continued", history[0]);
+          priceData.push({
+            time: Date.parse(item.bucket) / 1000,
+            open: item.open === null ? 0 : item.open,
+            high: item.high === null || isNaN(item.high) ? 0 : item.high,
+            low: item.low === null || isNaN(item.low) ? 0 : item.low,
+            close:
+              item.close === null ? blockData.priceHistory[i + 1] : item.close,
+          });
+
+          continue;
+        }
+        let item = history[i];
+
         priceData.push({
           time: Date.parse(item.bucket) / 1000,
-          open:
-            item.open === null
-              ? 0
-              : BN(blockData.priceHistory[i - 1].close)
-                  .dividedBy(BN(10).pow(18))
-                  .toString(),
+          open: item.open === null ? 0 : history[i - 1].close,
           high:
             item.high === null || isNaN(item.high)
-              ? BN(blockData.priceHistory[i - 1].close)
-                  .dividedBy(BN(10).pow(18))
-                  .toString()
-              : BN(item.high).dividedBy(BN(10).pow(18)).toString(),
+              ? history[i - 1].close
+              : item.high,
           low:
             item.low === null || isNaN(item.low)
-              ? BN(blockData.priceHistory[i - 1].close)
-                  .dividedBy(BN(10).pow(18))
-                  .toString()
-              : BN(item.low).dividedBy(BN(10).pow(18)).toString(),
-          close:
-            item.close === null
-              ? 0
-              : BN(item.close).dividedBy(BN(10).pow(18)).toString(),
+              ? history[i - 1].close
+              : item.low,
+          close: item.close === null ? 0 : item.close,
         });
       }
       priceData = priceData.map((item) => {
         return {
           time: item.time,
-          open: isNaN(item.open) ? 0 : item.open,
-          high: isNaN(item.high) ? 0 : item.high,
-          low: isNaN(item.low) ? 0 : item.low,
+          open: isNaN(item.open) || item.open == null ? 0 : item.open,
+          high: isNaN(item.high) || item.high == null ? 0 : item.high,
+          low: isNaN(item.low) || item.low == null ? 0 : item.low,
           close: isNaN(item.close) ? 0 : item.close,
         };
       });
-      console.log("CANDLEPRICEDATA:", priceData);
 
+      console.log("CANDLEPRICEDATA:", priceData);
       candleSeries.setData(priceData);
 
       // const areaSeries = chart.current.addAreaSeries({
@@ -158,7 +162,7 @@ export default function LightChart({ blockData, onBucketChange}) {
         <ContainerTitle style={{ marginBottom: 0 }}>
           {" "}
           Chart &nbsp;
-         <ChartTitleMenu onChange={onBucketChange}/>
+          <ChartTitleMenu onChange={onBucketChange} />
         </ContainerTitle>
         <div
           ref={chartContainerRef}

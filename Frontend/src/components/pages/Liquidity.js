@@ -544,6 +544,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
               Create Pool
             </LargeButton>
           </Container>
+          <h1>{blockData.liquidity}</h1>
         </div>
       )}
     </>

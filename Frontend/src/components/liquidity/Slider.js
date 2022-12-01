@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { rgb, scaleLinear, scaleSqrt } from "d3";
+import { rgb, scaleLinear, scaleLog, scalePow, scaleSqrt } from "d3";
 import { numericFormat } from "../../utils/inputValidations";
 
+
+function scale(currentPrice){
+    if(currentPrice < 0.001){ return [0.0000001,0.005]}else
+    if(currentPrice < 0.01){ return [0.000001,0.05]}else
+    if(currentPrice < 0.1){ return [0.00001,0.5]}else
+    if(currentPrice < 1){ return [0.0001,5]}else
+    if(currentPrice < 10){return [0.01,5]}else
+    return [currentPrice/2,currentPrice * 2]
+}
 export function Slider(props) {
   let [xPosLeft, setXPosLeft] = useState(100);
   let [xPosRight, setXPosRight] = useState(200);
@@ -9,25 +18,27 @@ export function Slider(props) {
   let [selected, setSelected] = useState(99);
   let self = useRef();
 
-  let lowerBoundary = 0;
-  let upperBoundary = 10;
-
   useEffect(() => {
     props.onMoveRight(myScale(xPosRight));
   }, [xPosRight]);
   useEffect(() => {
     props.onMoveLeft(myScale(xPosLeft));
   }, [xPosLeft]);
+  console.log(
+    "Current:",
+    props.currentPrice 
+  );
 
-  const myScale = scaleSqrt()
-    .range([0, props.currentPrice * 2])
+  
+  const myScale = scaleLinear()
+    .range(scale(props.currentPrice))
     .domain([0, props.width]);
   let yScale = scaleLinear()
     .range([0, props.height])
     .domain([
       props.positions.reduce((acc, item) => (item.lp < acc ? item.lp : acc), 0),
       props.positions.reduce((acc, item) => (item.lp > acc ? item.lp : acc), 0),
-    ]);
+    ]).clamp(false);
   function move(e) {
     const clientX = e.clientX - self.current.offsetLeft;
     if (clientX > 0 && clientX < props.width && drag) {

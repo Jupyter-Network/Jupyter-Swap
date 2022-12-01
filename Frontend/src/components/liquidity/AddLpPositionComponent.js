@@ -15,8 +15,8 @@ import LabeledInput from "../LabeledInput";
 import { Slider } from "./Slider";
 
 export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity }) {
-  const [lowerBoundary, setLowerBoundary] = useState(0);
-  const [upperBoundary, setUpperBoundary] = useState(0);
+  const [lowerBoundary, setLowerBoundary] = useState(10);
+  const [upperBoundary, setUpperBoundary] = useState(10);
   const [liquidity, setLiquidity] = useState(100);
   const [lpQuote, setLpQuote] = useState({ amount0: 0, amount1: 0 });
 
@@ -67,10 +67,10 @@ export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity }) {
           )}
           positions={formattedData()}
           onMoveRight={(e) => {
-            setUpperBoundary(e);
+            setUpperBoundary(e ? e : 0);
           }}
           onMoveLeft={(e) => {
-            setLowerBoundary(e);
+            setLowerBoundary(e ? e : 0);
             console.log(e);
           }}
         />
@@ -111,7 +111,7 @@ export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity }) {
         <br />
         <div style={{ textAlign: "start" }}>
           {tokens.token1.symbol} :{" "}
-          <b>{numericFormat(BigInt(lpQuote.amount1))}</b>
+          <b>{currency(_scaleDown(lpQuote.amount1))}</b>
           &nbsp;{" "}
           <img
             src={"/tokenlogos/" + tokens.token1.icon}

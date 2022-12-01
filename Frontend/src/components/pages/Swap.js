@@ -116,15 +116,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     let token1 = BigInt(tokens["token1"].contract.address);
     let quote;
     console.log(token0 < token1);
-    if (token0 < token1) {
-      quote = await routerContract.swapQuote(
-        tokens["token0"].contract.address,
-        tokens["token1"].contract.address,
-        BigInt(value * 10 ** 18),
-        -640000,
-        true
-      );
-    } else {
+    if (token0 > token1) {
       quote = await routerContract.swapQuote(
         tokens["token0"].contract.address,
         tokens["token1"].contract.address,
@@ -132,11 +124,20 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         640000,
         true
       );
+    } else {
+      quote = await routerContract.swapQuote(
+        tokens["token0"].contract.address,
+        tokens["token1"].contract.address,
+        BigInt(value * 10 ** 18),
+        -640000,
+        true
+      );
     }
-    if (quote.amountIn != value * 10 ** 18) {
-      error("Liquidity is too low for this trade");
-      return;
-    }
+    console.log("Quote:",quote.amountIn,value*10**18)
+    //if (quote.amountIn != value * 10 ** 18) {
+    //  error("Liquidity is too low for this trade");
+    //  return;
+    //}
     setState({ ...state, token1Amount: quote.amountOut / 10 ** 18 });
   }
   async function handleToken1AmountChange(value) {
@@ -144,7 +145,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     let token1 = BigInt(tokens["token1"].contract.address);
     let quote;
     console.log(token0 < token1);
-    if (token0 < token1) {
+    if (token0 > token1) {
       console.log("T0 < T1");
       quote = await routerContract.swapQuote(
         tokens["token0"].contract.address,
@@ -304,10 +305,10 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       [
         tokens["token0"].contract.address,
         tokens["token1"].contract.address,
-        BigInt(state.token0Amount * 10 ** 18).toString(),
-        tokens["token0"].contract.address < tokens["token1"].contract.address
-          ? -640000
-          : 640000,
+        BigInt(Math.round(state.token0Amount * 10 ** 18)).toString(),
+        BigInt(tokens["token0"].contract.address) > BigInt(tokens["token1"].contract.address)
+          ? 640000
+          : -640000,
         //new BN(state.token0Amount).multipliedBy(new BN(10).pow(18)).toFixed(0),
         //state.token1AmountMin.toFixed(0),
         //deadline(),
@@ -513,7 +514,9 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               <p style={{ fontSize: "small" }}>
                 Price Impact:{" "}
                 <span style={{ color: primary }}>
-                  {(1-(state.token1Amount)/(state.token0Amount*0.998/blockData.price))*100}%
+
+                  { BigInt(tokens.token0.contract.address)  > BigInt(tokens.token1.contract.address)  ?
+                  (1-(state.token1Amount)/(state.token0Amount*0.998/blockData.price))*100 :((state.token0Amount*0.998*blockData.price)/state.token1Amount)*100-100  }%
                 </span>
               </p>
             </ContainerInverted>

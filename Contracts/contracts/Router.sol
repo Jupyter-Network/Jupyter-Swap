@@ -365,8 +365,8 @@ contract Router is IRouter, IPositionCallback, Lock {
             _token0Address,
             _token1Address
         );
-        poolExists(_token0Address, _token1Address);
-        return pools[_token0Address][_token1Address];
+        
+        return poolExists(_token0Address, _token1Address);
     }
 
     function withdrawAndTransferETH(uint256 _amount, address _to) private {

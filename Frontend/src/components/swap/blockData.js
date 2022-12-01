@@ -224,6 +224,21 @@ console.log(poolInfo)
     const transactions = (
       await getTransanctionHistory(poolInfo.pool)
     ).data;
+    let priceHistory = (
+      await getHistoryOHLC(
+        poolInfo.pool,
+        data.timeBucket
+      )
+    ).data.map((item, index) => {
+      return {
+        open: item.open, //BN(10).pow(36).dividedBy(BN(item.open)),
+        high: item.high, //BN(10).pow(36).dividedBy(BN(item.high)),
+        low: item.low,  //BN(10).pow(36).dividedBy(BN(item.low)),
+        close: item.close, //BN(10).pow(36).dividedBy(BN(item.close)),
+        bucket: item.bucket,
+      };
+    });
+
 
   
   return {
@@ -233,6 +248,8 @@ console.log(poolInfo)
     token1Allowance: _scaleDown(token1Allowance),
     price: priceFromSqrtPrice(BigInt(poolInfo.price.toString())),
     currentTick:poolInfo.tick,
-    transactionHistory:transactions
+    currentSqrtPrice:poolInfo.currentSqrtPrice,
+    transactionHistory:transactions,
+    priceHistory:priceHistory
   };
 }

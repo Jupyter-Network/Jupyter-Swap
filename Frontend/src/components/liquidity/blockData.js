@@ -90,14 +90,22 @@ export async function fetchBlockDataNew(data) {
     return { ...e };
   });
 
-  console.log( data.tokens["token0"].contract.address,
-  data.tokens["token1"].contract.address,data.routerContract)
+  console.log(
+    data.tokens["token0"].contract.address,
+    data.tokens["token1"].contract.address,
+    data.routerContract
+  );
   const poolInfo = await data.routerContract.poolInfo(
     data.tokens["token0"].contract.address,
     data.tokens["token1"].contract.address
   );
 
-  console.log(poolInfo[0], poolInfo[1].toString(), poolInfo[2].toString());
+  console.log(
+    poolInfo[0],
+    poolInfo[1].toString(),
+    poolInfo[2].toString(),
+    poolInfo[3].toString()
+  );
   //  ? await data.tokens["token1"].contract.balanceOf(
   //      data.wallet.accounts[0].address
   //    )
@@ -132,7 +140,8 @@ export async function fetchBlockDataNew(data) {
     currentTick: poolInfo[0], //userBalance,
     currentLiquidity: poolInfo[2], //poolBalances,
     currentSqrtPrice: poolInfo[1], //lpTotalSupply,
-    apy: 10, // BN(apy)
+    apy: 10,
+    liquidity: poolInfo[2].toString(), // BN(apy)
     //.dividedBy(
     //  BN(poolBalances[1].toString()).multipliedBy(2).dividedBy(BN(10).pow(18))
     //)
