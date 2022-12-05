@@ -99,6 +99,44 @@ export async function fetchBlockDataNew(data) {
     data.tokens["token0"].contract.address,
     data.tokens["token1"].contract.address
   );
+  const tickInfo = await data.routerContract.getTick(
+    data.tokens["token0"].contract.address,
+    data.tokens["token1"].contract.address,
+    -45120
+  );
+  const tickInfoEnd = await data.routerContract.getTick(
+    data.tokens["token0"].contract.address,
+    data.tokens["token1"].contract.address,
+    21184
+  );
+  console.log("Tick start",tickInfo.map((e) => e.toString()));
+  console.log("Tick end",tickInfoEnd.map((e) => e.toString()));
+  const tickInfo1 = await data.routerContract.getTick(
+    data.tokens["token0"].contract.address,
+    data.tokens["token1"].contract.address,
+    -30144
+  );
+  const tickInfoEnd1 = await data.routerContract.getTick(
+    data.tokens["token0"].contract.address,
+    data.tokens["token1"].contract.address,
+    -20480
+  );
+  console.log("Tick 1 start",tickInfo1.map((e) => e.toString()));
+  console.log("Tick 1 end",tickInfoEnd1.map((e) => e.toString()));
+  const poolBalance0 = data.wallet
+    ? await getTokenBalance(
+        data.tokens["token0"],
+        data.ethersProvider,
+        poolInfo[3]
+      )
+    : 0;
+  const poolBalance1 = data.wallet
+    ? await getTokenBalance(
+        data.tokens["token1"],
+        data.ethersProvider,
+        poolInfo[3]
+      )
+    : 0;
 
   console.log(
     poolInfo[0],
@@ -136,6 +174,8 @@ export async function fetchBlockDataNew(data) {
   return {
     token0Balance: BigInt(t0Balance),
     token1Balance: BigInt(t1Balance),
+    poolBalance0:poolBalance0,
+    poolBalance1:poolBalance1,
     liquidityPositions: liquidityPositions,
     currentTick: poolInfo[0], //userBalance,
     currentLiquidity: poolInfo[2], //poolBalances,

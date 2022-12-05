@@ -9,6 +9,7 @@ import * as quotes from "../../utils/quotes.js";
 import {
   currency,
   currencyFormat,
+  dynamicPrecisionDecimal,
   numericFormat,
   validate,
 } from "../../utils/inputValidations";
@@ -296,7 +297,15 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     });
   }
   async function swapTokens() {
-    console.log(state.token0Amount.toString());
+    console.log(       "sWAP: ", tokens["token0"].contract.address,
+    tokens["token1"].contract.address,
+    BigInt(Math.round(state.token0Amount * 10 ** 18)).toString(),
+    BigInt(tokens["token0"].contract.address) > BigInt(tokens["token1"].contract.address)
+      ? 640000
+      : -640000,
+      BigInt(Math.round(state.token1Amount* (1-maxSlippage/100).toString() * 10 ** 18)).toString(),
+      (1-maxSlippage/100).toString()
+      );
     await transaction(
       `Swap ${new BN(state.token0Amount).toFixed(6)} ${
         tokens["token0"].symbol
@@ -309,6 +318,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         BigInt(tokens["token0"].contract.address) > BigInt(tokens["token1"].contract.address)
           ? 640000
           : -640000,
+          BigInt(Math.round(state.token1Amount*0.995 * 10 ** 18)).toString()
         //new BN(state.token0Amount).multipliedBy(new BN(10).pow(18)).toFixed(0),
         //state.token1AmountMin.toFixed(0),
         //deadline(),
@@ -418,7 +428,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                       }
                       onFocus={() => handleToken0AmountChange("")}
                       onBlur={(e) => handleToken0AmountChange(e.target.value)}
-                      value={state.token0Amount}
+                      value={state.token0Amount.toFixed ? dynamicPrecisionDecimal(state.token0Amount):state.token0Amount}
                       icon={tokens["token0"].icon}
                       info={`Bal: ${currency(blockData.token0Balance)}`}
                     ></LabeledInput>
@@ -435,7 +445,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                       }
                       onFocus={() => handleToken1AmountChange("")}
                       onBlur={(e) => handleToken1AmountChange(e.target.value)}
-                      value={state.token1Amount}
+                      value={state.token1Amount.toFixed ? dynamicPrecisionDecimal(state.token1Amount):state.token1Amount}
                       icon={tokens["token1"].icon}
                       info={`Bal: ${currency(blockData.token1Balance)}`}
                     ></LabeledInput>

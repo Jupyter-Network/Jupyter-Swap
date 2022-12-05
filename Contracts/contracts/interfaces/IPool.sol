@@ -1,14 +1,15 @@
 pragma solidity ^0.8.13;
 import "../libraries/Shared.sol";
+
 interface IJupyterSwapPool {
     struct Quote {
         uint256 amountIn;
         uint256 amountOut;
     }
- 
 
     function swap(
         uint256 _in,
+        uint256 _minValueOut,
         int24 _limitTick,
         address _sender
     ) external;
@@ -49,6 +50,23 @@ interface IJupyterSwapPool {
     function currentTick() external view returns (int24);
 
     function currentSqrtPrice() external view returns (uint256);
-    
-    function position(uint256 _positionId) external view returns(int24,int24,uint128);
+
+    function position(uint256 _positionId)
+        external
+        view
+        returns (
+            int24,
+            int24,
+            uint128
+        );
+
+    function getTick(int24 _tick)
+        external
+        view
+        returns (
+            uint256 liquidity,
+            int128 liquidityNet,
+            uint256 feesOutside0,
+            uint256 feesOutside1
+        );
 }

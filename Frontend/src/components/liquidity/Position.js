@@ -1,5 +1,13 @@
 import { Container, GradientDiv } from "../../theme";
-import { background, backgroundGradient, highlight, highlightGradient, primary, secondary, tintedBackground } from "../../theme/theme";
+import {
+  background,
+  backgroundGradient,
+  highlight,
+  highlightGradient,
+  primary,
+  secondary,
+  tintedBackground,
+} from "../../theme/theme";
 import {
   calcNewPosition,
   priceFromTick,
@@ -17,7 +25,14 @@ const formatter = new Intl.NumberFormat("en-US", {
   maximumSignificantDigits: 5,
 });
 
-export default function Position({ data, blockData, positionInfo, tokens,onRemove,onCollectFees }) {
+export default function Position({
+  data,
+  blockData,
+  positionInfo,
+  tokens,
+  onRemove,
+  onCollectFees,
+}) {
   const [open, setOpen] = useState(false);
   const [positionData, setPositionData] = useState(false);
 
@@ -29,7 +44,6 @@ export default function Position({ data, blockData, positionInfo, tokens,onRemov
     flexGrow: 2,
     margin: 1,
   };
-  console.log(tokens);
   function loadLpQuote() {
     if (blockData) {
       let quote = calcNewPosition(
@@ -43,12 +57,11 @@ export default function Position({ data, blockData, positionInfo, tokens,onRemov
     }
   }
   let lpQuote = loadLpQuote();
-  console.log(lpQuote);
   return (
     <Container
       style={{
         height: "fit-content",
-        maxHeight: open ? 325 :37,
+        maxHeight: open ? 325 : 37,
         transition: "max-height 0.3s ease",
       }}
     >
@@ -66,8 +79,8 @@ export default function Position({ data, blockData, positionInfo, tokens,onRemov
           style={{
             borderRadius: 5,
             padding: 5,
-            backgroundColor: open ? background :tintedBackground , 
-            color: open ? secondary :primary, 
+            backgroundColor: open ? background : tintedBackground,
+            color: open ? secondary : primary,
             width: "100%",
             overflow: "hidden",
             cursor: "pointer",
@@ -79,12 +92,20 @@ export default function Position({ data, blockData, positionInfo, tokens,onRemov
                 tokens.token1.contract.address,
                 data.lp_id
               );
+              console.log("Open:",data.lowertick, data.uppertick);
+
               setPositionData({
                 token0Amount: res[0],
                 token1Amount: res[1],
                 fee0: res[2],
                 fee1: res[3],
               });
+             //setPositionData({
+             //   token0Amount: 10000 ,
+             //   token1Amount: 100,
+             //   fee0: 20,
+             //   fee1: 40,
+             // });
             }
             setOpen(!open);
           }}
@@ -187,15 +208,24 @@ export default function Position({ data, blockData, positionInfo, tokens,onRemov
                 </p>
               </div>
             </div>
-
           </>
         ) : (
           <div></div>
         )}
       </div>
-     
-            <MediumButton onClick={()=>onRemove(data.lp_id)} style={{ padding:10,margin: 10 }}>Remove Position</MediumButton>
-            <MediumButton onClick={()=>onCollectFees(data.lp_id)} style={{ padding:10,margin: 10 }}>Collect Position</MediumButton>
+
+      <MediumButton
+        onClick={() => onRemove(data.lp_id)}
+        style={{ padding: 10, margin: 10 }}
+      >
+        Remove Position
+      </MediumButton>
+      <MediumButton
+        onClick={() => onCollectFees(data.lp_id)}
+        style={{ padding: 10, margin: 10 }}
+      >
+        Collect Position Needs Fix
+      </MediumButton>
     </Container>
   );
 }

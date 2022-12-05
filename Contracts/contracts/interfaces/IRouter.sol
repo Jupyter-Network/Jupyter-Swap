@@ -54,8 +54,22 @@ interface IRouter {
         address _token0Address,
         address _token1Address,
         uint256 _amount,
-        int24 _limitTick
+        int24 _limitTick,
+        uint256 _minValueOut
     ) external payable;
+
+    function position(
+        address _token0Address,
+        address _token1Address,
+        uint256 _positionId
+    )
+        external
+        view
+        returns (
+            int24,
+            int24,
+            uint128
+        );
 
     function positionInfo(
         address _token0Address,
@@ -79,6 +93,20 @@ interface IRouter {
             uint256 price,
             uint128 liquidity,
             address pool
+        );
+
+    function getTick(
+        address _token0Address,
+        address _token1Address,
+        int24 _tick
+    )
+        external
+        view
+        returns (
+            uint256,
+            int128,
+            uint256,
+            uint256
         );
 
     function collectFees(

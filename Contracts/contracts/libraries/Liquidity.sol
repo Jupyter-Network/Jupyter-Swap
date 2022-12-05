@@ -1,11 +1,11 @@
 pragma solidity ^0.8.13;
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./Math.sol";
 import "./Fees.sol";
 import "./PriceMath.sol";
 import "./BitMap.sol";
 import "./Tick.sol";
 import "./Shared.sol";
+
 library LiquidityManager {
     uint256 internal constant FEE_SCALE_FACTOR =
         0x100000000000000000000000000000000;
@@ -30,27 +30,31 @@ library LiquidityManager {
         Shared.Position memory pos = self[_positionId];
         return (
             Math.mulDiv(
+                //Fees.feesInRange(
                 Fees.feesInRange(
                     _currentTick,
                     pos.lowerTick,
                     pos.upperTick,
-                    _feeGlobal0 - pos.globalFees0,
+                    _feeGlobal0,// - pos.globalFees0,
                     _ticks[pos.lowerTick].feesOutside0,
                     _ticks[pos.upperTick].feesOutside0,
-                    false
+                    pos.globalFees0
+                    //false
                 ),
                 pos.liquidity,
-                FEE_SCALE_FACTOR
+                FEE_SCALE_FACTOR 
             ),
             Math.mulDiv(
+             //Fees.feesInRange(
                 Fees.feesInRange(
                     _currentTick,
                     pos.lowerTick,
                     pos.upperTick,
-                    _feeGlobal1 - pos.globalFees1,
+                    _feeGlobal1,// - pos.globalFees1,
                     _ticks[pos.lowerTick].feesOutside1,
                     _ticks[pos.upperTick].feesOutside1,
-                    true
+                    pos.globalFees1
+                  //  true
                 ),
                 pos.liquidity,
                 FEE_SCALE_FACTOR
@@ -76,14 +80,7 @@ library LiquidityManager {
         mapping(int24 => TickState) storage _ticks,
         mapping(int16 => uint256) storage _map,
         NewPositionParameter memory param
-    )
-        internal
-        view
-        returns (
-            uint256 amount0,
-            uint256 amount1
-        )
-    {
+    ) internal view returns (uint256 amount0, uint256 amount1) {
         require(param.startTick <= param.endTick, "Start tick too high");
         (amount0, amount1) = _calcNewPosition(
             param.startTick,
@@ -119,7 +116,7 @@ library LiquidityManager {
                 int128(param.amount),
                 true,
                 param.currentTick >= param.startTick ? param.feeGlobal0 : 0,
-                param.currentTick < param.startTick ? param.feeGlobal1 : 0
+                param.currentTick >= param.startTick ? param.feeGlobal1 : 0
             );
         }
 
@@ -132,7 +129,7 @@ library LiquidityManager {
                 -int128(param.amount),
                 true,
                 param.currentTick >= param.endTick ? param.feeGlobal0 : 0,
-                param.currentTick < param.endTick ? param.feeGlobal1 : 0
+                param.currentTick >= param.endTick ? param.feeGlobal1 : 0
             );
             _map.setFlagAtTick(param.endTick, Tick.SPACING);
         }

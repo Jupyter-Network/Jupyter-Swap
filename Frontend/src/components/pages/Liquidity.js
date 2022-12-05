@@ -402,7 +402,13 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             maxWidth: 1200,
           }}
         >
+          <div style={{ width: "100%" }}>
+            <p>{numericFormat(blockData.poolBalance0.toString())}</p>
+            <p>{numericFormat(blockData.poolBalance1.toString())}</p>
+          </div>
+
           <Balances blockData={blockData} tokens={tokens}></Balances>
+
           <div style={{ width: "100%" }}>
             <Container style={{ maxHeight: 260, margin: "0 auto" }}>
               <ContainerTitle>Select Pool</ContainerTitle>

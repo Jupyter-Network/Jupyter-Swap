@@ -1,15 +1,29 @@
 import { useEffect, useRef, useState } from "react";
-import { rgb, scaleLinear, scaleLog, scalePow, scaleSqrt } from "d3";
+import {
+  rgb,
+  scaleLinear,
+  scaleLog,
+  scalePow,
+  scaleQuantile,
+  scaleQuantize,
+  scaleSqrt,
+} from "d3";
 import { numericFormat } from "../../utils/inputValidations";
 
-
-function scale(currentPrice){
-    if(currentPrice < 0.001){ return [0.0000001,0.005]}else
-    if(currentPrice < 0.01){ return [0.000001,0.05]}else
-    if(currentPrice < 0.1){ return [0.00001,0.5]}else
-    if(currentPrice < 1){ return [0.0001,5]}else
-    if(currentPrice < 10){return [0.01,5]}else
-    return [currentPrice/2,currentPrice * 2]
+function scale(currentPrice) {
+  if (currentPrice < 0.001) {
+    return [0.0000001, 0.005];
+  } else if (currentPrice < 0.01) {
+    return [0.000001, 0.05];
+  } else if (currentPrice < 0.1) {
+    return [0.00001, 0.5];
+  } else if (currentPrice < 1) {
+    return [0.0001, 5];
+  } else if (currentPrice < 10) {
+    return [0.01, 10];
+  } else if (currentPrice < 100) {
+    return [0.1, 150];
+  } else return [currentPrice / 2, currentPrice * 2];
 }
 export function Slider(props) {
   let [xPosLeft, setXPosLeft] = useState(100);
@@ -19,26 +33,23 @@ export function Slider(props) {
   let self = useRef();
 
   useEffect(() => {
-    props.onMoveRight(myScale(xPosRight));
+    props.onMoveRight(myScale.invert(xPosRight));
   }, [xPosRight]);
   useEffect(() => {
-    props.onMoveLeft(myScale(xPosLeft));
+    props.onMoveLeft(myScale.invert(xPosLeft));
   }, [xPosLeft]);
-  console.log(
-    "Current:",
-    props.currentPrice 
-  );
+  console.log("Current:", props.currentPrice);
 
-  
-  const myScale = scaleLinear()
-    .range(scale(props.currentPrice))
-    .domain([0, props.width]);
+  const myScale = scaleLog()
+    .domain(scale(props.currentPrice))
+    .range([0, props.width]);
   let yScale = scaleLinear()
     .range([0, props.height])
     .domain([
       props.positions.reduce((acc, item) => (item.lp < acc ? item.lp : acc), 0),
       props.positions.reduce((acc, item) => (item.lp > acc ? item.lp : acc), 0),
-    ]).clamp(false);
+    ])
+    .clamp(false);
   function move(e) {
     const clientX = e.clientX - self.current.offsetLeft;
     if (clientX > 0 && clientX < props.width && drag) {
@@ -79,11 +90,13 @@ export function Slider(props) {
       for (let i = 0; i < props.width; i += step) {
         sum += props.positions.reduce((acc, current) => {
           let c =
-            current.lt >= myScale(i) && current.lt < myScale(i + step)
+            current.lt >= myScale.invert(i) &&
+            current.lt < myScale.invert(i + step)
               ? +current.lp
               : 0;
           let b =
-            current.ut >= myScale(i) && current.ut < myScale(i + step)
+            current.ut >= myScale.invert(i) &&
+            current.ut < myScale.invert(i + step)
               ? -current.lp
               : 0;
           acc = acc + c + b;
@@ -143,7 +156,7 @@ export function Slider(props) {
         ></rect>
 
         <rect
-          x={myScale.invert(props.currentPrice)}
+          x={myScale(props.currentPrice)}
           style={{ fill: "orange" }}
           height={props.height}
           width={2}
@@ -181,8 +194,8 @@ export function Slider(props) {
         </g>
       </svg>
       <div style={{ display: "flex", justifyContent: "space-around" }}>
-        <p>{numericFormat(myScale(xPosLeft) * 10 ** 18)}</p>
-        <p>{numericFormat(myScale(xPosRight) * 10 ** 18)}</p>
+        <p>{numericFormat(myScale.invert(xPosLeft) * 10 ** 18)}</p>
+        <p>{numericFormat(myScale.invert(xPosRight) * 10 ** 18)}</p>
       </div>
     </div>
   );
