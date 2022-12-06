@@ -11,19 +11,8 @@ import {
 import { numericFormat } from "../../utils/inputValidations";
 
 function scale(currentPrice) {
-  if (currentPrice < 0.001) {
-    return [0.0000001, 0.005];
-  } else if (currentPrice < 0.01) {
-    return [0.000001, 0.05];
-  } else if (currentPrice < 0.1) {
-    return [0.00001, 0.5];
-  } else if (currentPrice < 1) {
-    return [0.0001, 5];
-  } else if (currentPrice < 10) {
-    return [0.01, 10];
-  } else if (currentPrice < 100) {
-    return [0.1, 150];
-  } else return [currentPrice / 2, currentPrice * 2];
+  return [currentPrice/1000,currentPrice*1000]
+
 }
 export function Slider(props) {
   let [xPosLeft, setXPosLeft] = useState(100);
@@ -83,7 +72,7 @@ export function Slider(props) {
 
   function liquidityProfile() {
     if (props.positions && props.positions.length > 0) {
-      const step = 10;
+      const step = 64;
       let out = [];
       let sum = 0;
       let sums = [];

@@ -42,7 +42,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
         uint256 startPrice;
         uint128 endPrice;
         uint256 feesPaid;
-        uint256 feeGlobal0;
+        uint256 feeGlobal;
+        uint128 protocolFees;
     }
     //struct Quote {
     //    uint256 amountIn;
@@ -101,7 +102,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
             currentSqrtPrice,
             0,
             0,
-            feeGlobal0
+            feeGlobal0,
+            0
         );
 
         uint256 _currentSqrtPrice = currentSqrtPrice;
@@ -133,11 +135,12 @@ contract JupyterSwapPool is IJupyterSwapPool {
                 currentSwap.outAmount += amountOut;
                 currentSwap.feesPaid += fees;
 
-                uint256 protocolFee = fees / 200;
+                uint128 protocolFee = uint128(fees) / 200;
                 fees -= protocolFee;
-                collectedProtocolFees0 += protocolFee;
+                currentSwap.protocolFees += protocolFee;
+                //collectedProtocolFees0 += protocolFee;
 
-                currentSwap.feeGlobal0 += Math.mulDiv(
+                currentSwap.feeGlobal += Math.mulDiv(
                     fees,
                     0x100000000000000000000000000000000,
                     liquidity
@@ -146,7 +149,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
                 if (priceAfterSwap <= nextPrice) {
                     //Update fees
                     ticks[_currentTick].feesOutside0 =
-                        currentSwap.feeGlobal0 -
+                        currentSwap.feeGlobal -
                         ticks[_currentTick].feesOutside0;
                     ticks[_currentTick].feesOutside1 =
                         feeGlobal1 -
@@ -158,9 +161,10 @@ contract JupyterSwapPool is IJupyterSwapPool {
                         _currentTick - Tick.SPACING
                     );
                 }
-                feeGlobal0 = currentSwap.feeGlobal0;
                 _currentSqrtPrice = priceAfterSwap;
             }
+            feeGlobal0 = currentSwap.feeGlobal;
+            collectedProtocolFees0 = currentSwap.protocolFees;
             currentSwap.endPrice = uint128(_currentSqrtPrice);
             currentSwap.endTick = _currentTick;
             require(currentSwap.remainingAmount <= 1, "Limit reached");
@@ -184,23 +188,11 @@ contract JupyterSwapPool is IJupyterSwapPool {
         }
         //Swap ONE TO ZERO
         else {
+            currentSwap.feeGlobal = feeGlobal1;
             while (
                 currentSwap.remainingAmount > 1 && _currentTick <= _limitTick
             ) {
                 int24 next = getNextWhileNotInitializedFalse(_currentTick);
-
-                //(int24 next, bool init) = getNextInitialized(
-                //    _currentTick,
-                //    Tick.SPACING,
-                //    false
-                //);
-                //
-                ////check if tick is initialized else skip
-                //if(!init || ticks[next].liquidity == 0) {
-                //    _currentTick += Tick.SPACING;
-                //    //tempTick = next+64;
-                //    continue;
-                //}
 
                 uint256 nextPrice = Tick.getPriceFromTick(next);
 
@@ -222,11 +214,11 @@ contract JupyterSwapPool is IJupyterSwapPool {
                 currentSwap.outAmount += amountOut;
                 currentSwap.feesPaid += fees;
 
-                uint256 protocolFee = fees / 200;
+                uint128 protocolFee = uint128(fees) / 200;
                 fees -= protocolFee;
-                collectedProtocolFees1 += protocolFee;
+                currentSwap.protocolFees += protocolFee;
 
-                feeGlobal1 += Math.mulDiv(
+                currentSwap.feeGlobal += Math.mulDiv(
                     fees,
                     0x100000000000000000000000000000000,
                     liquidity
@@ -235,7 +227,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
                 if (priceAfterSwap >= nextPrice) {
                     //Update fees
                     ticks[next].feesOutside1 =
-                        feeGlobal1 -
+                        currentSwap.feeGlobal -
                         ticks[next].feesOutside1;
                     ticks[next].feesOutside0 =
                         feeGlobal0 -
@@ -249,6 +241,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
                 }
                 _currentSqrtPrice = priceAfterSwap;
             }
+            feeGlobal1 = currentSwap.feeGlobal;
+            collectedProtocolFees1 = currentSwap.protocolFees;
             currentSwap.endPrice = uint128(_currentSqrtPrice);
             currentSwap.endTick = _currentTick;
             require(currentSwap.remainingAmount <= 1, "Limit reached");
@@ -304,7 +298,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
             currentSqrtPrice,
             0,
             0,
-            feeGlobal0
+            feeGlobal0,
+            0
         );
         PriceMath.SwapCache memory cache; // = PriceMath.SwapCache(0, 0, 0, 0);
 

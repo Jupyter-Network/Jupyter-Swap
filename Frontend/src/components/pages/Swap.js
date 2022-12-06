@@ -514,10 +514,9 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                 You will receive min.{" "}
                 <span style={{ color: primary }}>
                   {" "}
-                  {numericFormat(
-                    state.token1AmountMin.dividedBy(BN(10).pow(18)).toFixed(18),
-                    6
-                  )}{" "}
+                  {
+                    dynamicPrecisionDecimal(state.token1Amount * (1-maxSlippage/100))
+                  }{" "}
                   {tokens["token1"].symbol}
                 </span>
               </p>
@@ -526,7 +525,10 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                 <span style={{ color: primary }}>
 
                   { BigInt(tokens.token0.contract.address)  > BigInt(tokens.token1.contract.address)  ?
-                  (1-(state.token1Amount)/(state.token0Amount*0.998/blockData.price))*100 :((state.token0Amount*0.998*blockData.price)/state.token1Amount)*100-100  }%
+                  (
+                    dynamicPrecisionDecimal(1-(state.token1Amount)/(state.token0Amount*0.998/blockData.price))*100) 
+                    :
+                    dynamicPrecisionDecimal(100-(state.token1Amount)/(state.token0Amount*0.998 * blockData.price)*100)}%
                 </span>
               </p>
             </ContainerInverted>
