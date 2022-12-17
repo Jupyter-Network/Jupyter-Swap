@@ -2,19 +2,20 @@ const ethers = require("ethers");
 const routerMetadata = require("../Contracts/build/contracts/Router.json");
 const erc20Metadata = require("../Contracts/build/contracts/ERC20.json");
 const erc20Abi = erc20Metadata.abi;
-const addresses = require("./addresses.json");
+//const addresses = require("./addresses.json");
+const CONST = require("./Database/CONST.json");
 const query = require("./Database/query");
-const { wbnb } = require("../Frontend/src/contracts/addresses");
+
 const { createPoolEvent } = require("./Database/query");
 const { lpValue } = require("./utils/Math");
 const routerAbi = routerMetadata.abi;
-const routerAddress = addresses.router;
-const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545");
+const routerAddress = CONST.SWAP_ROUTER_ADDRESS;
+const provider = new ethers.providers.JsonRpcProvider(CONST.RPC_URL);
 const routerContract = new ethers.Contract(routerAddress, routerAbi, provider);
 console.log(routerAddress);
 const BN = require("bignumber.js");
-let lastBlock = 1000;
-routerContract.queryFilter("*", lastBlock);
+let lastBlock = 23964661;
+//routerContract.queryFilter("*", lastBlock);
 //On router Events
 routerContract.on("*", async (tx) => {
   lastBlock = tx.blockNumber;
@@ -94,6 +95,8 @@ try{
   console.log(e)
 }
 });
+
+
 
 /*
 SELECT time_bucket_gapfill('15 minutes', time,now() - INTERVAL '1 day',now()) AS bucket, 

@@ -288,21 +288,11 @@ contract Router is IRouter, IPositionCallback, Lock {
         );
         factory.createPool(_token0Address, _token1Address, _startTick);
         address pool = factory.lastPool();
-        //JupyterSwapPool pool = new JupyterSwapPool(
-        //    2000,
-        //    _token0Address,
-        //    _token1Address,
-        //    _startTick,
-        //    msg.sender,
-        //    WETH
-        //);
 
         pools[_token0Address][_token1Address] = pool;
-        //validPools[address(pool)] = 1;
-        //Send remaining ETH value back to user
-        //if (address(this).balance > 0) {
-        //    payable(msg.sender).transfer(address(this).balance);
-        //}
+
+        IJupyterSwapPool(pool).initialPosition(msg.sender);
+
         emit Pool_Created(pool, _token0Address, _token1Address);
     }
 
@@ -363,31 +353,6 @@ contract Router is IRouter, IPositionCallback, Lock {
         return
             IJupyterSwapPool(payable(pools[_token0Address][_token1Address]))
                 .swapQuote(_amount, _limitTick, exactIn);
-    }
-
-    function getTick(
-        address _token0Address,
-        address _token1Address,
-        int24 _tick
-    )
-        external
-        view
-        override
-        returns (
-            uint256,
-            int128,
-            uint256,
-            uint256
-        )
-    {
-        (_token0Address, _token1Address) = _orderPools(
-            _token0Address,
-            _token1Address
-        );
-        poolExists(_token0Address, _token1Address);
-        return
-            IJupyterSwapPool(payable(pools[_token0Address][_token1Address]))
-                .getTick(_tick);
     }
 
     function _orderPools(address token0, address token1)

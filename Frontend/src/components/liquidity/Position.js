@@ -110,7 +110,7 @@ export default function Position({
             setOpen(!open);
           }}
         >
-          ID: <b>{data.lp_id.toLocaleString()}</b>
+          <b>{data.lp_id.toLocaleString()}</b>
           &nbsp;{" "}
           {lpQuote.amount1 == 0
             ? 0

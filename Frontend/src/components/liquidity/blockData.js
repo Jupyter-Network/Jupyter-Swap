@@ -1,7 +1,7 @@
 import BN from "bignumber.js";
 import { _scaleDown } from "../../utils/mathHelper";
 import { getAPY, getLiquidityPositionsForAddress } from "../../utils/requests";
-import { wbnb } from "../../contracts/addresses";
+import CONST from "../../CONST.json"
 
 const data = {
   tokens: ["tokenarray"],
@@ -20,24 +20,29 @@ export async function fetchBlockData(data) {
         data.wallet.accounts[0].address
       )
     : 0;
-  const userBalance = data.wallet
+  const userBalance = 
+  data.wallet
     ? await data.routerContract.getBalance(
         data.tokens["token1"].contract.address
       )
     : 0;
-  const rate = await data.routerContract.getRate(
+  const rate = 
+  await data.routerContract.getRate(
     data.tokens["token1"].contract.address
   );
 
-  const poolBalances = await data.routerContract.getPoolBalances(
+  const poolBalances = 
+  await data.routerContract.getPoolBalances(
     data.tokens["token1"].contract.address
   );
 
-  const lpTotalSupply = await data.routerContract.getLPTotalSupply(
+  const lpTotalSupply = 
+  await data.routerContract.getLPTotalSupply(
     data.tokens["token1"].contract.address
   );
 
-  const apy = await getAPY(data.tokens.token1.contract.address);
+  const apy = 
+  await getAPY(data.tokens.token1.contract.address);
   console.log(
     BN(apy)
       .dividedBy(BN(poolBalances[1].toString()).dividedBy(BN(10).pow(18)))
@@ -60,7 +65,7 @@ export async function fetchBlockData(data) {
 }
 
 async function getTokenBalance(token, ethersProvider, accountAddress) {
-  if (token.contract.address === wbnb) {
+  if (token.contract.address === CONST.WBNB_ADDRESS) {
     await ethersProvider.getBalance(accountAddress);
   }
   return await token.contract.balanceOf(accountAddress);
@@ -81,56 +86,28 @@ export async function fetchBlockDataNew(data) {
         data.wallet.accounts[0].address
       )
     : 0;
-  let liquidityPositions = data.wallet
-    ? await getLiquidityPositionsForAddress(data.wallet.accounts[0].address)
-    : { data: [] };
 
-  console.log(liquidityPositions);
-  liquidityPositions.data = liquidityPositions.data.map((e, i) => {
-    return { ...e };
-  });
+   // 0xc43bE04F802D1FA7d7BFc0FAE5FB100C19c2E85B
 
-  console.log(
-    data.tokens["token0"].contract.address,
-    data.tokens["token1"].contract.address,
-    data.routerContract
-  );
   const poolInfo = await data.routerContract.poolInfo(
     data.tokens["token0"].contract.address,
     data.tokens["token1"].contract.address
   );
-  const tickInfo = await data.routerContract.getTick(
-    data.tokens["token0"].contract.address,
-    data.tokens["token1"].contract.address,
-    -45120
-  );
-  const tickInfoEnd = await data.routerContract.getTick(
-    data.tokens["token0"].contract.address,
-    data.tokens["token1"].contract.address,
-    21184
-  );
-  console.log("Tick start",tickInfo.map((e) => e.toString()));
-  console.log("Tick end",tickInfoEnd.map((e) => e.toString()));
-  const tickInfo1 = await data.routerContract.getTick(
-    data.tokens["token0"].contract.address,
-    data.tokens["token1"].contract.address,
-    -30144
-  );
-  const tickInfoEnd1 = await data.routerContract.getTick(
-    data.tokens["token0"].contract.address,
-    data.tokens["token1"].contract.address,
-    -20480
-  );
-  console.log("Tick 1 start",tickInfo1.map((e) => e.toString()));
-  console.log("Tick 1 end",tickInfoEnd1.map((e) => e.toString()));
-  const poolBalance0 = data.wallet
+
+  let liquidityPositions = data.wallet
+  ? await getLiquidityPositionsForAddress(data.wallet.accounts[0].address,poolInfo[3])
+  : { data: [] };
+ 
+  const poolBalance0 = 
+  data.wallet
     ? await getTokenBalance(
         data.tokens["token0"],
         data.ethersProvider,
         poolInfo[3]
       )
     : 0;
-  const poolBalance1 = data.wallet
+  const poolBalance1 = 
+  data.wallet
     ? await getTokenBalance(
         data.tokens["token1"],
         data.ethersProvider,

@@ -1,4 +1,4 @@
-import { router, wbnb } from "../../contracts/addresses";
+import CONST from "../../CONST.json"
 import BN from "bignumber.js";
 import {
   getHistory,
@@ -22,7 +22,7 @@ export async function fetchBlockData(data) {
   let poolBalances = null;
   let transactions = [];
 
-  if (data.tokens["token0"].contract.address === wbnb) {
+  if (data.tokens["token0"].contract.address === CONST.WBNB_ADDRESS) {
     t0Balance = data.wallet
       ? await data.ethersProvider.getBalance(data.wallet.accounts[0].address)
       : 0;
@@ -77,7 +77,7 @@ export async function fetchBlockData(data) {
   let t1Balance = 0;
   let p1Rate = BN(BN(10).pow(18));
 
-  if (data.tokens["token1"].contract.address === wbnb) {
+  if (data.tokens["token1"].contract.address === CONST.WBNB_ADDRESS) {
     t1Balance = data.wallet
       ? await data.ethersProvider.getBalance(data.wallet.accounts[0].address)
       : 0;
@@ -96,7 +96,7 @@ export async function fetchBlockData(data) {
     ).dividedBy(BN(10).pow(18));
   }
 
-  if (data.tokens["token1"].contract.address !== wbnb) {
+  if (data.tokens["token1"].contract.address !== CONST.WBNB_ADDRESS) {
     poolBalances = await data.routerContract.getPoolBalances(
       data.tokens["token1"].contract.address
     );
@@ -124,8 +124,8 @@ export async function fetchBlockData(data) {
 
   console.log("PRICEHOSTORY: ", data.tokens["token0"], data.tokens["token1"]);
   if (
-    data.tokens["token0"].contract.address !== wbnb &&
-    data.tokens["token1"].contract.address !== wbnb
+    data.tokens["token0"].contract.address !== CONST.WBNB_ADDRESS &&
+    data.tokens["token1"].contract.address !== CONST.WBNB_ADDRESS
   ) {
     let p0 = await getHistoryOHLC(
       data.tokens["token0"].contract.address,
@@ -157,14 +157,14 @@ export async function fetchBlockData(data) {
   const token0Allowance = data.wallet
     ? await data.tokens["token0"].contract.allowance(
         data.wallet.accounts[0].address,
-        router
+        CONST.SWAP_ROUTER_ADDRESS
       )
     : 0;
 
   const token1Allowance = data.wallet
     ? await data.tokens["token1"].contract.allowance(
         data.wallet.accounts[0].address,
-        router
+        CONST.SWAP_ROUTER_ADDRESS
       )
     : 0;
   console.log("History", priceHistory);
@@ -183,7 +183,7 @@ export async function fetchBlockData(data) {
 }
 
 async function getBalance(data, zeroOrOne) {
-  if (data.tokens[zeroOrOne ? "token0" : "token1"].contract.address === wbnb) {
+  if (data.tokens[zeroOrOne ? "token0" : "token1"].contract.address === CONST.WBNB_ADDRESS) {
     return data.wallet
       ? await data.ethersProvider.getBalance(data.wallet.accounts[0].address)
       : 0;
@@ -211,14 +211,14 @@ console.log(poolInfo)
   const token0Allowance = data.wallet
     ? await data.tokens["token0"].contract.allowance(
         data.wallet.accounts[0].address,
-        router
+        CONST.SWAP_ROUTER_ADDRESS
       )
     : 0;
 
   const token1Allowance = data.wallet
     ? await data.tokens["token1"].contract.allowance(
         data.wallet.accounts[0].address,
-        router
+        CONST.SWAP_ROUTER_ADDRESS
       )
     : 0;
     const transactions = (

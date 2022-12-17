@@ -95,19 +95,7 @@ interface IRouter {
             address pool
         );
 
-    function getTick(
-        address _token0Address,
-        address _token1Address,
-        int24 _tick
-    )
-        external
-        view
-        returns (
-            uint256,
-            int128,
-            uint256,
-            uint256
-        );
+
 
     function collectFees(
         address _token0Address,

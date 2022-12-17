@@ -60,7 +60,6 @@ contract JupyterFactory is IJupyterFactory {
         );
 
         JupyterSwapPool pool = new JupyterSwapPool(
-            2000,
             _token0Address,
             _token1Address,
             _startTick,

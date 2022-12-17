@@ -83,11 +83,21 @@ async function swapAndPrint(amount, up) {
   res = await router.positionInfo(token0.address, token1.address, 3);
   tableBefore.push(Object.keys(res).map((e) => res[e].toString()));
 
+  res = await router.swapQuote(
+    token0.address,
+    token1.address,
+    amount,
+    up ? 887272 : -887272,
+    true
+  );
+  console.log(res.amountIn.toString(), res.amountOut.toString());
+
   await router.swap(
     token0.address,
     token1.address,
     amount,
-    up ? 256000 : -256000
+    up ? 887272 : -887272,
+    Math.round(res.amountOut.toString()*0.999)
   );
 
   let table = [];
@@ -112,6 +122,7 @@ async function swapAndPrint(amount, up) {
   console.log("Liquidity: ", res[2].toString());
 }
 contract("Router", ([owner, testAddress]) => {
+  /*
   it("Swap Up", async () => {
     await router.createPool(token0.address, token1.address, 1024);
 
@@ -224,5 +235,40 @@ contract("Router", ([owner, testAddress]) => {
     await swapAndPrint(100000000, false);
     await swapAndPrint(100000000, false);
     await swapAndPrint(100000000, true);
+  });
+
+
+*/
+
+  it("Swap Up on an empty", async () => {
+    await router.createPool(token0.address, token1.address, 1024);
+
+    let poolAddress = await router.getPool(token0.address, token1.address);
+
+    await router.addPosition(
+      token0.address,
+      token1.address,
+      10240,
+      64000,
+      "1000000000"
+    );
+
+    await swapAndPrint(10000000, true);
+  });
+  
+  it("Swap Down on an empty", async () => {
+    await router.createPool(token0.address, token1.address, 1024);
+
+    let poolAddress = await router.getPool(token0.address, token1.address);
+
+    await router.addPosition(
+      token0.address,
+      token1.address,
+      -64000,
+      -10240,
+      "1000000000"
+    );
+
+    await swapAndPrint(10000000, false);
   });
 });

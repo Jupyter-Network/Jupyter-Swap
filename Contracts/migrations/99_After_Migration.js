@@ -73,6 +73,22 @@ module.exports = async function (deployer, network, accounts) {
     }
   );
 
+  fs.writeFile(
+    "../addresses.json",
+    JSON.stringify({
+      token0: token0.address,
+      token1: token1.address,
+      router: router.address,
+      wbnb: weth.address,
+    }),
+    (err) => {
+      if (err) {
+        throw err;
+      }
+      console.log("JSON data is saved.");
+    }
+  );
+
 };
 
 

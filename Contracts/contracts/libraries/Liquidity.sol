@@ -80,7 +80,7 @@ library LiquidityManager {
         mapping(int24 => TickState) storage _ticks,
         mapping(int16 => uint256) storage _map,
         NewPositionParameter memory param
-    ) internal view returns (uint256 amount0, uint256 amount1) {
+    ) internal pure returns (uint256 amount0, uint256 amount1) {
         require(param.startTick <= param.endTick, "Start tick too high");
         (amount0, amount1) = _calcNewPosition(
             param.startTick,

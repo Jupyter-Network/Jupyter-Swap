@@ -48,11 +48,37 @@ export function txHashFormat(value) {
 }
 
 export function dynamicPrecisionDecimal(value) {
-  if (value > 0.000000099999999999 || value == 0) {
+  if (value == 0) {
+    return value;
+  } else if (value > 1000000) {
+    return value.toFixed(0);
+  } else if (value > 10000) {
+    return value.toFixed(1);
+  } else if (value > 100) {
+    return value.toFixed(3);
+  } else if (value > 1) {
+    return value.toFixed(5);
+  } else if (value > 0.01) {
+    return value.toFixed(7);
+  } else if (value > 0.000000099999999999) {
     return value;
   } else if (value > 0.00000000099999999999) {
     return value.toFixed(9);
   } else {
-    return value.toFixed(12);
+    return value.toFixed(18);
   }
+}
+
+export function safeBigInt(value) {
+  try {
+    BigInt(value);
+  } catch {
+    return 0;
+  }
+}
+
+export function isAddress(address) {
+  if (!address.startsWith("0x")) return false;
+  if (address.length != 42) return false;
+  return true;
 }

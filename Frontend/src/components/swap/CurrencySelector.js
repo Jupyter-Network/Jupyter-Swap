@@ -21,6 +21,8 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
 
   const [activeSelector, setActiveSelector] = useState();
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     localStorage.setItem(
       "tokens",
@@ -138,6 +140,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
   }
 
   async function queryTokens(value) {
+    setLoading(true);
     if (value) {
       let res = (await getPools(value.toUpperCase())).data;
       console.log(res);
@@ -147,6 +150,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
         })
       );
     }
+    setLoading(false);
   }
 
   return (
@@ -209,8 +213,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
           <p style={{ lineHeight: 0.2 }}>{tokens["token1"].symbol}</p>{" "}
         </MediumButtonInverted>
       </div>
-
-      {activeSelector === 1 ? (
+      {activeSelector != null ? (
         <div
           style={{
             position: "absolute",
@@ -252,114 +255,38 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             placeholder={tokens["token1"].symbol}
             style={{ width: "50px", textAlign: "center" }}
           ></Input>
-          {currencies.map((item) => (
-            <ListOption
-              key={item.address}
-              tabIndex={0}
-              onClick={() => {
-                checkValidityAndSetTokens(
-                  item
-                  //item.address,
-                  //item.symbol,
-                  //item.icon,
-                  //item.name,
-                  //item.description,
-                  //1
-                );
-                setActiveSelector(null);
-                console.log(item);
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-evenly" }}>
-                <img
-                  style={{ width: 15 }}
-                  src={`/tokenlogos/${item.icon}`}
-                ></img>
-                <div style={{ minWidth: 10 }}>
-                  <p> </p>
-                </div>{" "}
-                {item.symbol}
-              </div>
-            </ListOption>
-          ))}
-          <br style={{ lineHeight: 0.2 }} />
-        </div>
-      ) : (
-        <span></span>
-      )}
-
-      {activeSelector === 0 ? (
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            backgroundColor: background,
-            width: 300,
-            margin: "0 auto",
-            boxShadow: "0px 2px 5px -3px black",
-            height: "fit-content",
-            border: "solid",
-            borderWidth: 1,
-            borderRadius: 5,
-            zIndex: 1000,
-          }}
-        >
-          <h4>Search Token :</h4>
-          <Input
-            autoFocus={true}
-            onBlur={(e) => {
-              if (
-                e.relatedTarget !== null &&
-                e.relatedTarget.nodeName === "P"
-              ) {
-                e.stopPropagation();
-              } else {
-                setActiveSelector(null);
-              }
-            }}
-            onChange={async (e) => {
-              await queryTokens(e.target.value);
-              setFilteredCurrencies(
-                currencies.filter((item) => {
-                  return (
-                    item.symbol.slice(0, e.target.value.length) ===
-                    e.target.value.toUpperCase()
-                  );
-                })
-              );
-            }}
-            placeholder={tokens["token1"].symbol}
-            style={{ width: "50px", textAlign: "center" }}
-          ></Input>
-          {currencies.map((item) => (
-            <ListOption
-              tabIndex={0}
-              onClick={() => {
-                checkValidityAndSetTokens(
-                  item
-                  //item.address,
-                  //item.symbol,
-                  //item.icon,
-                  //item.name,
-                  //item.description,
-                  //0
-                );
-                setActiveSelector(null);
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-evenly" }}>
-                <img
-                  style={{ width: 15 }}
-                  src={`/tokenlogos/${item.token0_icon}`}
-                ></img>
-                <div style={{ minWidth: 10 }}>
-                  <p> </p>
-                </div>{" "}
-                {item.token0_symbol} / {item.token1_symbol}
-              </div>
-            </ListOption>
-          ))}
+          {loading ? (
+            <p>Loading...</p>
+          ) : (
+            currencies.map((item) => (
+              <ListOption
+                key={item.address}
+                tabIndex={0}
+                onClick={() => {
+                  checkValidityAndSetTokens(item);
+                  setActiveSelector(null);
+                  console.log(item);
+                }}
+              >
+                <div
+                  style={{ display: "flex", justifyContent: "space-evenly" }}
+                >
+                  <img
+                    style={{ width: 25 }}
+                    src={`/tokenlogos/${item.token0_icon}`}
+                  ></img>
+                  <img
+                    style={{ width: 25 }}
+                    src={`/tokenlogos/${item.token1_icon}`}
+                  ></img>
+                  <div style={{ minWidth: 10 }}>
+                    <p> </p>
+                  </div>{" "}
+                  {item.token0_symbol} / {item.token1_symbol}
+                </div>
+              </ListOption>
+            ))
+          )}
           <br style={{ lineHeight: 0.2 }} />
         </div>
       ) : (

@@ -200,7 +200,7 @@ library PriceMath {
     }
 
     function swaps(SwapParams memory params, bool _exactIn)
-        internal
+        public
         view
         returns (SwapCache memory)
     {
@@ -208,14 +208,10 @@ library PriceMath {
     }
 
     function swap(
-        //uint160 _sqrtPrice,
-        //uint256 _endPrice,
-        //uint128 _liquidity,
-        //uint256 _amount,
         SwapParams memory params
     )
         internal
-        view
+        pure
         returns (
             uint256 amountIn,
             uint256 amountOut,
@@ -301,7 +297,7 @@ library PriceMath {
 
     function swapExactIn(SwapParams memory params)
         internal
-        view
+    pure
         returns (SwapCache memory cache)
     {
         uint256 remaining = Math.mulDiv(params.amount, 1000000 - 2000, 1000000);

@@ -1,7 +1,7 @@
 import { useConnectWallet, useWallets } from "@web3-onboard/react";
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
-import { router } from "../../contracts/addresses";
+import CONST from "../../CONST.json"
 import { background } from "../../theme/theme";
 import ContractWrapper from "../ContractWrapper";
 import Liquidity from "../pages/Liquidity";
@@ -43,12 +43,12 @@ export default function Frame() {
   let ethersProvider = null;
   let routerContract = null;
   ethersProvider = new ethers.providers.JsonRpcProvider(
-    "http://127.0.0.1:8545"
+    CONST.RPC_URL
   );
 
   const [state, setState] = useState({
     provider: ethersProvider,
-    routerContract: new ethers.Contract(router, routerAbi, ethersProvider),
+    routerContract: new ethers.Contract(CONST.SWAP_ROUTER_ADDRESS, routerAbi, ethersProvider),
   });
   const [index, setIndex] = useState(0);
   const [block, setBlock] = useState(0);
@@ -78,7 +78,7 @@ export default function Frame() {
         wallet: wallet,
         provider: ethersProvider,
         routerContract: new ethers.Contract(
-          router,
+          CONST.SWAP_ROUTER_ADDRESS,
           routerAbi,
           ethersProvider.getSigner()
         ),

@@ -13,12 +13,15 @@ done
 echo "Starting JupyterSwap development"
 #Blockchain
 echo "Open Ganache"
-gnome-terminal -- ganache -i 5777 
+gnome-terminal -- ganache -i 5777
 
 sleep 5
 
 echo "Contract migration"
 (cd ./Contracts && truffle migrate --reset  --network local)
+
+echo "Copy Constants"
+node CONSTANTS.js
 
 echo "Copy Contract JSON data"
 cp -v ./Contracts/build/contracts/* ./Frontend/src/contracts/build

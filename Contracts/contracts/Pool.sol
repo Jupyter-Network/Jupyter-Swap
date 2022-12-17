@@ -10,6 +10,13 @@ import "./interfaces/IWETH.sol";
 import "./interfaces/IPool.sol";
 import "./libraries/Shared.sol";
 
+error WrongAmount();
+error Limit();
+error Slippage();
+error NotRouter();
+error PosExists();
+error NotInitialized();
+
 contract JupyterSwapPool is IJupyterSwapPool {
     int24 public currentTick;
     uint256 public currentSqrtPrice;
@@ -21,7 +28,6 @@ contract JupyterSwapPool is IJupyterSwapPool {
     address public immutable token0;
     address public immutable token1;
     address immutable WETH;
-    uint256 positionId = 0;
 
     uint256 feeGlobal0 = 0;
     uint256 feeGlobal1 = 0;
@@ -45,10 +51,6 @@ contract JupyterSwapPool is IJupyterSwapPool {
         uint256 feeGlobal;
         uint128 protocolFees;
     }
-    //struct Quote {
-    //    uint256 amountIn;
-    //    uint256 amountOut;
-    //}
 
     using Tick for int24;
 
@@ -60,15 +62,17 @@ contract JupyterSwapPool is IJupyterSwapPool {
     mapping(int24 => LiquidityManager.TickState) public ticks;
     uint128 public liquidity = 0;
 
-    uint256 immutable feeMultiplier;
-
     modifier isRouter() {
-        require(msg.sender == router, "Not router");
+        if (msg.sender != router) revert NotRouter();
+        _;
+    }
+    bool initialized = false;
+    modifier isInitialized() {
+        if (!initialized) revert NotInitialized();
         _;
     }
 
     constructor(
-        uint256 _feeMultiplier,
         address _token0,
         address _token1,
         int24 _startTick,
@@ -80,10 +84,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
         WETH = _WETH;
 
         router = _sender;
-        feeMultiplier = _feeMultiplier;
         currentTick = _startTick; //Tick.SPACING * 35;
         currentSqrtPrice = Tick.getPriceFromTick(currentTick);
-        //addPosition(-887232, 887232, 1000000, _sender);
     }
 
     function swap(
@@ -91,7 +93,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
         uint256 _minValueOut,
         int24 _limitTick,
         address _sender
-    ) external override isRouter {
+    ) external override isRouter isInitialized {
         int24 _currentTick = currentTick;
         SwapData memory currentSwap = SwapData(
             0,
@@ -167,10 +169,9 @@ contract JupyterSwapPool is IJupyterSwapPool {
             collectedProtocolFees0 = currentSwap.protocolFees;
             currentSwap.endPrice = uint128(_currentSqrtPrice);
             currentSwap.endTick = _currentTick;
-            require(currentSwap.remainingAmount <= 1, "Limit reached");
-            require(currentSwap.outAmount >= _minValueOut,"Return is lower than min");
+            if (currentSwap.remainingAmount > 1) revert Limit();
+            if (currentSwap.outAmount < _minValueOut) revert Slippage();
             uint256 balance0Before = IERC20(token0).balanceOf(address(this));
-            uint256 balance1Before = IERC20(token1).balanceOf(address(this));
             IPositionCallback(msg.sender).swapCallback(
                 currentSwap.inAmount,
                 token0,
@@ -178,19 +179,17 @@ contract JupyterSwapPool is IJupyterSwapPool {
             );
 
             uint256 balance0After = IERC20(token0).balanceOf(address(this));
-            require(
-                balance0After >= balance0Before + currentSwap.inAmount,
-                "Return Balance too low"
-            );
-            transferOut(token1, _sender, currentSwap.outAmount);
+            if (balance0After < balance0Before + currentSwap.inAmount)
+                revert WrongAmount();
 
-            //IERC20(token1).safeTransfer(_sender, currentSwap.outAmount);
+            transferOut(token1, _sender, currentSwap.outAmount);
         }
         //Swap ONE TO ZERO
         else {
             currentSwap.feeGlobal = feeGlobal1;
+
             while (
-                currentSwap.remainingAmount > 1 && _currentTick <= _limitTick
+                currentSwap.remainingAmount > 0 && _currentTick <= _limitTick
             ) {
                 int24 next = getNextWhileNotInitializedFalse(_currentTick);
 
@@ -245,8 +244,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
             collectedProtocolFees1 = currentSwap.protocolFees;
             currentSwap.endPrice = uint128(_currentSqrtPrice);
             currentSwap.endTick = _currentTick;
-            require(currentSwap.remainingAmount <= 1, "Limit reached");
-            require(currentSwap.outAmount >= _minValueOut,"Return is lower than min");
+            if (currentSwap.remainingAmount > 1) revert Limit();
+            if (currentSwap.outAmount < _minValueOut) revert Slippage();
 
             uint256 balance1Before = IERC20(token1).balanceOf(address(this));
 
@@ -257,10 +256,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
             );
 
             uint256 balance1After = IERC20(token1).balanceOf(address(this));
-            require(
-                balance1Before == balance1After - currentSwap.inAmount,
-                "Wrong amount"
-            );
+            if (balance1Before != balance1After - currentSwap.inAmount)
+                revert WrongAmount();
 
             transferOut(token0, _sender, currentSwap.outAmount);
 
@@ -284,8 +281,6 @@ contract JupyterSwapPool is IJupyterSwapPool {
         bool _exactIn
     ) external view override returns (Quote memory) {
         int24 _currentTick = currentTick;
-        int24 next;
-        bool init;
         uint128 l = liquidity;
         uint256 _currentSqrtPrice = currentSqrtPrice;
         uint256 nextPrice;
@@ -320,8 +315,6 @@ contract JupyterSwapPool is IJupyterSwapPool {
                     ),
                     _exactIn
                 );
-                //require(currentSwap.remainingAmount == 1000000,"Remaining wrong value");
-                //require(currentSwap.remainingAmount >= cache.amountOut,"Out amount bigger than remaining");
 
                 currentSwap.inAmount += cache.amountIn + cache.fees;
                 currentSwap.remainingAmount -= _exactIn
@@ -349,20 +342,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
             while (
                 currentSwap.remainingAmount > 0 && _currentTick <= _limitTick
             ) {
-                //(int24 next, bool init) = getNextInitialized(
-                //    _currentTick,
-                //    Tick.SPACING,
-                //    false
-                //);
                 int24 next = getNextWhileNotInitializedFalse(_currentTick);
-
-                //
-                ////check if tick is initialized else skip
-                //if (!init) {
-                //    _currentTick += Tick.SPACING;
-                //    //tempTick = next+64;
-                //    continue;
-                //}
 
                 nextPrice = Tick.getPriceFromTick(next);
 
@@ -376,24 +356,17 @@ contract JupyterSwapPool is IJupyterSwapPool {
                     _exactIn
                 );
                 currentSwap.inAmount += cache.amountIn + cache.fees;
-                currentSwap.remainingAmount = _exactIn
+                currentSwap.remainingAmount -= _exactIn
                     ? cache.amountIn + cache.fees
                     : cache.amountOut;
-                //if (
-                //    cache.amountIn + cache.fees <= currentSwap.remainingAmount
-                //) {
-                //    currentSwap.remainingAmount -= cache.amountIn + cache.fees;
-                //} else {
-                //    currentSwap.remainingAmount = 0;
-                //}
-                currentSwap.remainingAmount = 0;
+
                 currentSwap.outAmount += cache.amountOut;
                 currentSwap.feesPaid += cache.fees;
 
                 if (cache.priceAfterSwap >= nextPrice) {
                     //Update fees
-
                     _currentTick = next;
+
                     //Update liquidity
                     l = addDelta(l, ticks[_currentTick].liquidityNet);
                 }
@@ -403,6 +376,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
         }
         //outAmount = currentSwap.outAmount;
         //inAmount = currentSwap.inAmount;
+
         Quote memory quote = Quote(currentSwap.inAmount, currentSwap.outAmount);
         return quote;
     }
@@ -428,13 +402,11 @@ contract JupyterSwapPool is IJupyterSwapPool {
         uint128 _amount,
         uint256 _lpId,
         address _sender
-    ) external override isRouter {
+    ) external override isRouter isInitialized {
         uint256 amount0;
         uint256 amount1;
-        require(
-            positions[_lpId].owner == address(0),
-            "Liquidity ID already exists"
-        );
+        if (positions[_lpId].owner != address(0)) revert PosExists();
+
         (liquidity, amount0, amount1) = positions.addPosition(
             ticks,
             map,
@@ -452,8 +424,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
             )
         );
 
-        //uint256 balance0Before = IERC20(token0).balanceOf(address(this));
-        //uint256 balance1Before = IERC20(token1).balanceOf(address(this));
+        uint256 balance0Before = IERC20(token0).balanceOf(address(this));
+        uint256 balance1Before = IERC20(token1).balanceOf(address(this));
         IPositionCallback(msg.sender).addPositionCallback(
             amount0,
             amount1,
@@ -461,18 +433,30 @@ contract JupyterSwapPool is IJupyterSwapPool {
             token1,
             _sender
         );
-        //uint256 balance0After = IERC20(token0).balanceOf(address(this));
-        //uint256 balance1After = IERC20(token1).balanceOf(address(this));
-        //require(
-        //    balance0After == balance0Before + amount0,
-        //    "Wrong amount0 sent"
-        //);
-        //require(
-        //    balance1After == balance1Before + amount1,
-        //    "Wrong amount1 sent"
-        //);
+        uint256 balance0After = IERC20(token0).balanceOf(address(this));
+        uint256 balance1After = IERC20(token1).balanceOf(address(this));
+        if (balance0After != balance0Before + amount0) revert WrongAmount();
+        if (balance1After != balance1Before + amount1) revert WrongAmount();
 
-        emit PositionCallback.Add_Position(liquidity, positionId);
+        emit PositionCallback.Add_Position(liquidity, _lpId);
+    }
+
+    function initialPosition(address _sender) external override {
+        uint256 amount0;
+        uint256 amount1;
+        initialized = true;
+        (amount0, amount1) = addPositionView(-887208, 887208, 1000);
+        liquidity = 1000;
+        IPositionCallback(msg.sender).addPositionCallback(
+            amount0,
+            amount1,
+            token0,
+            token1,
+            _sender
+        );
+
+        //IERC20(token0).safeTransferFrom(_sender, address(this), amount0);
+        //IERC20(token1).safeTransferFrom(_sender, address(this), amount1);
     }
 
     function addPositionView(
@@ -480,19 +464,16 @@ contract JupyterSwapPool is IJupyterSwapPool {
         int24 _endTick,
         uint128 _amount
     )
-        external
+        public
         view
         override
         returns (uint256 token0Amount, uint256 token1Amount)
     {
-        uint256 amount0;
-        uint256 amount1;
-
         (token0Amount, token1Amount) = positions.addPositionView(
             ticks,
             map,
             LiquidityManager.NewPositionParameter(
-                positionId,
+                0,
                 _startTick,
                 _endTick,
                 currentTick,
@@ -555,11 +536,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
                 currentTick
             );
 
-        positions[_positionId].globalFees0 =
-            feeGlobal0;//-positions[_positionId].globalFees0;
-        positions[_positionId].globalFees1 =
-            feeGlobal1;//-positions[_positionId].globalFees1;
-       
+        positions[_positionId].globalFees0 = feeGlobal0; //-positions[_positionId].globalFees0;
+        positions[_positionId].globalFees1 = feeGlobal1; //-positions[_positionId].globalFees1;
 
         if (collectedFees0 > 0) {
             transferOut(token0, positions[_positionId].owner, collectedFees0);
@@ -642,26 +620,6 @@ contract JupyterSwapPool is IJupyterSwapPool {
         return next;
     }
 
-    function getFlag(int24 _tick) internal view returns (uint256) {
-        return map.getFlagAtTick(_tick, Tick.SPACING);
-    }
-
-    function snapshot(int24 _tick)
-        public
-        view
-        returns (
-            uint128 _liquidity,
-            uint256 currentPrice,
-            uint256 tickLiquidity,
-            int128 tickLiquidityNet
-        )
-    {
-        _liquidity = liquidity;
-        currentPrice = currentSqrtPrice;
-        tickLiquidity = ticks[_tick].liquidity;
-        tickLiquidityNet = ticks[_tick].liquidityNet;
-    }
-
     function transferOut(
         address _token,
         address _to,
@@ -688,26 +646,6 @@ contract JupyterSwapPool is IJupyterSwapPool {
     {
         Shared.Position memory pos = positions[_positionId];
         return (pos.lowerTick, pos.upperTick, pos.liquidity);
-    }
-
-    function getTick(int24 _tick)
-        external
-        view
-        override
-        returns (
-            uint256 liquidity,
-            int128 liquidityNet,
-            uint256 feesOutside0,
-            uint256 feesOutside1
-        )
-    {
-        LiquidityManager.TickState memory tick = ticks[_tick];
-        return (
-            tick.liquidity,
-            tick.liquidityNet,
-            tick.feesOutside0,
-            tick.feesOutside1
-        );
     }
 
     receive() external payable {}

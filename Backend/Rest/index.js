@@ -26,10 +26,14 @@ fastify.get("/tokens/:tokenSymbol", async (request, reply) => {
   return await query.getPool({ tokenSymbol: request.params.tokenSymbol });
 });
 
-fastify.get("/lp/:ownerAddress", async (request, reply) => {
-  return await query.getLiquidityPositionsForAddress({
-    owner: request.params.ownerAddress,
-  });
+fastify.get("/lp/:ownerAddress/:poolAddress", async (request, reply) => {
+  //return await query.getLiquidityPositionsForAddress({
+  //  owner: request.params.ownerAddress,
+  //});
+  return await query.getLiquidityPositionsForOwnerByPool({
+    owner:request.params.ownerAddress,
+    poolAddress:request.params.poolAddress
+  })
 });
 
 

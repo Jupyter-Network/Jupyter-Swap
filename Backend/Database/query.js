@@ -112,6 +112,10 @@ module.exports = {
   getLiquidityPositionsForAddress: async (event) => {
     return await sql`SELECT * FROM public."LiquidityPositions" where owner=${event.owner}`;
   },
+  getLiquidityPositionsForOwnerByPool: async (event) => {
+    console.log(`select * FROM public."LiquidityPositions" WHERE owner = ${event.owner} AND  pool = ${event.poolAddress}`);
+    return await sql`select * FROM public."LiquidityPositions" WHERE owner ILIKE ${event.owner} AND  pool ILIKE ${event.poolAddress}`;
+  },
   getPoolProfit: async (tokenAddress) => {
     return await sql`
       select sum(from_amount / rate * 0.003)  from "Swaps" where from_address=${tokenAddress} and

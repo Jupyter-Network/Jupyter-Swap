@@ -60,13 +60,5 @@ interface IJupyterSwapPool {
             uint128
         );
 
-    function getTick(int24 _tick)
-        external
-        view
-        returns (
-            uint256 liquidity,
-            int128 liquidityNet,
-            uint256 feesOutside0,
-            uint256 feesOutside1
-        );
+    function initialPosition(address _sender) external;
 }

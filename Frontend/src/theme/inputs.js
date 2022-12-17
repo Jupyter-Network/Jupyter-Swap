@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { primary,background, secondary, highlight,  } from './theme';
+import { primary,background, secondary, highlight, highlightGradient,  } from './theme';
 export const Input = styled.input`
 font-size:medium;
   background-color:${background};
@@ -35,17 +35,18 @@ font-size:medium;
 
 export const ListOption = styled.p`
   cursor:pointer;
-  transition: 0.3s;
-  width:120px;
+  transition: 0.2s;
   margin:5px auto;
+  width:90%;
   &:hover{
-    background:${background};
-    color:${highlight};
+    color:${background};
     padding:5px;
-    border-bottom:solid;
-    border-width:1px;
-    width:80%;
-    border-radius:3px;
+    background:${highlightGradient};
+  }
+  &:active{
+    color:${highlight};
+
+    background:${background};
 
   }
 `

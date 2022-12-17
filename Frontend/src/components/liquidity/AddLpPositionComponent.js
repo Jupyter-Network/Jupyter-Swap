@@ -14,29 +14,43 @@ import {
 import LabeledInput from "../LabeledInput";
 import { Slider } from "./Slider";
 
-export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity }) {
+export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity,routerContract }) {
   const [lowerBoundary, setLowerBoundary] = useState(10);
   const [upperBoundary, setUpperBoundary] = useState(10);
   const [liquidity, setLiquidity] = useState(100);
   const [lpQuote, setLpQuote] = useState({ amount0: 0, amount1: 0 });
+  const [wait,setWait] = useState(Date.now());
 
   useEffect(() => {
     getQuote();
   }, [lowerBoundary, upperBoundary, liquidity]);
 
-  function getQuote() {
+  async function getQuote() {
     
-    let quote = calcNewPosition(
-      Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(lowerBoundary)).toString()/64)*64,
-      Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(upperBoundary)).toString()/64)*64,
-      blockData.currentTick,
-      BigInt(liquidity*10**9) * 10n ** 9n,
-      BigInt(blockData.currentSqrtPrice)
-    );
-    console.log(
-      quote
-    );
+   let quote = calcNewPosition(
+     Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(lowerBoundary)).toString()/64)*64,
+     Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(upperBoundary)).toString()/64)*64,
+     blockData.currentTick,
+     BigInt(liquidity*10**18),
+     BigInt(blockData.currentSqrtPrice)
+   );
+   //console.log(
+   //  quote
+   //);
+  //if(Date.now() < wait){
+  //  return
+  //}
+  //  quote = await routerContract.addPositionView(
+  //       tokens.token0.address,
+  //       tokens.token1.address,
+  //       Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(lowerBoundary)).toString()/64)*64,
+  //       Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(upperBoundary)).toString()/64)*64,
+  //       BigInt(liquidity * 10**18)
+  //     );
+//
     setLpQuote({ amount0: quote[0], amount1: quote[1] });
+    setWait(Date.now() + 500);
+
   }
 
   function formattedData() {

@@ -1,7 +1,7 @@
 import { useConnectWallet, useWallets } from "@web3-onboard/react";
 import { ethers, utils } from "ethers";
 import { useEffect, useState } from "react";
-import { token0, router, token1, wbnb } from "../../contracts/addresses";
+import CONST from "../../CONST.json"
 import erc20 from "../../contracts/build/DynamicToken.json";
 import BN from "bignumber.js";
 import { numericFormat, validate } from "../../utils/inputValidations";
@@ -31,7 +31,7 @@ export default function Build({ block, ethersProvider, routerContract }) {
 
   async function approveToken(contract, amount) {
     console.log(ethersProvider.getSigner());
-    await transaction(`Approve `, contract.approve, [router, amount]);
+    await transaction(`Approve `, contract.approve, [CONST.SWAP_ROUTER_ADDRESS, amount]);
   }
 
   //New Block

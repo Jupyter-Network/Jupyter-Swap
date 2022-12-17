@@ -4,7 +4,7 @@ import {
   MediumButton,
   MediumButtonInverted,
 } from "../../theme/buttons";
-import { highlight, primary, secondary } from "../../theme/theme";
+import { backgroundGradient, highlight, highlightGradient, primary, secondary } from "../../theme/theme";
 import { addressFormat, txHashFormat } from "../../utils/inputValidations";
 export default function Header() {
   const [
@@ -16,14 +16,16 @@ export default function Header() {
     disconnect, // function to call to with wallet<DisconnectOptions> to disconnect wallet
   ] = useConnectWallet();
   return (
-    <div style={{ display: "flex", justifyContent: "space-evenly",boxShadow:"0px 0px 2px black" }}>
+    <>
+     <div style={{ display: "flex", justifyContent: "space-evenly"}}>
+      <img src="/tokenlogos/jupyterSwap.svg" style={{width:40}}></img>
       <h3
         style={{
-          color: secondary,
+          color: highlight,
           textAlign: "center",
         }}
       >
-        Jupyter Swap
+        Jupyter - Swap
       </h3>
       {!wallet ? (
         <LargeButton
@@ -44,5 +46,9 @@ export default function Header() {
         </LargeButton>
       )}
     </div>
+          <div style={{height:1,width:"100%",background:highlightGradient}}></div>
+    </>
+   
+
   );
 }

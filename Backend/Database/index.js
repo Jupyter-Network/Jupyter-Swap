@@ -1,5 +1,4 @@
 const process = require("process");
-const { token0, wbnb,token1 } = require("../../Frontend/src/contracts/addresses");
 const query = require("./query");
 
 initDB();

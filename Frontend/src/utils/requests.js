@@ -1,31 +1,31 @@
 const axios = require("axios").default;
-
+const CONST = require("../CONST.json")
 export async function getHistory(tokenAddress) {
-  let res = await axios.get(`http://127.0.0.1:3001/history/${tokenAddress}`);
+  let res = await axios.get(`${CONST.BACKEND_URL}/history/${tokenAddress}`);
   return res;
 }
 export async function getTransanctionHistory(tokenAddress) {
   let res = await axios.get(
-    `http://127.0.01:3001/transactionHistory/${tokenAddress}`
+    `${CONST.BACKEND_URL}/transactionHistory/${tokenAddress}`
   );
   return res;
 }
 export async function getPools(searchString) {
-  let res = await axios.get(`http://127.0.01:3001/tokens/${searchString}`);
+  let res = await axios.get(`${CONST.BACKEND_URL}/tokens/${searchString}`);
   return res;
 }
 export async function getAPY(tokenAddress) {
-  let res = await axios.get(`http://127.0.0.1:3001/apy/${tokenAddress}`);
+  let res = await axios.get(`${CONST.BACKEND_URL}/apy/${tokenAddress}`);
   return res.data;
 }
 
 export async function getHistoryOHLC(tokenAddress, bucket) {
   let res = await axios.get(
-    `http://127.0.0.1:3001/historyOHLC/${tokenAddress}/${bucket}`
+    `${CONST.BACKEND_URL}/historyOHLC/${tokenAddress}/${bucket}`
   );
   return res;
 }
-export async function getLiquidityPositionsForAddress(token0Address) {
-  let res = await axios.get(`http://127.0.0.1:3001/lp/${token0Address}`);
+export async function getLiquidityPositionsForAddress(token0Address,poolAddress) {
+  let res = await axios.get(`${CONST.BACKEND_URL}/lp/${token0Address}/${poolAddress}`);
   return res;
 }

@@ -62,6 +62,39 @@ export function transaction(message, exec, options, getBlockData) {
   });
 }
 
+export function transactionChain(message, exec, getBlockData) {
+  return Swal.fire({
+    ...theme,
+    position: "center",
+    width: "fit-content",
+    preConfirm: false,
+    showConfirmButton: true,
+    showLoaderOnConfirm: true,
+    confirmButtonText: "Yes",
+    showDenyButton: true,
+    preConfirm: async () => {
+
+      try {
+        for(let f in exec){
+          let tx = await exec[f].transaction(...exec[f].options);
+          await tx.wait();
+        }
+        success(getBlockData);
+
+      } catch (e) {
+        console.log(e);
+        if (e.data) {
+          error(e.data.message);
+        } else {
+          error(e.message);
+        }
+      }
+      return true;
+    },
+    html: message,
+  });
+}
+
 export function success(getBlockData) {
   toast.success("Success", {
     position: "top-left",

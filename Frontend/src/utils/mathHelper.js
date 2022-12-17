@@ -133,9 +133,10 @@ export function sqrtPriceFromTick(tick) {
   if ((absTick & 0x80000n) != 0)
     ratio = (ratio * 0x48a170391f7dc42444e8fa2n) >> 128n;
 
-  if(tick > 0) ratio =
-    115792089237316195423570985008687907853269984665640564039457584007913129639935n /
-    ratio;
+  if (tick > 0)
+    ratio =
+      115792089237316195423570985008687907853269984665640564039457584007913129639935n /
+      ratio;
 
   return (ratio >> 32n) + (ratio % (1n << 32n) == 0 ? 0n : 1n);
 }
@@ -161,9 +162,9 @@ export function getAmount0(lowerPrice, upperPrice, liquidity) {
       : [upperPrice, lowerPrice];
   const lp = sqrtPriceFromTick(tickAtSqrtPrice(lowerPrice));
   const up = sqrtPriceFromTick(tickAtSqrtPrice(upperPrice));
+  console.log("LP:", lp, "UP:", up, "Delta:", up - lp);
   liquidity = BigInt(liquidity) << 96n;
   let delta = up - lp;
-
   return (liquidity * delta) / BigInt(lp * up);
 }
 
@@ -173,7 +174,8 @@ export function getAmount1(lowerPrice, upperPrice, liquidity) {
 
   liquidity = BigInt(liquidity);
   let delta = up - lp;
-  return (liquidity * delta) / 79228162514264337593543950336n;
+  let out = (liquidity * delta) / 79228162514264337593543950336n;
+  return out;
 }
 
 export function calcNewPosition(
@@ -187,10 +189,8 @@ export function calcNewPosition(
   let amount1;
   _currentTick = BigInt(_currentTick);
 
-
+  console.log(_currentTick, _startTick, _endTick);
   if (_currentTick >= _startTick && _currentTick < _endTick) {
-
-
     amount0 = getAmount0(
       _currentPrice,
       sqrtPriceFromTick(_endTick),
@@ -237,4 +237,17 @@ export function getNextPriceFromAmount0(currentPrice, liquidity, amount) {
   const denominator = numerator1 + product;
 
   return (numerator1 * currentPrice) / denominator;
+}
+
+export async function checkAndSetAllowance(
+  tokenContract,
+  sender,
+  spender,
+  amount
+) {
+  let allowance = await tokenContract.allowance(sender, spender);
+  if (allowance.lt(amount)) {
+    return await tokenContract.approve(spender, amount);
+  }
+  return { wait: () => {} };
 }

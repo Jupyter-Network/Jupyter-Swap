@@ -22,7 +22,7 @@ export default function LiquidityPositions({
           marginTop: -15
         }}
       >
-        {blockData.liquidityPositions.data.length == 0 ? <p>No Positions yet</p>:blockData.liquidityPositions.data.map((e) => {
+        {blockData.liquidityPositions.data.length == 0 ? <p>You have no Liquidity Positions yet.</p>:blockData.liquidityPositions.data.map((e) => {
           return (
             <Position
               data={e}
