@@ -34,6 +34,8 @@ export default function Position({
   onCollectFees,
 }) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const [positionData, setPositionData] = useState(false);
 
   //const [lpQuote, setLpQuote] = useState(loadLpQuote());
@@ -87,12 +89,13 @@ export default function Position({
           }}
           onClick={async () => {
             if (!open) {
+              setLoading(true);
               let res = await positionInfo(
                 tokens.token0.contract.address,
                 tokens.token1.contract.address,
                 data.lp_id
               );
-              console.log("Open:",data.lowertick, data.uppertick);
+              console.log("Open:", data.lowertick, data.uppertick);
 
               setPositionData({
                 token0Amount: res[0],
@@ -100,17 +103,20 @@ export default function Position({
                 fee0: res[2],
                 fee1: res[3],
               });
-             //setPositionData({
-             //   token0Amount: 10000 ,
-             //   token1Amount: 100,
-             //   fee0: 20,
-             //   fee1: 40,
-             // });
+              setLoading(false);
+              //setPositionData({
+              //   token0Amount: 10000 ,
+              //   token1Amount: 100,
+              //   fee0: 20,
+              //   fee1: 40,
+              // });
             }
             setOpen(!open);
           }}
         >
-          <b>{data.lp_id.toLocaleString()}</b>
+          {loading ? <img style={{height:15}} src="small_loader.svg"></img> : <b>{data.lp_id.toLocaleString()}</b>}
+
+         
           &nbsp;{" "}
           {lpQuote.amount1 == 0
             ? 0
@@ -120,7 +126,11 @@ export default function Position({
             ? 0
             : numericFormat(lpQuote.amount0 / 10n ** 18n)}
           <img
-            src="/tokenlogos/placeholder.svg"
+            src={`/tokenlogos/${tokens["token0"].icon}`}
+            style={{ margin: "auto", width: 17, float: "right" }}
+          ></img>
+                    <img
+            src={`/tokenlogos/${tokens["token1"].icon}`}
             style={{ margin: "auto", width: 17, float: "right" }}
           ></img>
         </div>

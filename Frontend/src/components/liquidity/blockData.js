@@ -19,7 +19,8 @@ export async function fetchBlockData(data) {
     ? await data.tokens["token1"].contract.balanceOf(
         data.wallet.accounts[0].address
       )
-    : 0;
+    : 0
+
   const userBalance = 
   data.wallet
     ? await data.routerContract.getBalance(
@@ -87,8 +88,7 @@ export async function fetchBlockDataNew(data) {
       )
     : 0;
 
-   // 0xc43bE04F802D1FA7d7BFc0FAE5FB100C19c2E85B
-
+console.log(data.tokens)
   const poolInfo = await data.routerContract.poolInfo(
     data.tokens["token0"].contract.address,
     data.tokens["token1"].contract.address

@@ -24,7 +24,7 @@ export default function LoadingSpinner({ loading = false }) {
           <div style={{ display: "flex", justifyContent: "center" }}>
             <div
               style={{
-                zIndex: 1000,
+                zIndex: 0,
                 marginTop: 100,
                 width: planetWidth,
                 padding: 40,

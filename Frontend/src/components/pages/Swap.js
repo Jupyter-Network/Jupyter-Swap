@@ -56,6 +56,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   const [state, setState] = useState({
     token0Amount: new BN(0),
     token1Amount: new BN(0),
+    token0Loading:false,
+    token1Loading:false,
     token1AmountMin: new BN(0),
     impact: new BN(0),
     allowanceCheck: new BN(0),
@@ -113,6 +115,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   }
   //TODO: Change this two methods, instead of calculating quotes in js get quote from contract
   async function handleToken0AmountChange(value) {
+    setState({...state,token1Loading:true,token0Amount :value})
     let token0 = BigInt(tokens["token0"].contract.address);
     let token1 = BigInt(tokens["token1"].contract.address);
     let quote;
@@ -143,9 +146,11 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     //  error("Liquidity is too low for this trade");
     //  return;
     //}
-    setState({ ...state, token1Amount: quote.amountOut / 10 ** 18 });
+    setState({ ...state, token1Amount: quote.amountOut / 10 ** 18 ,token1Loading:false});
   }
   async function handleToken1AmountChange(value) {
+    setState({...state,token0Loading:true,token1Amount :value})
+
     let token0 = BigInt(tokens["token0"].contract.address);
     let token1 = BigInt(tokens["token1"].contract.address);
     let quote;
@@ -179,7 +184,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     //  error("Liquidity is too low for this trade");
     //  return;
     //}
-    setState({ ...state, token0Amount: quote.amountIn / 10 ** 18 });
+    setState({ ...state, token0Amount: quote.amountIn / 10 ** 18,token0Loading:false });
   }
 
   //New Block
@@ -469,7 +474,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                       onChange={(e) =>
                         setState({ ...state, token0Amount: e.target.value })
                       }
-                      onFocus={() => handleToken0AmountChange("")}
+                      //onFocus={() => handleToken0AmountChange("")}
                       onBlur={(e) => handleToken0AmountChange(e.target.value)}
                       value={
                         state.token0Amount.toFixed
@@ -478,6 +483,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                       }
                       icon={tokens["token0"].icon}
                       info={`Bal: ${currency(blockData.token0Balance)}`}
+                      loading={state.token0Loading}
+
                     ></LabeledInput>
                   </td>
                 </tr>
@@ -490,7 +497,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                       onChange={(e) =>
                         setState({ ...state, token1Amount: e.target.value })
                       }
-                      onFocus={() => handleToken1AmountChange("")}
+                      //onFocus={() => handleToken1AmountChange("")}
                       onBlur={(e) => handleToken1AmountChange(e.target.value)}
                       value={
                         state.token1Amount.toFixed
@@ -499,6 +506,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                       }
                       icon={tokens["token1"].icon}
                       info={`Bal: ${currency(blockData.token1Balance)}`}
+                      loading={state.token1Loading}
                     ></LabeledInput>
                   </td>
                 </tr>
@@ -610,8 +618,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                 setTime={setTimeoutTime}
               ></TransactionTimeoutSelector>
             </div>
-              <br/>
-            <GradientDiv style={{ height: 60 }}>
+            <GradientDiv style={{ height: 58 }}>
               <br />
 
               <div style={{ display: "flex", justifyContent: "center" }}>

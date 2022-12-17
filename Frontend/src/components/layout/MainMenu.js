@@ -9,7 +9,7 @@ import {
 import styles from "./MainMenu.module.css";
 
 export default function MainMenu({ onclick, active, block }) {
-  const items = ["Home", "Swap", "Liquidity", "Build"];
+  const items = [ "Swap", "Liquidity", "Build"];
   useEffect(() => {
     //get balances here
     if (block) {

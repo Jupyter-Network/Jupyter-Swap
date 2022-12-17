@@ -1,7 +1,7 @@
 import { useConnectWallet, useWallets } from "@web3-onboard/react";
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
-import CONST from "../../CONST.json"
+import CONST from "../../CONST.json";
 import { background } from "../../theme/theme";
 import ContractWrapper from "../ContractWrapper";
 import Liquidity from "../pages/Liquidity";
@@ -12,10 +12,13 @@ import Build from "../pages/Build";
 import { ToastContainer } from "react-toastify";
 import Header from "./Header";
 import useInterval from "react-useinterval";
+import Home from "../pages/Home";
 const routerAbi = routerMeta.abi;
 
 export default function Frame() {
-  const [active, setActive] = useState("Home");
+
+  const maintenance = false;
+  const [active, setActive] = useState("Swap");
   let connectedWallets = useWallets();
   //Check if mobile
   const [width, setWidth] = useState(window.innerWidth);
@@ -42,13 +45,15 @@ export default function Frame() {
   ] = useConnectWallet();
   let ethersProvider = null;
   let routerContract = null;
-  ethersProvider = new ethers.providers.JsonRpcProvider(
-    CONST.RPC_URL
-  );
+  ethersProvider = new ethers.providers.JsonRpcProvider(CONST.RPC_URL);
 
   const [state, setState] = useState({
     provider: ethersProvider,
-    routerContract: new ethers.Contract(CONST.SWAP_ROUTER_ADDRESS, routerAbi, ethersProvider),
+    routerContract: new ethers.Contract(
+      CONST.SWAP_ROUTER_ADDRESS,
+      routerAbi,
+      ethersProvider
+    ),
   });
   const [index, setIndex] = useState(0);
   const [block, setBlock] = useState(0);
@@ -66,8 +71,6 @@ export default function Frame() {
     }
   }
 
-
-
   useEffect(() => {
     console.log("Wallet reload");
     if (wallet) {
@@ -83,7 +86,7 @@ export default function Frame() {
           ethersProvider.getSigner()
         ),
       });
-      setSelected(select("Home"));
+      setSelected(select("Swap"));
     }
   }, [connectedWallets]);
 
@@ -127,14 +130,19 @@ export default function Frame() {
   return (
     <div style={{ backgroundColor: background, minHeight: "100vh" }}>
       <Header></Header>
-      <MainMenu
-        block={block}
-        onclick={(item) => setSelected(select(item))}
-        active={active}
-      ></MainMenu>
-      <br />
+      { maintenance ? <h3>Coming soon..</h3> :      <>
+        <MainMenu
+          block={block}
+          onclick={(item) => setSelected(select(item))}
+          active={active}
+        ></MainMenu>
+        <br />
 
-      {selected}
+        {selected}
+      </>
+
+      }
+
     </div>
   );
 }

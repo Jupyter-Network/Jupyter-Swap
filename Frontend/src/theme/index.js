@@ -52,8 +52,8 @@ export const MainMenuItem = styled.div`
   border-bottom: solid transparent;
   z-index: 100;
   &:hover {
-    color: ${secondary};
-    border-bottom: solid ${primary};
+    color: ${highlightGradient};
+    border-bottom: solid ${secondary};
     height: 20px;
   }
   -webkit-tap-highlight-color: transparent;

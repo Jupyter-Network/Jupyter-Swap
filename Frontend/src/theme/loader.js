@@ -17,9 +17,9 @@ const rotete = keyframes`
 
 export const LoaderObject = styled.object`
   transform-origin: center center;
-  animation: ${rotete} 9s linear infinite;
+  animation: ${rotete} 10s linear infinite;
 `;
 export const Rocket = styled.object`
   transform-origin: center center;
-  animation: ${rotete} 9s linear reverse infinite;
+  animation: ${rotete} 5s linear reverse infinite;
 `;

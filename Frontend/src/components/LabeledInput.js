@@ -7,9 +7,10 @@ export default function LabeledInput({
   value,
   icon,
   info,
-  title="",
-  onFocus=()=>{},
-  onBlur=()=>{}
+  title = "",
+  onFocus = () => {},
+  onBlur = () => {},
+  loading = false,
 }) {
   return (
     <div style={{ width: "90%" }}>
@@ -26,7 +27,7 @@ export default function LabeledInput({
             fontSize: "medium",
             textAlign: "left",
             margin: 5,
-            marginBottom:-4
+            marginBottom: -4,
           }}
         >
           {name}
@@ -42,28 +43,31 @@ export default function LabeledInput({
             fontSize: "x-small",
             textAlign: "right",
             marginRight: -10,
-            marginBottom:0
+            marginBottom: 0,
           }}
         >
           {info}
         </p>
       </div>
-
-      <Input
-      title={title}
-        placeholder={name}
-        value={value}
-        onChange={(e) => {
-          onChange(e);
-        }}
-        onFocus={(e) => {
-          onFocus(e);
-        }}
-        onBlur={(e)=>{
-          onBlur(e)
-        }}
-        type={"tel"}
-      ></Input>
+      {!loading ? (
+        <Input
+          title={title}
+          placeholder={name}
+          value={value}
+          onChange={(e) => {
+            onChange(e);
+          }}
+          onFocus={(e) => {
+            onFocus(e);
+          }}
+          onBlur={(e) => {
+            onBlur(e);
+          }}
+          type={"tel"}
+        ></Input>
+      ) : (
+        <img style={{ width: 25 }} src="/small_loader.svg"></img>
+      )}
     </div>
   );
 }

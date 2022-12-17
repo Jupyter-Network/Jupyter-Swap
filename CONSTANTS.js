@@ -11,19 +11,19 @@ const CONST = {
       : "http://127.0.0.1:3001",
   SWAP_ROUTER_ADDRESS:
     process.env.ENV == "production"
-      ? "0xfa1f5facBBea22ffDEA3CF112c60D3FD3d5F5db7"
+      ? "0xAD377EA2D993B09A58261c925C4DE3351D45b07d"
       : devAddresses.router,
   WBNB_ADDDRESS:
     process.env.ENV == "production"
-      ? "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd"
+      ? "0x6356560cEc59Dde1b9A2eDdbaA2c43AE7e6b024B"
       : devAddresses.wbnb,
   TOKEN0_ADDRESS:
     process.env.ENV == "production"
-      ? "0xbb311372Ea97982698DBB36877620F7d88bB2752"
+      ? "0x0858446Eb45AEB7E162B65b2eb783C2A96f374dD"
       : devAddresses.token0,
   TOKEN1_ADDRESS:
     process.env.ENV == "production"
-      ? "0x2c6974C8B65cB4e878762299e51259EFE5550257"
+      ? "0x45827ef3FAC73e1F734d3A20f7de41DFd27dE981"
       : devAddresses.token1,
 };
 

@@ -18,7 +18,7 @@ export default function Header() {
   return (
     <>
      <div style={{ display: "flex", justifyContent: "space-evenly"}}>
-      <img src="/tokenlogos/jupyterSwap.svg" style={{width:40}}></img>
+      <img src="/tokenlogos/jupyterSwap.svg" style={{width:40,marginRight:"3%"}}></img>
       <h3
         style={{
           color: highlight,
