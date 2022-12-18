@@ -21,6 +21,7 @@ export default function LabeledInput({
           justifyContent: "space-between",
         }}
       >
+    
         <p
           style={{
             lineHeight: 0.1,
@@ -30,13 +31,14 @@ export default function LabeledInput({
             marginBottom: -4,
           }}
         >
-          {name}
-          &nbsp;
-          {icon ? (
-            <img src={"/tokenlogos/" + icon} style={{ width: 13 }}></img>
+                     {icon ? (
+            <img src={"/tokenlogos/" + icon} style={{ width: 15 }}></img>
           ) : (
             <span></span>
-          )}
+          )} &nbsp;
+          <span style={{color:"white"}}>{name}</span>
+          &nbsp;
+   
         </p>
         <p
           style={{

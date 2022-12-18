@@ -1,11 +1,15 @@
 // Require the framework and instantiate it
 const fastify = require("fastify")({ logger: true });
+
+fastify.register(require("@fastify/cors"), { 
+  // put your options here
+  origin: ["https://app.jupyter.tech","http://127.0.0.1:3000"]
+})
+
 const { default: BN } = require("bignumber.js");
 const query = require("../Database/query");
 
-fastify.register(require("@fastify/cors"), {
-  origin: true,
-});
+
 // Declare a route
 fastify.get("/history/:tokenAddress", async (request, reply) => {
   return await query.getHistory(request.params.tokenAddress);
@@ -35,7 +39,6 @@ fastify.get("/lp/:ownerAddress/:poolAddress", async (request, reply) => {
     poolAddress:request.params.poolAddress
   })
 });
-
 
 fastify.get("/apy/:tokenAddress", async (request, reply) => {
   let d = await query.getPoolProfit(request.params.tokenAddress);

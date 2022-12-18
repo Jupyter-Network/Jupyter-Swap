@@ -62,7 +62,7 @@ export const MediumButtonInverted = styled.button`
   border-radius: 4px;
   border: none;
   border-width: 2px;
-  color: ${primary};
+  color: white;
   padding: 10px 10px;
   cursor: pointer;
   z-index: 1;

@@ -19,7 +19,7 @@ const fadeIn = keyframes`
 export const Container = styled.div`
   border-radius: 10px;
   background-color: ${background};
-  color: ${primary};
+  color: darkgray;
   width: 97%;
   max-width: 400px;
   overflow: hidden;
@@ -29,13 +29,13 @@ export const Container = styled.div`
 `;
 
 export const ContainerTitle = styled.p`
-  background-color: ${primary};
-  color: ${background};
+  color: ${secondary};
   margin-top: 0px;
   font-size: large;
   padding: 3px;
   text-align: start;
-  background: ${backgroundGradient};
+  padding-left:10px;
+  border-bottom:solid 1px;
 `;
 export const Table = styled.table`
   background-color: ${background};

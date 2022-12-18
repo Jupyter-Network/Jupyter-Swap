@@ -1,5 +1,11 @@
-import { Container, ContainerTitle } from "../../theme";
-import { highlight } from "../../theme/theme";
+import { Container, ContainerTitle, GradientDiv } from "../../theme";
+import {
+  MediumButton,
+  MediumButtonInverted,
+  SmallButton,
+} from "../../theme/buttons";
+import { background, highlight, primary } from "../../theme/theme";
+import { addressFormat } from "../../utils/inputValidations";
 
 export default function TokenInfo({ tokens }) {
   return (
@@ -10,46 +16,71 @@ export default function TokenInfo({ tokens }) {
         width: "100%",
         maxWidth: 1180,
         margin: "0 auto",
-        justifyContent:"center"
-    }}
+        justifyContent: "center",
+      }}
     >
-      <Container style={{minWidth:300,width:"45%",maxWidth:"97%",flexGrow:2}}>
-        <ContainerTitle>{tokens.token0.name}</ContainerTitle>
+      <Container
+        style={{ minWidth: 300, width: "45%", maxWidth: "97%", flexGrow: 2 }}
+      >
+        <br />
         <div style={{ textAlign: "left", paddingLeft: 15 }}>
           <img
             src={"/tokenlogos/" + tokens.token0.icon}
-            style={{ width: 32 }}
+            style={{
+              width: 50,
+              borderRadius: 10,
+              boxShadow: "0px 0px 7px -2px black",
+              padding: 3,
+            }}
           ></img>
-          <br />
-          <h4>
-            {tokens.token0.name} : {tokens.token0.symbol}
-          </h4>
-          <a title={"View token on bscscan"} style={{color:highlight}}  href={`https://bscscan.com/token/${tokens.token0.address}`}>
-            {tokens.token0.address.slice(0, 5) +
-              "..." +
-              tokens.token0.address.slice(38)}
-          </a>
+          <h4 style={{ color:"white" }}>{tokens.token0.symbol} : {tokens.token0.name}</h4>
+
           <p>{tokens.token0.description}</p>
+          <p>No description for this token</p>
+          <a
+            title={"View token on bscscan"}
+            style={{ color: highlight }}
+            href={`https://bscscan.com/token/${tokens.token0.address}`}
+          >
+            <b>
+              View on Bscscan &nbsp;
+              {addressFormat(tokens.token0.address)}
+            </b>
+          </a>
         </div>
+
+        <br />
       </Container>
-      <Container style={{minWidth:300,width:"45%",maxWidth:"97%",flexGrow:2}}>
-        <ContainerTitle>{tokens.token1.name}</ContainerTitle>
+      <Container
+        style={{ minWidth: 300, width: "45%", maxWidth: "97%", flexGrow: 2 }}
+      >
         <div style={{ textAlign: "left", paddingLeft: 15 }}>
+          <br />
           <img
             src={"/tokenlogos/" + tokens.token1.icon}
-            style={{ width: 32 }}
+            style={{
+              width: 50,
+              borderRadius: 10,
+              boxShadow: "0px 0px 7px -2px black",
+              padding: 3,
+            }}
           ></img>
-          <br />
-          <h4>
-            {tokens.token1.name} : {tokens.token1.symbol}
-          </h4>
-          <a title={"View token on bscscan"} style={{color:highlight}}  href={`https://bscscan.com/token/${tokens.token1.address}`}>
-            {tokens.token1.address.slice(0, 5) +
-              "..." +
-              tokens.token1.address.slice(38)}
-          </a>
+          <h4 style={{ color:"white" }}>{tokens.token1.symbol} : {tokens.token1.name}</h4>
+
           <p>{tokens.token1.description}</p>
+          <p>No description for this token</p>
+          <a
+            title={"View token on bscscan"}
+            style={{ color: highlight }}
+            href={`https://bscscan.com/token/${tokens.token1.address}`}
+          >
+            <b>
+              View on Bscscan &nbsp;
+              {addressFormat(tokens.token1.address)}
+            </b>
+          </a>
         </div>
+        <br />
       </Container>
     </div>
   );

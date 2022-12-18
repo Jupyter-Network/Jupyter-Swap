@@ -1,8 +1,16 @@
 import BN from "bignumber.js";
 import { useState } from "react";
 import { Table } from "../../theme";
-import { background, tintedBackground } from "../../theme/theme";
-import { numericFormat } from "../../utils/inputValidations";
+import {
+  background,
+  highlightGradient,
+  shadowEffect,
+  tintedBackground,
+} from "../../theme/theme";
+import {
+  dynamicPrecisionDecimal,
+  numericFormat,
+} from "../../utils/inputValidations";
 import { priceFromSqrtPrice } from "../../utils/mathHelper";
 
 export default function TransactionList({ transactions, tokens }) {
@@ -19,15 +27,15 @@ export default function TransactionList({ transactions, tokens }) {
         }}
       >
         <tr>
-          <th>From</th>
+          <th></th>
 
-          <th></th>
-          <th></th>
-          <th>To</th>
+          <th>Amount</th>
           <th>Rate</th>
-          <th>Scan</th>
-
+          <th>&nbsp;</th>
           <th>Time</th>
+
+
+          <th>TX</th>
         </tr>
         {transactions.map((transaction, index) => {
           return (
@@ -45,7 +53,7 @@ export default function TransactionList({ transactions, tokens }) {
 }
 
 function ListItem({ transaction, index, tokens }) {
-  let swapUp = transaction.limit_tick > transaction.currentTick;
+  let swapUp = transaction.limit_tick < transaction.current_tick;
   return (
     <tr
       style={{
@@ -53,44 +61,80 @@ function ListItem({ transaction, index, tokens }) {
         backgroundColor: index % 2 === 0 ? tintedBackground : background,
       }}
     >
-      <td style={{ padding: 5 }}>
-        {transaction.limit_tick < transaction.current_tick ? (
-          <img
-            style={{ height: 25 }}
-            src={"/tokenlogos/" + tokens["token0"].icon}
-          ></img>
+      <td
+        style={{
+          padding: 10,
+        }}
+      >
+        {swapUp ? (
+          <>
+            <img
+              style={{
+                height: 30,
+                marginLeft: 20,
+                boxShadow: "0px 0px 7px -2px black",
+                borderRadius: "50%",
+                backgroundColor: background,
+              }}
+              src={"/tokenlogos/" + tokens["token1"].icon}
+            ></img>
+            <img
+              style={{
+                height: 30,
+                zIndex: 0,
+                marginLeft: -50,
+                boxShadow: "0px 0px 7px -2px black",
+                borderRadius: "50%",
+                backgroundColor: background,
+              }}
+              src={"/tokenlogos/" + tokens["token0"].icon}
+            ></img>
+          </>
         ) : (
-          <img
-            style={{ height: 25 }}
-            src={"/tokenlogos/" + tokens["token1"].icon}
-          ></img>
+          <>
+            <img
+              style={{
+                height: 30,
+                marginLeft: 15,
+                boxShadow: "0px 0px 7px -2px black",
+                borderRadius: "50%",
+                backgroundColor: background,
+              }}
+              src={"/tokenlogos/" + tokens["token0"].icon}
+            ></img>
+            <img
+              style={{
+                height: 30,
+                marginLeft: -50,
+                boxShadow: "0px 0px 7px -2px black",
+                borderRadius: "50%",
+                backgroundColor: background,
+              }}
+              src={"/tokenlogos/" + tokens["token1"].icon}
+            ></img>
+          </>
         )}
+        &nbsp; &nbsp; &nbsp;
       </td>
-      <td>
-        {BN(transaction.amount_in).dividedBy(BN(10).pow(18)).toString()} &nbsp;
-        {transaction.limit_tick < transaction.current_tick
-          ? tokens["token0"].symbol
-          : tokens["token1"].symbol}
+      <td style={{textAlign:"start",fontSize:"1.2em"}}>
+        <b>
+          {dynamicPrecisionDecimal(
+            BN(transaction.amount_in).dividedBy(BN(10).pow(18))
+          )}
+        </b>{" "}
+        {swapUp ? tokens["token0"].symbol : tokens["token1"].symbol}
       </td>
 
-      <td style={{ minWidth: 30 }}>{"< - >"}</td>
-      <td>
-        {transaction.limit_tick < transaction.current_tick ? (
-          <img
-            style={{ height: 25 }}
-            src={"/tokenlogos/" + tokens["token1"].icon}
-          ></img>
-        ) : (
-          <img
-            style={{ height: 25 }}
-            src={"/tokenlogos/" + tokens["token0"].icon}
-          ></img>
-        )}
+      <td  style={{textAlign:"start",fontSize:"1,2em"}}>
+        <b>
+        {Math.round(dynamicPrecisionDecimal(
+          priceFromSqrtPrice(BigInt(transaction.sqrt_price))
+        )*100000000)/100000000}
+        </b>
       </td>
-      <td>
-        {priceFromSqrtPrice(BigInt(transaction.sqrt_price))}
-        &nbsp;
-      </td>
+      <br/>
+      <td style={{fontSize:"1.1em"}}>{new Date(transaction.time).toUTCString()}</td>
+
       <td>
         <a
           title="View transaction on bscscan"
@@ -103,8 +147,6 @@ function ListItem({ transaction, index, tokens }) {
           ></img>
         </a>
       </td>
-
-      <td>{new Date(transaction.time).toLocaleString()}</td>
     </tr>
   );
 }

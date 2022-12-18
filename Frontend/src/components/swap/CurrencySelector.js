@@ -8,7 +8,7 @@ import {
   SmallButton,
 } from "../../theme/buttons";
 import { Input, ListOption } from "../../theme/inputs";
-import { background } from "../../theme/theme";
+import { background, secondary, tintedBackground } from "../../theme/theme";
 import { getPools } from "../../utils/requests";
 const erc20Abi = erc20.abi;
 
@@ -166,16 +166,15 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             }, 100);
           }}
           style={{
-            border: "solid",
             borderWidth: 1,
             borderRadius: 5,
             width: 120,
-            height: 70,
+            height: 80,
             zIndex: 1,
           }}
         >
           <img
-            style={{ width: 22 }}
+            style={{ width: 30 }}
             src={"/tokenlogos/" + tokens["token0"].icon}
           ></img>
           &nbsp;
@@ -199,15 +198,14 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             }, 100)
           }
           style={{
-            border: "solid",
             borderWidth: 1,
             borderRadius: 5,
             width: 120,
-            height: 70,
+            height: 80,
           }}
         >
           <img
-            style={{ width: 22 }}
+            style={{ width: 30 }}
             src={"/tokenlogos/" + tokens["token1"].icon}
           ></img>
           <p style={{ lineHeight: 0.2 }}>{tokens["token1"].symbol}</p>{" "}
@@ -219,15 +217,16 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             position: "absolute",
             left: 0,
             right: 0,
-            background: background,
+            background: tintedBackground,
             width: 300,
             margin: "0 auto",
             boxShadow: "0px 2px 5px -3px black",
             height: "fit-content",
-            border: "solid",
             borderWidth: 1,
             borderRadius: 5,
             zIndex: 1000,
+            color:"white",
+
           }}
         >
           <h4>Search Token :</h4>
@@ -253,10 +252,16 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
               );
             }}
             placeholder={tokens["token1"].symbol}
-            style={{ width: "50px", textAlign: "center" }}
+            style={{ width: "50px", textAlign: "center",backgroundColor:tintedBackground }}
           ></Input>
           {loading ? (
-            <p>Loading...</p>
+            <>
+              <br></br>
+              <img
+                style={{ width: 30, padding: 5 }}
+                src="/small_loader.svg"
+              ></img>
+            </>
           ) : (
             currencies.map((item) => (
               <ListOption

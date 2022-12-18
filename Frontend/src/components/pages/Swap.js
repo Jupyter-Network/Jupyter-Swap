@@ -32,6 +32,7 @@ import { Line } from "react-chartjs-2";
 import {
   background,
   highlight,
+  highlightGradient,
   primary,
   secondary,
   tintedBackground,
@@ -124,23 +125,28 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     BigInt(value * 10 ** 18),
     -640000,
     true);
-    if (token0 > token1) {
-      quote = await routerContract.swapQuote(
-        tokens["token0"].contract.address,
-        tokens["token1"].contract.address,
-        BigInt(value * 10 ** 18),
-        640000,
-        true
-      );
-    } else {
-      quote = await routerContract.swapQuote(
-        tokens["token0"].contract.address,
-        tokens["token1"].contract.address,
-        BigInt(value * 10 ** 18).toString(),
-        -640000,
-        true
-      );
+    try{
+      if (token0 > token1) {
+        quote = await routerContract.swapQuote(
+          tokens["token0"].contract.address,
+          tokens["token1"].contract.address,
+          BigInt(value * 10 ** 18),
+          887272,
+          true
+        );
+      } else {
+        quote = await routerContract.swapQuote(
+          tokens["token0"].contract.address,
+          tokens["token1"].contract.address,
+          BigInt(value * 10 ** 18),
+          -887272,
+          true
+        );
+      }
+    }catch {
+      error("Swap will fail probably of too low liquidity")
     }
+
     console.log("Quote:", quote.amountIn, value * 10 ** 18);
     //if (quote.amountIn != value * 10 ** 18) {
     //  error("Liquidity is too low for this trade");
@@ -161,7 +167,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         tokens["token0"].contract.address,
         tokens["token1"].contract.address,
         BigInt(value * 10 ** 18),
-        640000,
+        -887272,
         false
       );
     } else {
@@ -170,7 +176,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         tokens["token0"].contract.address,
         tokens["token1"].contract.address,
         BigInt(value * 10 ** 18),
-        -640000,
+        887272,
         false
       );
     }
@@ -514,15 +520,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
             </table>
 
             <p></p>
-            <CurrencySelector
-              provider={ethersProvider}
-              initialToken={tokens}
-              onChange={async (tokens, poolHop) => {
-                setState({ ...state, poolHop: poolHop });
-                setTokens(tokens);
-              }}
-            ></CurrencySelector>
-            <br/>
+
             <p
               style={{
                 backgroundColor: tintedBackground,
@@ -540,7 +538,14 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               )}
             </p>
             <br/>
-
+            <CurrencySelector
+              provider={ethersProvider}
+              initialToken={tokens}
+              onChange={async (tokens, poolHop) => {
+                setState({ ...state, poolHop: poolHop });
+                setTokens(tokens);
+              }}
+            ></CurrencySelector>
             <LargeButton
               style={{ width: "70%" }}
               onClick={async () => {
@@ -618,13 +623,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                 setTime={setTimeoutTime}
               ></TransactionTimeoutSelector>
             </div>
-            <GradientDiv style={{ height: 58 }}>
-              <br />
-
-              <div style={{ display: "flex", justifyContent: "center" }}>
-      
-              </div>
-            </GradientDiv>
+   
           </div>
         </Container>
         <div style={{ width: "100vw" }}>

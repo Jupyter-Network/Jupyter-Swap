@@ -1,5 +1,5 @@
 import BN from "bignumber.js";
-import { isBigNumberish } from "ethers/node_modules/@ethersproject/bignumber/lib/bignumber";
+import { isBigNumberish } from "bignumber.js";
 import { error } from "./alerts";
 
 export function validate(value) {

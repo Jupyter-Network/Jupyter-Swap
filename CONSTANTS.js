@@ -7,7 +7,7 @@ const CONST = {
       : "http://127.0.0.1:8545",
   BACKEND_URL:
     process.env.ENV == "production"
-      ? "http://127.0.0.1:3001"
+      ? "https://api.jupyter.tech"
       : "http://127.0.0.1:3001",
   SWAP_ROUTER_ADDRESS:
     process.env.ENV == "production"
