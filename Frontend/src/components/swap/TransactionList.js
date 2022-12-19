@@ -120,7 +120,7 @@ function ListItem({ transaction, index, tokens }) {
         <b>
           {dynamicPrecisionDecimal(
             BN(transaction.amount_in).dividedBy(BN(10).pow(18))
-          )}
+          ).toString()}
         </b>{" "}
         {swapUp ? tokens["token0"].symbol : tokens["token1"].symbol}
       </td>

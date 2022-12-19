@@ -69,9 +69,6 @@ export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity,route
   return (
     <Container style={{height:"fit-content"}}>
       <ContainerTitle>Add Liquidity Position</ContainerTitle>
-      <p>
-        {tokens["token0"].symbol} / {tokens["token1"].symbol}
-      </p>
       <div style={{ display: "flex", justifyContent: "center" }}>
         <Slider
           width={300}

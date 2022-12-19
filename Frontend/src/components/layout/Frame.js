@@ -1,4 +1,12 @@
-import { useConnectWallet, useWallets } from "@web3-onboard/react";
+import {
+  useConnectWallet,
+  useWallets,
+  init,
+  useSetChain
+} from "@web3-onboard/react";
+import walletConnectModule from "@web3-onboard/walletconnect";
+import injectedModule from "@web3-onboard/injected-wallets";
+
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
 import CONST from "../../CONST.json";
@@ -13,10 +21,36 @@ import { ToastContainer } from "react-toastify";
 import Header from "./Header";
 import useInterval from "react-useinterval";
 import Home from "../pages/Home";
+
 const routerAbi = routerMeta.abi;
+const walletConnect = walletConnectModule({
+  qrcodeModalOptions: {
+    desktopLinks: [
+      'ledger',
+      'tokenary',
+      'wallet',
+      'wallet 3',
+      'secuX',
+      'ambire',
+      'wallet3',
+      'apolloX',
+      'zerion',
+      'sequence',
+      'punkWallet',
+      'kryptoGO',
+      'nft',
+      'riceWallet',
+      'vision',
+      'keyring'
+    ],
+    mobileLinks: ['rainbow', 'metamask', 'argent', 'trust', 'imtoken', 'pillar']
+  },
+});
+const injected = injectedModule();
+
+
 
 export default function Frame() {
-
   const maintenance = false;
   const [active, setActive] = useState("Swap");
   let connectedWallets = useWallets();
@@ -34,7 +68,8 @@ export default function Frame() {
   }, [window]);
   const isMobile = width <= 768;
   console.log("rerender frame");
-
+  const [{ chains, connectedChain, settingChain }, setChain] = useSetChain();
+  console.log("Chains: ", chains, connectedChain);
   const [
     {
       wallet, // the wallet that has been connected or null if not yet connected
@@ -70,6 +105,20 @@ export default function Frame() {
       }
     }
   }
+
+  useEffect(()=>{
+    init({
+      wallets: [walletConnect, injected],
+      chains: [
+        {
+          id: "0x61",
+          token: "BNB",
+          label: "BSC TESTNET",
+          rpcUrl: CONST.RPC_URL,
+        },
+      ],
+    });
+  },[])
 
   useEffect(() => {
     console.log("Wallet reload");
@@ -130,19 +179,20 @@ export default function Frame() {
   return (
     <div style={{ backgroundColor: background, minHeight: "100vh" }}>
       <Header></Header>
-      { maintenance ? <h3>Coming soon..</h3> :      <>
-        <MainMenu
-          block={block}
-          onclick={(item) => setSelected(select(item))}
-          active={active}
-        ></MainMenu>
-        <br />
+      {maintenance ? (
+        <h3>Coming soon..</h3>
+      ) : (
+        <>
+          <MainMenu
+            block={block}
+            onclick={(item) => setSelected(select(item))}
+            active={active}
+          ></MainMenu>
+          <br />
 
-        {selected}
-      </>
-
-      }
-
+          {selected}
+        </>
+      )}
     </div>
   );
 }

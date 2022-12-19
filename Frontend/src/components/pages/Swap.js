@@ -167,7 +167,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         tokens["token0"].contract.address,
         tokens["token1"].contract.address,
         BigInt(value * 10 ** 18),
-        -887272,
+        887272,
         false
       );
     } else {
@@ -176,7 +176,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         tokens["token0"].contract.address,
         tokens["token1"].contract.address,
         BigInt(value * 10 ** 18),
-        887272,
+        -887272,
         false
       );
     }

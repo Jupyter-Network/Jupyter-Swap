@@ -36,7 +36,7 @@ export default function LabeledInput({
           ) : (
             <span></span>
           )} &nbsp;
-          <span style={{color:"white"}}>{name}</span>
+          <span>{name}</span>
           &nbsp;
    
         </p>

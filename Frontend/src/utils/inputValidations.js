@@ -1,9 +1,9 @@
 import BN from "bignumber.js";
-import { isBigNumberish } from "bignumber.js";
+import { BigNumber } from "bignumber.js";
 import { error } from "./alerts";
 
 export function validate(value) {
-  if (isBigNumberish(value)) {
+  if (BigNumber.isBigNumber(value)) {
     value.toString();
   }
   if (isNaN(value)) {
