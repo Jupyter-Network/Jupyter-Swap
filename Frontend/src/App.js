@@ -7,62 +7,43 @@ import {
 } from "@web3-onboard/react";
 import { ethers } from "ethers";
 import injectedModule from "@web3-onboard/injected-wallets";
+import walletConnect from "@web3-onboard/walletconnect";
+import CONST from "./CONST.json"
 
+import style from "./App.css"
 import ContractWrapper from "./components/ContractWrapper";
 import { ToastContainer } from "react-toastify";
 
 const injected = injectedModule();
 const web3Onboard = init({
-  wallets: [injected],
+  wallets: [walletConnect, injected],
   chains: [
     {
-      id: "0x1",
-      token: "ETH",
-      label: "Ethereum Mainnet",
-      rpcUrl: "https://mainnet.infura.io/v3/ababf9851fd845d0a167825f97eeb12b",
-    },
-    {
-      id: "0x3",
-      token: "tROP",
-      label: "Ethereum Ropsten Testnet",
-      rpcUrl: "https://ropsten.infura.io/v3/ababf9851fd845d0a167825f97eeb12b",
-    },
-    {
-      id: "0x4",
-      token: "rETH",
-      label: "Ethereum Rinkeby Testnet",
-      rpcUrl: "https://rinkeby.infura.io/v3/ababf9851fd845d0a167825f97eeb12b",
-    },
-    {
-      id: "0x89",
-      token: "MATIC",
-      label: "Matic Mainnet",
-      rpcUrl: "https://matic-mainnet.chainstacklabs.com",
-    },
-    {
-      id: "0x38",
+      id: "0x61",
       token: "BNB",
-      label: "Smart Chain",
-      rpcUrl: "https://bsc-dataseed.binance.org/",
-    },
-    {
-      id: "0x1691",
-      token: "BNB",
-      label: "Ganache",
-      rpcUrl: "http://localhost:8545",
+      label: "BSC TESTNET",
+      rpcUrl: CONST.RPC_URL,
     },
   ],
+  accountCenter: {
+    desktop: {
+      position: "bottomLeft",
+      enabled: true,
+      minimal: true,
+    },
+    mobile: {
+      position: "bottomLeft",
+      enabled: true,
+      minimal: true,
+
+    },
+
+  },
   appMetadata: {
     name: "Jupyter-Swap",
-    icon: "<svg><svg/>",
+    icon: "/tokenlogos/jupyter-iom-logo.svg",
     description: "Jupyter Token Swap V1",
-    recommendedInjectedWallets: [
-      { name: "MetaMask", url: "https://metamask.io" },
-      { name: "Coinbase", url: "https://wallet.coinbase.com/" },
-    ],
-  },
-  accountCenter: {
-    desktop: { enabled: false },
+
   },
 });
 

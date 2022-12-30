@@ -1,6 +1,28 @@
 .App {
   text-align: center;
 }
+:root {
+  --account-center-micro-background: linear-gradient(
+    -30deg,
+    rgba(33, 118, 174, 1) 10%,
+    rgba(37, 206, 209, 1) 80%
+  );
+  --account-center-box-shadow: 1px 1px 7px rgba(250, 250, 250, 0.1);
+
+  --account-center-border:none;
+  --account-center-maximized-app-name-color: #423E37;
+  --account-center-maximized-app-info-color:#38342d;
+
+  --account-center-app-btn-background:linear-gradient(
+    -30deg,
+    rgba(33, 118, 174, 1) 10%,
+    rgba(37, 206, 209, 1) 80%
+  );
+  --account-center-app-btn-border:red;
+
+  --account-center-app-btn-text-color:#423E37;
+
+}
 
 .App-logo {
   height: 40vmin;

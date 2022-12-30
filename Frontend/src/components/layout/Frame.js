@@ -135,6 +135,11 @@ export default function Frame() {
           minimal: true,
         },
       },
+      appMetadata: {
+        name: "Jupyter-Swap",
+        icon: "/tokenlogos/jupyter-iom-logo.svg",
+        description: "Decentralized cryptocurrency swaps",
+      },
     });
   }, []);
 

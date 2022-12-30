@@ -155,7 +155,7 @@ export default function LightChart({ blockData, onBucketChange,open }) {
           width: open ? "100vw":"0px",
           maxWidth: "775px",
           maxHeight: open ? "620px": "0px",
-          zIndex: 1,
+          zIndex: 0,
         }}
       >
         <ContainerTitle style={{ marginBottom: 0 }}>

@@ -169,7 +169,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             borderRadius: 5,
             width: 120,
             height: 80,
-            zIndex: 1,
+            zIndex: 0,
           }}
         >
           <img
@@ -181,7 +181,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
         </MediumButtonInverted>
         <MediumButtonInverted
           title="Switch trade direction"
-          style={{ height: 70 }}
+          style={{ height: 70,zIndex:0 }}
           onClick={() => switchTokens()}
         >
           <img src={"/chevron.svg"} style={{ width: 25, padding: 10 }}></img>
@@ -201,6 +201,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             borderRadius: 5,
             width: 120,
             height: 80,
+            zIndex:0
           }}
         >
           <img
