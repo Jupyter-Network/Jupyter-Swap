@@ -82,7 +82,6 @@ export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity,route
           }}
           onMoveLeft={(e) => {
             setLowerBoundary(e ? e : 0);
-            console.log(e);
           }}
         />
       </div>

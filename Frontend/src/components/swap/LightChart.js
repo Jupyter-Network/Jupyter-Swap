@@ -12,7 +12,7 @@ import equal from "fast-deep-equal";
 import { _scaleDown } from "../../utils/mathHelper";
 import { createChart, CrosshairMode } from "lightweight-charts";
 import ChartTitleMenu from "./ChartTitleMenu";
-export default function LightChart({ blockData, onBucketChange }) {
+export default function LightChart({ blockData, onBucketChange,open }) {
   const chartContainerRef = useRef();
   const chart = useRef();
   const resizeObserver = useRef();
@@ -49,7 +49,6 @@ export default function LightChart({ blockData, onBucketChange }) {
         },
       });
 
-      console.log(chart.current);
 
       candleSeries = chart.current.addCandlestickSeries({
         upColor: primary,
@@ -105,7 +104,6 @@ export default function LightChart({ blockData, onBucketChange }) {
         };
       });
 
-      console.log("CANDLEPRICEDATA:", priceData);
       candleSeries.setData(priceData);
 
       // const areaSeries = chart.current.addAreaSeries({
@@ -153,9 +151,10 @@ export default function LightChart({ blockData, onBucketChange }) {
     <>
       <Container
         style={{
-          width: "100vw",
+          transition: "0.2s",
+          width: open ? "100vw":"0px",
           maxWidth: "775px",
-          maxHeight: "620px",
+          maxHeight: open ? "620px": "0px",
           zIndex: 1,
         }}
       >

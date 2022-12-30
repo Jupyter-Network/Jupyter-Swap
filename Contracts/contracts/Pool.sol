@@ -160,7 +160,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
                         int128(liquidity) - ticks[_currentTick].liquidityNet
                     );
                     _currentTick = getNextWhileNotInitialized(
-                        _currentTick - Tick.SPACING
+                        next - Tick.SPACING
                     );
                 }
                 _currentSqrtPrice = priceAfterSwap;
@@ -374,8 +374,6 @@ contract JupyterSwapPool is IJupyterSwapPool {
                 _currentSqrtPrice = cache.priceAfterSwap;
             }
         }
-        //outAmount = currentSwap.outAmount;
-        //inAmount = currentSwap.inAmount;
 
         Quote memory quote = Quote(currentSwap.inAmount, currentSwap.outAmount);
         return quote;

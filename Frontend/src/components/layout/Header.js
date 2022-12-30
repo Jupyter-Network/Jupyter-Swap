@@ -26,6 +26,8 @@ export default function Header() {
         }}
       >
         Jupyter - Swap
+        <p style={{color:secondary,position:"relative",display:"inline",top:16,left:-15,fontSize:"0.65em"}}>Beta</p>
+
       </h3>
       {!wallet ? (
         <LargeButton

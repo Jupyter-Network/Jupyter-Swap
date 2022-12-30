@@ -139,6 +139,7 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
             style={{ width: 36,verticalAlign:"middle",marginLeft:-20 }}
             src={"/tokenlogos/" + tokens.token1.icon}
           ></img>
+          &nbsp;
           <span style={{ lineHeight: 0.2 }}>
             {tokens.token0.symbol} / {tokens.token1.symbol}
           </span>{" "}

@@ -6,6 +6,8 @@ const Factory = artifacts.require("JupyterFactory");
 module.exports = async function (deployer, network, accounts) {
   let factory = await Factory.deployed();
   let weth = await WETH.deployed();
+  await deployer.deploy(PriceMath);
+  deployer.link(PriceMath, Router);
   await deployer.deploy(Router, weth.address, factory.address);
   //console.log(accounts[0]);
 };

@@ -3,7 +3,6 @@ const Token = artifacts.require("TestToken");
 const Factory = artifacts.require("JupyterFactory");
 const Router = artifacts.require("Router");
 const WBNB = artifacts.require("WBNB");
-
 let router;
 let token0;
 let token1;
@@ -12,6 +11,8 @@ let factory;
 const DEC = "000000000000000000";
 
 beforeEach("should setup the contract instance", async () => {
+
+
   wbnb = await WBNB.new();
 
   factory = await Factory.new(wbnb.address);
@@ -97,7 +98,7 @@ async function swapAndPrint(amount, up) {
     token1.address,
     amount,
     up ? 887272 : -887272,
-    Math.round(res.amountOut.toString()*0.999)
+    Math.round(res.amountOut.toString() * 0.999)
   );
 
   let table = [];
@@ -255,7 +256,7 @@ contract("Router", ([owner, testAddress]) => {
 
     await swapAndPrint(10000000, true);
   });
-  
+
   it("Swap Down on an empty", async () => {
     await router.createPool(token0.address, token1.address, 1024);
 

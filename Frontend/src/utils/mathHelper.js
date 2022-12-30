@@ -162,7 +162,6 @@ export function getAmount0(lowerPrice, upperPrice, liquidity) {
       : [upperPrice, lowerPrice];
   const lp = sqrtPriceFromTick(tickAtSqrtPrice(lowerPrice));
   const up = sqrtPriceFromTick(tickAtSqrtPrice(upperPrice));
-  console.log("LP:", lp, "UP:", up, "Delta:", up - lp);
   liquidity = BigInt(liquidity) << 96n;
   let delta = up - lp;
   return (liquidity * delta) / BigInt(lp * up);
@@ -189,7 +188,6 @@ export function calcNewPosition(
   let amount1;
   _currentTick = BigInt(_currentTick);
 
-  console.log(_currentTick, _startTick, _endTick);
   if (_currentTick >= _startTick && _currentTick < _endTick) {
     amount0 = getAmount0(
       _currentPrice,
@@ -202,7 +200,6 @@ export function calcNewPosition(
       _liquidity
     );
   } else if (_currentTick >= _endTick) {
-    console.log("Tick > _endTick");
     amount0 = 0;
     amount1 = getAmount1(
       sqrtPriceFromTick(_startTick),
@@ -210,7 +207,6 @@ export function calcNewPosition(
       _liquidity
     );
   } else if (_currentTick < _startTick) {
-    console.log("Tick < _endTick");
 
     amount1 = 0;
     amount0 = getAmount0(

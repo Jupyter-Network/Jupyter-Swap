@@ -1,20 +1,24 @@
 import styled from 'styled-components';
-import { primary,background, secondary, highlight, highlightGradient,  } from './theme';
+import { primary,background, secondary, highlight, highlightGradient, tintedBackground,  } from './theme';
 export const Input = styled.input`
 font-size:medium;
-  background-color:${background};
+  background-color:${tintedBackground};
   border:none;
   border-bottom:solid;
   color:${primary};
-  padding:5px 3px;
+  padding: 10px 10px;
   text-align:end;
   outline:none;
+  transition: 0.2s;
+  border-bottom:none;
   width:100%;
-  transition: 0.4s;
+  border-radius:10px;
   &:focus{
-    color:${highlight};
+    color:${secondary};
+    border: solid 1px;
   }
-  margin:5px;
+  margin:7px;
+  font-size:1.01em;
 `;
 
 export const Select = styled.select`

@@ -9,6 +9,8 @@ export default function TransactionTimeoutSelector({ initTimeout, setTime }) {
     setTimeoutTime(value);
     setTime(value);
   }
+  return <div></div>;
+  /*
   return (
     <div>
       {open ? (
@@ -33,4 +35,5 @@ export default function TransactionTimeoutSelector({ initTimeout, setTime }) {
       )}
     </div>
   );
+  */
 }

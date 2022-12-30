@@ -27,7 +27,6 @@ export function Slider(props) {
   useEffect(() => {
     props.onMoveLeft(myScale.invert(xPosLeft));
   }, [xPosLeft]);
-  console.log("Current:", props.currentPrice);
 
   const myScale = scaleLog()
     .domain(scale(props.currentPrice))
@@ -52,11 +51,7 @@ export function Slider(props) {
 
   function startDrag(e) {
     e.preventDefault();
-    console.log(
-      "Start Drag ",
-      e.clientX > xPosLeft - 20 + self.current.offsetLeft &&
-        e.clientX < xPosLeft + 20 + self.current.offsetLeft
-    );
+
     let correctedX = e.clientX - self.current.offsetLeft;
     correctedX = correctedX > 0 ? correctedX : 0;
     if (correctedX > xPosLeft - 20 && correctedX < xPosLeft + 20) {

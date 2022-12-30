@@ -143,7 +143,6 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
     setLoading(true);
     if (value) {
       let res = (await getPools(value.toUpperCase())).data;
-      console.log(res);
       setCurrencies(
         res.map((item) => {
           return item;
@@ -226,6 +225,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             borderRadius: 5,
             zIndex: 1000,
             color:"white",
+            fontSize:"1.2em"
 
           }}
         >
@@ -244,7 +244,6 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             }}
             onChange={async (e) => {
               await queryTokens(e.target.value);
-              console.log(currencies);
               setFilteredCurrencies(
                 currencies.filter((item) => {
                   return item.symbol;
@@ -270,7 +269,6 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
                 onClick={() => {
                   checkValidityAndSetTokens(item);
                   setActiveSelector(null);
-                  console.log(item);
                 }}
               >
                 <div

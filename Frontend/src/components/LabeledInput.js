@@ -1,5 +1,6 @@
 import { Input } from "../theme/inputs";
 import { Label } from "../theme/outputs";
+import { background } from "../theme/theme";
 
 export default function LabeledInput({
   name,
@@ -11,6 +12,7 @@ export default function LabeledInput({
   onFocus = () => {},
   onBlur = () => {},
   loading = false,
+  symbol=""
 }) {
   return (
     <div style={{ width: "90%" }}>
@@ -36,10 +38,13 @@ export default function LabeledInput({
           ) : (
             <span></span>
           )} &nbsp;
-          <span>{name}</span>
+
+                    <span>{name}</span>
           &nbsp;
    
         </p>
+
+
         <p
           style={{
             fontSize: "x-small",

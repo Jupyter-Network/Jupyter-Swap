@@ -168,7 +168,7 @@ export default function Position({
                   {formatter.format(priceFromTick(data.uppertick))}
                 </p>
               </div>
-
+            
               <div style={card}>
                 Liquidity:{" "}
                 <p

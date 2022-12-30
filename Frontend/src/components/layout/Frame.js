@@ -2,7 +2,7 @@ import {
   useConnectWallet,
   useWallets,
   init,
-  useSetChain
+  useSetChain,
 } from "@web3-onboard/react";
 import walletConnectModule from "@web3-onboard/walletconnect";
 import injectedModule from "@web3-onboard/injected-wallets";
@@ -26,29 +26,34 @@ const routerAbi = routerMeta.abi;
 const walletConnect = walletConnectModule({
   qrcodeModalOptions: {
     desktopLinks: [
-      'ledger',
-      'tokenary',
-      'wallet',
-      'wallet 3',
-      'secuX',
-      'ambire',
-      'wallet3',
-      'apolloX',
-      'zerion',
-      'sequence',
-      'punkWallet',
-      'kryptoGO',
-      'nft',
-      'riceWallet',
-      'vision',
-      'keyring'
+      "ledger",
+      "tokenary",
+      "wallet",
+      "wallet 3",
+      "secuX",
+      "ambire",
+      "wallet3",
+      "apolloX",
+      "zerion",
+      "sequence",
+      "punkWallet",
+      "kryptoGO",
+      "nft",
+      "riceWallet",
+      "vision",
+      "keyring",
     ],
-    mobileLinks: ['rainbow', 'metamask', 'argent', 'trust', 'imtoken', 'pillar']
+    mobileLinks: [
+      "rainbow",
+      "metamask",
+      "argent",
+      "trust",
+      "imtoken",
+      "pillar",
+    ],
   },
 });
 const injected = injectedModule();
-
-
 
 export default function Frame() {
   const maintenance = false;
@@ -68,8 +73,6 @@ export default function Frame() {
   }, [window]);
   const isMobile = width <= 768;
   console.log("rerender frame");
-  const [{ chains, connectedChain, settingChain }, setChain] = useSetChain();
-  console.log("Chains: ", chains, connectedChain);
   const [
     {
       wallet, // the wallet that has been connected or null if not yet connected
@@ -81,6 +84,9 @@ export default function Frame() {
   let ethersProvider = null;
   let routerContract = null;
   ethersProvider = new ethers.providers.JsonRpcProvider(CONST.RPC_URL);
+  //ethersProvider = new ethers.providers.WebSocketProvider(
+  //  "wss://proportionate-proportionate-pallet.bsc-testnet.discover.quiknode.pro/1e9362438617484ea0607b2e5284917435c630d9/"
+  //);
 
   const [state, setState] = useState({
     provider: ethersProvider,
@@ -106,7 +112,7 @@ export default function Frame() {
     }
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     init({
       wallets: [walletConnect, injected],
       chains: [
@@ -117,8 +123,20 @@ export default function Frame() {
           rpcUrl: CONST.RPC_URL,
         },
       ],
+      accountCenter: {
+        desktop: {
+          position: "bottomLeft",
+          enabled: true,
+          minimal: true,
+        },
+        mobile: {
+          position: "bottomLeft",
+          enabled: true,
+          minimal: true,
+        },
+      },
     });
-  },[])
+  }, []);
 
   useEffect(() => {
     console.log("Wallet reload");

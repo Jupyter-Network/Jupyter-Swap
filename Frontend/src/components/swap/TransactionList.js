@@ -14,7 +14,6 @@ import {
 import { priceFromSqrtPrice } from "../../utils/mathHelper";
 
 export default function TransactionList({ transactions, tokens }) {
-  console.log(transactions);
   if (transactions && tokens) {
     return (
       <Table
@@ -34,7 +33,6 @@ export default function TransactionList({ transactions, tokens }) {
           <th>&nbsp;</th>
           <th>Time</th>
 
-
           <th>TX</th>
         </tr>
         {transactions.map((transaction, index) => {
@@ -53,6 +51,8 @@ export default function TransactionList({ transactions, tokens }) {
 }
 
 function ListItem({ transaction, index, tokens }) {
+  let tokenOrder =
+    BigInt(tokens["token0"].address) > BigInt(tokens["token1"].address);
   let swapUp = transaction.limit_tick < transaction.current_tick;
   return (
     <tr
@@ -116,24 +116,34 @@ function ListItem({ transaction, index, tokens }) {
         )}
         &nbsp; &nbsp; &nbsp;
       </td>
-      <td style={{textAlign:"start",fontSize:"1.2em"}}>
+      <td style={{ textAlign: "start", fontSize: "1.2em" }}>
         <b>
           {dynamicPrecisionDecimal(
             BN(transaction.amount_in).dividedBy(BN(10).pow(18))
           ).toString()}
         </b>{" "}
-        {swapUp ? tokens["token0"].symbol : tokens["token1"].symbol}
+        {swapUp
+          ? tokenOrder
+            ? tokens["token1"].symbol
+            : tokens["token0"].symbol
+          : tokenOrder
+          ? tokens["token0"].symbol
+          : tokens["token1"].symbol}
       </td>
 
-      <td  style={{textAlign:"start",fontSize:"1,2em"}}>
+      <td style={{ textAlign: "start", fontSize: "1,2em" }}>
         <b>
-        {Math.round(dynamicPrecisionDecimal(
-          priceFromSqrtPrice(BigInt(transaction.sqrt_price))
-        )*100000000)/100000000}
+          {Math.round(
+            dynamicPrecisionDecimal(
+              priceFromSqrtPrice(BigInt(transaction.sqrt_price))
+            ) * 100000000
+          ) / 100000000}
         </b>
       </td>
-      <br/>
-      <td style={{fontSize:"1.1em"}}>{new Date(transaction.time).toUTCString()}</td>
+      <br />
+      <td style={{ fontSize: "1.1em" }}>
+        {new Date(transaction.time).toUTCString()}
+      </td>
 
       <td>
         <a

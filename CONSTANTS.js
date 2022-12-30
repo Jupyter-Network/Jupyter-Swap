@@ -3,7 +3,7 @@ const devAddresses = require("./addresses.json");
 const CONST = {
   RPC_URL:
     process.env.ENV == "production"
-      ? "https://data-seed-prebsc-1-s1.binance.org:8545/"
+      ? "https://proportionate-proportionate-pallet.bsc-testnet.discover.quiknode.pro/1e9362438617484ea0607b2e5284917435c630d9/"
       : "http://127.0.0.1:8545",
   BACKEND_URL:
     process.env.ENV == "production"
