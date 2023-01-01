@@ -1,5 +1,5 @@
 const { wbnb } = require("../../Frontend/src/contracts/addresses");
-const sql = require("./db");
+const sql = require("./localDb");
 
 module.exports = {
   createLiquidityPositionsTable: async () => {
@@ -52,7 +52,7 @@ module.exports = {
         time timestamp NOT NULL,
         UNIQUE(time,transaction_hash)
     )`;
-    await sql`SELECT create_hypertable('public."Swaps"','time')`;
+      await sql`SELECT create_hypertable('public."Swaps"','time')`;
   },
   createPoolEventsTable: async () => {
     await sql`CREATE TABLE IF NOT EXISTS public."PoolEvents"

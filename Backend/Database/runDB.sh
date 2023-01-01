@@ -7,5 +7,5 @@ sudo docker run -d --name timescaledb -p 5432:5432 -e POSTGRES_PASSWORD=password
 sleep 3
 
 echo "Creating Tables"
-node index.js
+node ./Backend/Database/index.js
 

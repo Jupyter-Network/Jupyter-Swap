@@ -32,7 +32,7 @@ sudo docker start timescaledb
 if [[ $purge_db = "true" ]]
 then
     echo "Purge and restart Database"
-    (cd ./Backend/Database/ && ./runDB.sh)
+    ./Backend/Database/runDB.sh
 fi
 
 echo "Start Backend"

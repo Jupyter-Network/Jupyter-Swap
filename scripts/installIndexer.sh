@@ -3,7 +3,7 @@
 #Run this file to install all Jupyterswap blockchain indexer
 echo "Install node modules"
 cd ./Contracts
-[! -d ./node_modules/ ] && npm install
+[ ! -d ./node_modules/ ] && npm install
  truffle build
 
 cp -r ./build/contracts/. ../Frontend/src/contracts/build
@@ -16,6 +16,8 @@ cd ./Backend
 cd ./Database
 [ ! -d ./node_modules/ ] && npm install
 
+
+cd ../
 
 echo "Starting indexer"
 pm2 start index.js --name indexer
