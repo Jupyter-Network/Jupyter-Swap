@@ -90,10 +90,19 @@ async function getTokenBalance(token, ethersProvider, accountAddress) {
 }
 export async function fetchBlockDataNew(data) {
   let promises = [];
-  const pool = await getPool(
-    data.tokens["token0"].contract.address,
-    data.tokens["token1"].contract.address
+
+  let pool = await getPool(
+    data.tokens["token0"].address,
+    data.tokens["token1"].address
   );
+  if (pool.data.length == 0) {
+    pool = await getPool(
+      data.tokens["token1"].address,
+      data.tokens["token0"].address
+    );
+  }
+
+  console.log(data.tokens);
   console.log("Fetch: ", data);
   data.wallet
     ? promises.push(
@@ -129,11 +138,16 @@ export async function fetchBlockDataNew(data) {
       data.tokens["token1"].contract.address
     )
   );
+  console.log(pool.data)
+  pool.data =
+    pool.data.length > 0
+      ? pool.data
+      : { pool_address: "0xcCA880Cdd57EEDE7b5E974eFC84CF85468212c31" };
   data.wallet
     ? promises.push(
         getLiquidityPositionsForAddress(
           data.wallet.accounts[0].address,
-          pool.data.pool_address
+          pool.data[0].pool_address
         )
       )
     : promises.push(
@@ -147,7 +161,7 @@ export async function fetchBlockDataNew(data) {
         getTokenBalance(
           data.tokens["token0"],
           data.ethersProvider,
-          pool.data.pool_address
+          pool.data[0].pool_address
         )
       )
     : promises.push(
@@ -160,7 +174,7 @@ export async function fetchBlockDataNew(data) {
         getTokenBalance(
           data.tokens["token1"],
           data.ethersProvider,
-          pool.data.pool_address
+          pool.data[0].pool_address
         )
       )
     : promises.push(

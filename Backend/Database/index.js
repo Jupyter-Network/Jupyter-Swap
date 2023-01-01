@@ -1,5 +1,5 @@
 const process = require("process");
-const query = require("./query");
+const query = require("./createTableQueries");
 
 initDB();
 //main()
