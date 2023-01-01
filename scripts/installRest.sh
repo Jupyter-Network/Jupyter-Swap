@@ -4,16 +4,18 @@
 
 
 echo "Install node modules"
-cd Jupyter-Swap/Contracts && npm install
+cd ./Contracts 
+[ ! -d ./node_modules/ ] && npm install
 truffle build
 
-cp -r ./build/contracts/ ../Frontend/src/contracts/build
+cp -r ./build/contracts/. ../Frontend/src/contracts/build
 
 cd ../ && ENV=production node CONSTANTS.js
 
-
-[ ! -d ./Backend/node_modules/ ] && cd ./Backend && npm install
-[ ! -d ./Database/node_modules/ ] && cd ./Database && npm install
+cd ./Backend
+[ ! -d ./node_modules/ ] && npm install
+cd ./Database
+[ ! -d ./node_modules/ ] && npm install
 
 echo "Starting rest api"
 cd ../Rest && pm2 start index.js --name rest

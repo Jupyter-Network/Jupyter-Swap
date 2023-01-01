@@ -8,7 +8,6 @@ LIGHTBLUE='\033[0;94m'
 echo -e "${YELLOW}Jupyter Swap Installation Script${RESET}"
 echo -e "Select installation option: "
 echo
-exit 0
 
 echo -e "1${BLUE} => ${RESET}Install frontend"
 echo -e "2${LIGHTBLUE} => ${RESET}Install indexer"
@@ -31,7 +30,6 @@ case $ANSWER in
         echo -e "${YELLOW}Installing indexer${RESET}"
         ./scripts/installDependencies.sh
         ./scripts/installIndexer.sh
-
     ;;    
     3)
         echo -e "${YELLOW}Installing rest api${RESET}"

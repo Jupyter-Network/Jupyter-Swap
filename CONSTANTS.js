@@ -25,6 +25,10 @@ const CONST = {
     process.env.ENV == "production"
       ? "0x45827ef3FAC73e1F734d3A20f7de41DFd27dE981"
       : devAddresses.token1,
+  DATABASE:
+  process.env.ENV == "production"
+  ? "10.131.0.4"
+  : "127.0.0.1",
 };
 
 fs.writeFile("./Frontend/src/CONST.json", JSON.stringify(CONST), (err) => {
