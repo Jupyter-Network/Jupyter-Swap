@@ -221,7 +221,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       }
     }
     if (!loading || firstLoad) {
-      asyncRun();
+      setLoading(true)
+      asyncRun().then(()=>setLoading(false));
     }
   }, [block, tokens, maxSlippage, timeBucket]);
 

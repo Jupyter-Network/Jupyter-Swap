@@ -1,4 +1,4 @@
-import CONST from "../../CONST.json"
+import CONST from "../../CONST.json";
 import BN from "bignumber.js";
 import {
   getHistory,
@@ -183,7 +183,10 @@ export async function fetchBlockData(data) {
 }
 
 async function getBalance(data, zeroOrOne) {
-  if (data.tokens[zeroOrOne ? "token0" : "token1"].contract.address === CONST.WBNB_ADDRESS) {
+  if (
+    data.tokens[zeroOrOne ? "token0" : "token1"].contract.address ===
+    CONST.WBNB_ADDRESS
+  ) {
     return data.wallet
       ? await data.ethersProvider.getBalance(data.wallet.accounts[0].address)
       : 0;
@@ -197,59 +200,69 @@ async function getBalance(data, zeroOrOne) {
 }
 export async function fetchBlockDataNew(data) {
   console.log("Fetch Data: ", data);
+  let promises = [];
   //Get users token balances
-  const t0Balance = await getBalance(data, true);
-  const t1Balance = await getBalance(data, false);
-
+  promises.push(getBalance(data, true));
+  promises.push(getBalance(data, false));
   //Get Sqrt Price
-  const poolInfo = await data.routerContract.poolInfo(
-    data.tokens["token0"].address,
-    data.tokens["token1"].address
+  promises.push(
+    data.routerContract.poolInfo(
+      data.tokens["token0"].address,
+      data.tokens["token1"].address
+    )
   );
-console.log(poolInfo)
   //Get users allowances
-  const token0Allowance = data.wallet
-    ? await data.tokens["token0"].contract.allowance(
-        data.wallet.accounts[0].address,
-        CONST.SWAP_ROUTER_ADDRESS
+  data.wallet
+    ? promises.push(
+        data.tokens["token0"].contract.allowance(
+          data.wallet.accounts[0].address,
+          CONST.SWAP_ROUTER_ADDRESS
+        )
       )
-    : 0;
+    : promises.push(
+        (async function () {
+          return 0;
+        })()
+      );
 
-  const token1Allowance = data.wallet
-    ? await data.tokens["token1"].contract.allowance(
-        data.wallet.accounts[0].address,
-        CONST.SWAP_ROUTER_ADDRESS
+  data.wallet
+    ? promises.push(
+        data.tokens["token1"].contract.allowance(
+          data.wallet.accounts[0].address,
+          CONST.SWAP_ROUTER_ADDRESS
+        )
       )
-    : 0;
-    const transactions = (
-      await getTransanctionHistory(poolInfo.pool)
-    ).data;
-    let priceHistory = (
-      await getHistoryOHLC(
-        poolInfo.pool,
-        data.timeBucket
-      )
-    ).data.map((item, index) => {
-      return {
-        open: item.open, //BN(10).pow(36).dividedBy(BN(item.open)),
-        high: item.high, //BN(10).pow(36).dividedBy(BN(item.high)),
-        low: item.low,  //BN(10).pow(36).dividedBy(BN(item.low)),
-        close: item.close, //BN(10).pow(36).dividedBy(BN(item.close)),
-        bucket: item.bucket,
-      };
-    });
+    : promises.push(
+        (async function () {
+          return 0;
+        })()
+      );
 
+  const [t0Balance, t1Balance, poolInfo, token0Allowance, token1Allowance] =
+    await Promise.all(promises);
 
-  
+  const transactions = (await getTransanctionHistory(poolInfo.pool)).data;
+  let priceHistory = (
+    await getHistoryOHLC(poolInfo.pool, data.timeBucket)
+  ).data.map((item, index) => {
+    return {
+      open: item.open, //BN(10).pow(36).dividedBy(BN(item.open)),
+      high: item.high, //BN(10).pow(36).dividedBy(BN(item.high)),
+      low: item.low, //BN(10).pow(36).dividedBy(BN(item.low)),
+      close: item.close, //BN(10).pow(36).dividedBy(BN(item.close)),
+      bucket: item.bucket,
+    };
+  });
+
   return {
     token0Balance: _scaleDown(t0Balance),
     token1Balance: _scaleDown(t1Balance),
     token0Allowance: _scaleDown(token0Allowance),
     token1Allowance: _scaleDown(token1Allowance),
     price: priceFromSqrtPrice(BigInt(poolInfo.price.toString())),
-    currentTick:poolInfo.tick,
-    currentSqrtPrice:poolInfo.currentSqrtPrice,
-    transactionHistory:transactions,
-    priceHistory:priceHistory
+    currentTick: poolInfo.tick,
+    currentSqrtPrice: poolInfo.currentSqrtPrice,
+    transactionHistory: transactions,
+    priceHistory: priceHistory,
   };
 }

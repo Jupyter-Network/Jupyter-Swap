@@ -81,8 +81,8 @@ module.exports = {
               ${pool.poolAddress},${pool.tx_id});`;
   },
   getPool: async (queryObject) => {
-    if (queryObject.tokenAddress) {
-      return await sql`SELECT * FROM public."Pools" WHERE token_address = ${queryObject.tokenAddress}`;
+    if (queryObject.token0Address && queryObject.token1Address) {
+      return await sql`SELECT * FROM public."Pools" WHERE token0_address = ${queryObject.token0Address} AND token1_address = ${queryObject.token1Address}`;
     } else if (queryObject.poolAddress) {
       return await sql`SELECT * FROM public."Pools" WHERE pool_address = ${queryObject.poolAddress}`;
     } else if (queryObject.tokenSymbol) {

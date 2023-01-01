@@ -83,7 +83,7 @@ export default function Frame() {
   ] = useConnectWallet();
   let ethersProvider = null;
   let routerContract = null;
-  ethersProvider = new ethers.providers.JsonRpcProvider(CONST.RPC_URL);
+  ethersProvider = new ethers.providers.JsonRpcBatchProvider(CONST.RPC_URL);
   //ethersProvider = new ethers.providers.WebSocketProvider(
   //  "wss://proportionate-proportionate-pallet.bsc-testnet.discover.quiknode.pro/1e9362438617484ea0607b2e5284917435c630d9/"
   //);

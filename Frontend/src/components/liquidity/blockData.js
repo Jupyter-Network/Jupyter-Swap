@@ -1,7 +1,11 @@
 import BN from "bignumber.js";
 import { _scaleDown } from "../../utils/mathHelper";
-import { getAPY, getLiquidityPositionsForAddress } from "../../utils/requests";
-import CONST from "../../CONST.json"
+import {
+  getAPY,
+  getLiquidityPositionsForAddress,
+  getPool,
+} from "../../utils/requests";
+import CONST from "../../CONST.json";
 
 const data = {
   tokens: ["tokenarray"],
@@ -12,43 +16,56 @@ const data = {
 
 export async function fetchBlockData(data) {
   console.log(data);
-  const t0Balance = data.wallet
-    ? await data.ethersProvider.getBalance(data.wallet.accounts[0].address)
-    : 0;
-  const t1Balance = data.wallet
-    ? await data.tokens["token1"].contract.balanceOf(
-        data.wallet.accounts[0].address
-      )
-    : 0
-
-  const userBalance = 
+  let promises = [];
   data.wallet
-    ? await data.routerContract.getBalance(
-        data.tokens["token1"].contract.address
+    ? promises.push(
+        data.ethersProvider.getBalance(data.wallet.accounts[0].address)
       )
-    : 0;
-  const rate = 
-  await data.routerContract.getRate(
-    data.tokens["token1"].contract.address
+    : promises.push(
+        (async function () {
+          return 0;
+        })()
+      );
+
+  data.wallet
+    ? promises.push(
+        data.tokens["token1"].contract.balanceOf(
+          data.wallet.accounts[0].address
+        )
+      )
+    : promises.push(
+        (async function () {
+          return 0;
+        })()
+      );
+
+  data.wallet
+    ? promises.push(
+        data.routerContract.getBalance(data.tokens["token1"].contract.address)
+      )
+    : promises.push(
+        (async function () {
+          return 0;
+        })()
+      );
+
+  promises.push(
+    data.routerContract.getRate(data.tokens["token1"].contract.address)
   );
 
-  const poolBalances = 
-  await data.routerContract.getPoolBalances(
-    data.tokens["token1"].contract.address
+  promises.push(
+    data.routerContract.getPoolBalances(data.tokens["token1"].contract.address)
   );
 
-  const lpTotalSupply = 
-  await data.routerContract.getLPTotalSupply(
-    data.tokens["token1"].contract.address
+  promises.push(
+    data.routerContract.getLPTotalSupply(data.tokens["token1"].contract.address)
   );
 
-  const apy = 
-  await getAPY(data.tokens.token1.contract.address);
-  console.log(
-    BN(apy)
-      .dividedBy(BN(poolBalances[1].toString()).dividedBy(BN(10).pow(18)))
-      .toString()
-  );
+  const [t0Balance, t1Balance, userBalance, rate, poolBalances, lpTotalSupply] =
+    await Promise.all(promises);
+
+  const apy = await getAPY(data.tokens.token1.contract.address);
+
   return {
     token0Balance: _scaleDown(t0Balance),
     token1Balance: _scaleDown(t1Balance),
@@ -72,97 +89,104 @@ async function getTokenBalance(token, ethersProvider, accountAddress) {
   return await token.contract.balanceOf(accountAddress);
 }
 export async function fetchBlockDataNew(data) {
-  console.log("Fetch: ", data);
-  const t0Balance = data.wallet
-    ? await getTokenBalance(
-        data.tokens["token0"],
-        data.ethersProvider,
-        data.wallet.accounts[0].address
-      )
-    : 0;
-  const t1Balance = data.wallet
-    ? await getTokenBalance(
-        data.tokens["token1"],
-        data.ethersProvider,
-        data.wallet.accounts[0].address
-      )
-    : 0;
-
-console.log(data.tokens)
-  const poolInfo = await data.routerContract.poolInfo(
+  let promises = [];
+  const pool = await getPool(
     data.tokens["token0"].contract.address,
     data.tokens["token1"].contract.address
   );
-
-  let liquidityPositions = data.wallet
-  ? await getLiquidityPositionsForAddress(data.wallet.accounts[0].address,poolInfo[3])
-  : { data: [] };
- 
-  const poolBalance0 = 
+  console.log("Fetch: ", data);
   data.wallet
-    ? await getTokenBalance(
-        data.tokens["token0"],
-        data.ethersProvider,
-        poolInfo[3]
+    ? promises.push(
+        getTokenBalance(
+          data.tokens["token0"],
+          data.ethersProvider,
+          data.wallet.accounts[0].address
+        )
       )
-    : 0;
-  const poolBalance1 = 
-  data.wallet
-    ? await getTokenBalance(
-        data.tokens["token1"],
-        data.ethersProvider,
-        poolInfo[3]
-      )
-    : 0;
+    : promises.push(
+        (async function () {
+          return 0;
+        })()
+      );
 
-  console.log(
-    poolInfo[0],
-    poolInfo[1].toString(),
-    poolInfo[2].toString(),
-    poolInfo[3].toString()
+  data.wallet
+    ? promises.push(
+        getTokenBalance(
+          data.tokens["token1"],
+          data.ethersProvider,
+          data.wallet.accounts[0].address
+        )
+      )
+    : promises.push(
+        (async function () {
+          return 0;
+        })()
+      );
+
+  promises.push(
+    data.routerContract.poolInfo(
+      data.tokens["token0"].contract.address,
+      data.tokens["token1"].contract.address
+    )
   );
-  //  ? await data.tokens["token1"].contract.balanceOf(
-  //      data.wallet.accounts[0].address
-  //    )
-  //  : 0;
-  // const userBalance = data.wallet
-  //   ? await data.routerContract.getBalance(
-  //       data.tokens["token1"].contract.address
-  //     )
-  //   : 0;
-  // const rate = await data.routerContract.getRate(
-  //   data.tokens["token1"].contract.address
-  // );
-  //
-  // const poolBalances = await data.routerContract.getPoolBalances(
-  //   data.tokens["token1"].contract.address
-  // );
-  //
-  // const lpTotalSupply = await data.routerContract.getLPTotalSupply(
-  //   data.tokens["token1"].contract.address
-  // );
+  data.wallet
+    ? promises.push(
+        getLiquidityPositionsForAddress(
+          data.wallet.accounts[0].address,
+          pool.data.pool_address
+        )
+      )
+    : promises.push(
+        (async function () {
+          return { data: [] };
+        })()
+      );
 
-  //const apy = await getAPY(data.tokens.token1.contract.address);
-  //console.log(
-  //  BN(apy)
-  //    .dividedBy(BN(poolBalances[1].toString()).dividedBy(BN(10).pow(18)))
-  //    .toString()
-  //);
+  data.wallet
+    ? promises.push(
+        getTokenBalance(
+          data.tokens["token0"],
+          data.ethersProvider,
+          pool.data.pool_address
+        )
+      )
+    : promises.push(
+        (async function () {
+          return 0;
+        })()
+      );
+  data.wallet
+    ? promises.push(
+        getTokenBalance(
+          data.tokens["token1"],
+          data.ethersProvider,
+          pool.data.pool_address
+        )
+      )
+    : promises.push(
+        (async function () {
+          return 0;
+        })()
+      );
+  const [
+    t0Balance,
+    t1Balance,
+    poolInfo,
+    liquidityPositions,
+    poolBalance0,
+    poolBalance1,
+  ] = await Promise.all(promises);
+
   return {
     token0Balance: BigInt(t0Balance),
     token1Balance: BigInt(t1Balance),
-    poolBalance0:poolBalance0,
-    poolBalance1:poolBalance1,
+    poolBalance0: poolBalance0,
+    poolBalance1: poolBalance1,
     liquidityPositions: liquidityPositions,
     currentTick: poolInfo[0], //userBalance,
     currentLiquidity: poolInfo[2], //poolBalances,
     currentSqrtPrice: poolInfo[1], //lpTotalSupply,
     apy: 10,
-    liquidity: poolInfo[2].toString(), // BN(apy)
-    //.dividedBy(
-    //  BN(poolBalances[1].toString()).multipliedBy(2).dividedBy(BN(10).pow(18))
-    //)
-    //.multipliedBy(100)
-    //.toString(),
+    liquidity: poolInfo[2].toString(),
   };
 }
