@@ -8,6 +8,7 @@ LIGHTBLUE='\033[0;94m'
 echo -e "${YELLOW}Jupyter Swap Installation Script${RESET}"
 echo -e "Select installation option: "
 echo
+exit 0
 
 echo -e "1${BLUE} => ${RESET}Install frontend"
 echo -e "2${LIGHTBLUE} => ${RESET}Install indexer"
@@ -18,7 +19,6 @@ echo -e "9${BLUE} => ${RESET}exit"
 
 read -N 1 ANSWER
 echo 
-
 
 
 case $ANSWER in 

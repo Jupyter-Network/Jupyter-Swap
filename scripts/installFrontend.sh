@@ -4,15 +4,20 @@
 
 echo "Install node modules"
 echo "Rebuild contracts"
-cd Jupyter-Swap/Contracts && npm install
+cd ./Contracts
+[ ! -d ./node_modules/ ] && npm install
 truffle build
 
-cp -r ./build/contracts/ ../Frontend/src/contracts/build
+cp -r ./build/contracts/. ../Frontend/src/contracts/build
 
-cd ../ && ENV=production node CONSTANTS.js
+cd ../ 
+ENV=production node CONSTANTS.js
 
 
-cd ../../Frontend && npm install && npm run build
+cd ./Frontend
+[ ! -d ./node_modules/ ] && npm install
+npm run build
+pm2 serve ./build/ 3000 --spa
 
 
 
