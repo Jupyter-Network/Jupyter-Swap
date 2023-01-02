@@ -7,9 +7,6 @@ export default function LiquidityPositions({
   onRemove,
   onCollectFees,
 }) {
-  console.log(blockData);
-  console.log(tokens);
-
   if (blockData.liquidityPositions.data) {
     return (
       <div

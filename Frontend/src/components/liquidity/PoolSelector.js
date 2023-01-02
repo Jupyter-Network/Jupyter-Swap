@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { token0, token1, wbnb } from "../../contracts/addresses";
 import erc20 from "../../contracts/build/IERC20.json";
 import {
+  LargeButton,
   MediumButton,
   MediumButtonInverted,
   SmallButton,
@@ -117,7 +118,7 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <MediumButtonInverted
+        <LargeButton
           title={"Select pool"}
           onClick={() =>
             activeSelector === 1
@@ -125,25 +126,33 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
               : setActiveSelector(1)
           }
           style={{
-            borderWidth: 1,
-            borderRadius: 5,
-            width: "100vw",
-            height: 60,
+            width: "fit-content",
+            whiteSpace: "nowrap",
+            padding:2
           }}
         >
-          <img
-            style={{ width: 36,verticalAlign:"middle" }}
-            src={"/tokenlogos/" + tokens.token0.icon}
-          ></img>
-              <img
-            style={{ width: 36,verticalAlign:"middle",marginLeft:-20 }}
-            src={"/tokenlogos/" + tokens.token1.icon}
-          ></img>
-          &nbsp;
-          <span style={{ lineHeight: 0.2 }}>
-            {tokens.token0.symbol} / {tokens.token1.symbol}
-          </span>{" "}
-        </MediumButtonInverted>
+          <div
+            style={{
+              backgroundColor: tintedBackground,
+              padding: 10,
+              borderRadius: 4,
+              color: "darkgray",
+            }}
+          >
+            <img
+              style={{ width: 36, verticalAlign: "middle" }}
+              src={"/tokenlogos/" + tokens.token0.icon}
+            ></img>
+            <img
+              style={{ width: 36, verticalAlign: "middle", marginLeft: -20 }}
+              src={"/tokenlogos/" + tokens.token1.icon}
+            ></img>
+            &nbsp;
+            <span style={{ lineHeight: 0.2 }}>
+              {tokens.token0.symbol} / {tokens.token1.symbol}
+            </span>{" "}
+          </div>
+        </LargeButton>
       </div>
 
       {activeSelector === 1 ? (

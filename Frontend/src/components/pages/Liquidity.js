@@ -1,7 +1,7 @@
 import { useConnectWallet } from "@web3-onboard/react";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
-import CONST from "../../CONST.json"
+import CONST from "../../CONST.json";
 import erc20 from "../../contracts/build/ERC20.json";
 import BN from "bignumber.js";
 import { Slider } from "../liquidity/Slider";
@@ -27,10 +27,10 @@ import {
   SmallButton,
 } from "../../theme/buttons";
 import { P } from "../../theme/outputs";
-import { transaction, transactionChain } from "../../utils/alerts";
+import { error, transaction, transactionChain } from "../../utils/alerts";
 import "react-toastify/dist/ReactToastify.css";
 import PoolSelector from "../liquidity/PoolSelector";
-import { primary, tintedBackground } from "../../theme/theme";
+import { background, highlight, primary, secondary, tintedBackground } from "../../theme/theme";
 
 import Balances from "../liquidity/Balances";
 import Chart from "../liquidity/Chart";
@@ -200,9 +200,9 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       : initTokens(ethers, ethersProvider, erc20Abi)
   );
 
-  useEffect(() => {
-    console.log(ethersProvider.getCode());
-  }, [wallet]);
+  //useEffect(() => {
+  //  console.log(ethersProvider.getCode());
+  //}, [wallet]);
 
   useEffect(() => {
     console.log("Tokens changed");
@@ -219,13 +219,15 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       connect();
       return;
     }
+    if(!isAddress(createWidgetState.token0Address) && !isAddress(createWidgetState.token1Address)){
+      error("Token 0 Address and Token 1 Address must be an ETH Address")
+    }
     let [token0Address, token1Address] =
       safeBigInt(createWidgetState.token0Address) <
       safeBigInt(createWidgetState.token1Address)
         ? [createWidgetState.token0Address, createWidgetState.token1Address]
         : [createWidgetState.token1Address, createWidgetState.token0Address];
 
-    console.log(token0Address, token1Address);
     let token0 = new ethers.Contract(
       token0Address,
       erc20Abi,
@@ -237,8 +239,10 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       ethersProvider.getSigner()
     );
     console.log(await token0.symbol());
-    let token0Symbol = await token0.symbol();
-    let token1Symbol = await token1.symbol();
+    let token0Symbol =
+      token0Address == CONST.WBNB_ADDRESS ? "BNB" : await token0.symbol();
+    let token1Symbol =
+      token1Address == CONST.WBNB_ADDRESS ? "BNB" : await token1.symbol();
 
     let startTick = tickAtSqrtPrice(
       sqrtPriceFromPrice(createWidgetState.startPrice)
@@ -254,30 +258,34 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       sqrtPriceFromPrice(createWidgetState.startPrice)
     );
     let transactions = [];
-
-    transactions.push({
-      transaction: token1.approve,
-      options: [routerContract.address, 10n ** 18n],
-    });
-
-    transactions.push({
-      transaction: token0.approve,
-      options: [routerContract.address, 10n ** 18n],
-    });
+    if (token0Address != CONST.WBNB_ADDRESS) {
+      transactions.push({
+        transaction: token0.approve,
+        options: [routerContract.address, 10n ** 18n],
+      });
+    }
+    if (token1Address != CONST.WBNB_ADDRESS) {
+      transactions.push({
+        transaction: token1.approve,
+        options: [routerContract.address, 10n ** 18n],
+      });
+    }
+    console.log(newPosition);
+    let value = token0Address == CONST.WBNB_ADDRESS ? newPosition[0] : 0;
+    value = token1Address == CONST.WBNB_ADDRESS ? newPosition[1] : value;
 
     transactions.push({
       transaction: routerContract.createPool,
-      options: [
-        createWidgetState.token0Address,
-        createWidgetState.token1Address,
-        startTick,
-      ],
+      options: [token0Address, token1Address, startTick, { value: value*2n }],
     });
 
-    let message = `<h3>Create Pair:</h3> 
+    let message = `<h3>Create New Pair:</h3> 
     <div style="background-color:white;border-radius:5px;text-align:end;padding:5px;">
     1 ${token0Symbol}  <br/> = ${startPrice} ${token1Symbol}
-     <div/>`;
+     </div>
+     <p>Confirm transactions in your wallet</p>
+     
+     `;
 
     await transactionChain(message, transactions, getBlockData);
   }
@@ -315,25 +323,35 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
 
     console.log(quote.map((e) => e.toString()));
     let transactions = [];
+    let value;
+    //If token is not wbnb set allowance
+    if (_tokens[1].contract.address != CONST.WBNB_ADDRESS) {
+      transactions.push({
+        transaction: checkAndSetAllowance,
+        options: [
+          _tokens[1].contract,
+          wallet.accounts[0].address,
+          routerContract.address,
+          quote[0],
+        ],
+      });
+    } else {
+      value = quote[0];
+    }
+    if (_tokens[0].contract.address != CONST.WBNB_ADDRESS) {
+      transactions.push({
+        transaction: checkAndSetAllowance,
+        options: [
+          _tokens[0].contract,
+          wallet.accounts[0].address,
+          routerContract.address,
+          quote[1],
+        ],
+      });
+    } else {
+      value = quote[1];
+    }
 
-    transactions.push({
-      transaction: checkAndSetAllowance,
-      options: [
-        _tokens[1].contract,
-        wallet.accounts[0].address,
-        routerContract.address,
-        quote[0],
-      ],
-    });
-    transactions.push({
-      transaction: checkAndSetAllowance,
-      options: [
-        _tokens[0].contract,
-        wallet.accounts[0].address,
-        routerContract.address,
-        quote[1],
-      ],
-    });
 
     transactions.push({
       transaction: routerContract.addPosition,
@@ -349,6 +367,7 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         BN(liquidity)
           .multipliedBy(BN(10).pow(BN(18)))
           .toFixed(0),
+        { value: value },
       ],
     });
     let message = `<h3>Add Liquidity:</h3>
@@ -357,7 +376,17 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
       _tokens[0].symbol
     } <br/> ${dynamicPrecisionDecimal(quote.token0Amount / 10 ** 18)} &nbsp; ${
       _tokens[1].symbol
-    } <div/>`;
+    } 
+    <br/>
+    Position active between:
+    ${dynamicPrecisionDecimal( lowerBoundary)}
+    ${dynamicPrecisionDecimal( upperBoundary)}
+
+    </div>
+
+    <p>Confirm transactions in your wallet</p>
+
+    `;
 
     await transactionChain(message, transactions, getBlockData);
   }
@@ -485,34 +514,20 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
         >
           <div
             style={{
-              width: "90%",
-              maxWidth: 700,
+              width: "98%",
+              maxWidth: 900,
               display: "flex",
               justifyContent: "end",
             }}
           >
-            <Container
-              style={{
-                maxHeight: 260,
-                width: "fit-content",
-                right: 0,
-                border: "none",
-                boxShadow: "none",
-              }}
-            >
-              <PoolSelector
-                provider={ethersProvider}
-                onChange={(tokens) => {
-                  console.log("PoolSelectro loaded");
-                  setTokens(tokens);
-                }}
-                initialTokens={tokens}
-              ></PoolSelector>
-            </Container>
+          
+  
+          <br/>
+
+
           </div>
-          <div style={{ width: "100%" }}>
-            <Balances blockData={blockData} tokens={tokens}></Balances>
-          </div>
+
+    
 
           <AddLpPositionComponent
             onAddLiquidity={(
@@ -525,8 +540,25 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             tokens={tokens}
             routerContract={routerContract}
           ></AddLpPositionComponent>
-          <div>
-            <Container style={{ maxWidth: "96vw", width: 400 }}>
+<div>
+<Container
+              style={{
+                height: "fit-content",
+              }}
+            >
+              <ContainerTitle>Pool</ContainerTitle>
+              <PoolSelector
+                provider={ethersProvider}
+                onChange={(tokens) => {
+                  console.log("PoolSelectro loaded");
+                  setTokens(tokens);
+                }}
+                initialTokens={tokens}
+              ></PoolSelector>
+                        <Balances blockData={blockData} tokens={tokens}></Balances>
+
+            </Container>
+            <Container style={{ maxWidth: "96vw", width: 400,height:"fit-content" }}>
               <ContainerTitle>Your Positions</ContainerTitle>
               <LiquidityPositions
                 blockData={blockData}
@@ -540,8 +572,10 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
                 }}
               ></LiquidityPositions>
             </Container>
-          </div>
-
+</div>
+          
+     
+    
           <div style={{ width: "100%" }}>
             <h3 style={{ color: primary, textAlign: "center" }}>
               Open a new liquidty pool:
@@ -659,11 +693,14 @@ export default function Liquidity({ block, ethersProvider, routerContract }) {
             </div>
 
             <LargeButton
+            style={{padding:2}}
               onClick={async () => {
                 createLiquidityPool();
               }}
             >
-              Create Pool
+              <div style={{backgroundColor:tintedBackground,padding:10,borderRadius:4,color:"darkgray"}}>
+              Open new Pool
+              </div>
             </LargeButton>
           </Container>
         </div>

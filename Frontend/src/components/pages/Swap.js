@@ -50,6 +50,7 @@ import { checkAndSetAllowance, _scaleDown } from "../../utils/mathHelper";
 import { fetchBlockData, fetchBlockDataNew } from "../swap/blockData";
 import Chart from "../swap/Chart";
 import LightChart from "../swap/LightChart";
+import { stackOrderNone } from "d3";
 
 const erc20Abi = erc20.abi;
 BN.config({ DECIMAL_PLACES: 18 });
@@ -60,6 +61,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     token1Amount: new BN(0),
     token0Loading: false,
     token1Loading: false,
+    token0Error: false,
+    token1Error: false,
     token1AmountMin: new BN(0),
     impact: new BN(0),
     allowanceCheck: new BN(0),
@@ -123,7 +126,6 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     let token0 = BigInt(tokens["token0"].contract.address);
     let token1 = BigInt(tokens["token1"].contract.address);
     let quote;
-    console.log(token0 > token1, BigInt(value * 10 ** 18));
     try {
       if (token0 < token1) {
         quote = await routerContract.swapQuote(
@@ -143,15 +145,10 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         );
       }
     } catch {
+      setState({ ...state, token0Error: true });
       error("Swap will fail probably of too low liquidity");
     }
 
-    console.log(
-      "Quote:",
-      quote.amountIn.toString(),
-      quote.amountOut.toString(),
-      value * 10 ** 18
-    );
     //if (quote.amountIn != value * 10 ** 18) {
     //  error("Liquidity is too low for this trade");
     //  return;
@@ -160,6 +157,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       ...state,
       token1Amount: quote.amountOut / 10 ** 18,
       token1Loading: false,
+      token0Error:false,
+      token1Error:false
     });
   }
   async function handleToken1AmountChange(value) {
@@ -169,6 +168,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     let token1 = BigInt(tokens["token1"].contract.address);
     let quote;
     console.log(token0 < token1);
+
+    try{
     if (token0 > token1) {
       console.log("T0 < T1");
       quote = await routerContract.swapQuote(
@@ -188,11 +189,13 @@ export default function Swap({ block, ethersProvider, routerContract }) {
         false
       );
     }
-    console.log(
-      quote.amountOut.toString(),
-      value * 10 ** 18,
-      quote.amountIn.toString()
-    );
+  }
+    catch (e){
+      console.log(e)
+      setState({ ...state, token1Error: true });
+      error("Swap will fail probably of too low liquidity");
+    }
+
 
     //if(quote.amountOut != value*10**18){
     //  error("Liquidity is too low for this trade");
@@ -202,6 +205,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       ...state,
       token0Amount: quote.amountIn / 10 ** 18,
       token0Loading: false,
+      token0Error:false,
+      token1Error:false
     });
   }
 
@@ -221,8 +226,8 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       }
     }
     if (!loading || firstLoad) {
-      setLoading(true)
-      asyncRun().then(()=>setLoading(false));
+      setLoading(true);
+      asyncRun().then(() => setLoading(false));
     }
   }, [block, tokens, maxSlippage, timeBucket]);
 
@@ -325,42 +330,38 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     });
   }
   async function swapTokens() {
-    //console.log(       "sWAP: ", tokens["token0"].contract.address,
-    //tokens["token1"].contract.address,
-    //BigInt(Math.round(state.token0Amount * 10 ** 18)).toString(),
-    //BigInt(tokens["token0"].contract.address) > BigInt(tokens["token1"].contract.address)
-    //  ? 887272
-    //  : -887272,
-    //  BigInt(Math.round(state.token1Amount* (1-maxSlippage/100).toString() * 10 ** 18)).toString(),
-    //  (1-maxSlippage/100).toString()
-    //  );
+    let value = 0;
 
-    let transactions = [
-      {
-        transaction: checkAndSetAllowance,
-        options: [
-          tokens["token0"].contract,
-          wallet.accounts[0].address,
-          routerContract.address,
-          BigInt(state.token0Amount * 10 ** 18),
-        ],
-      },
-      {
-        transaction: routerContract.swap,
-        options: [
-          tokens["token0"].contract.address,
-          tokens["token1"].contract.address,
-          BigInt(Math.round(state.token0Amount * 10 ** 18)).toString(),
-          BigInt(tokens["token0"].contract.address) >
-          BigInt(tokens["token1"].contract.address)
-            ? 887272
-            : -887272,
-          BigInt(
-            Math.round(state.token1Amount * (1 - maxSlippage / 100) * 10 ** 18)
-          ).toString(),
-        ],
-      },
-    ];
+    let transactions = [];
+    CONST.WBNB_ADDRESS != tokens["token0"].contract.address
+      ? transactions.push({
+          transaction: checkAndSetAllowance,
+          options: [
+            tokens["token0"].contract,
+            wallet.accounts[0].address,
+            routerContract.address,
+            BigInt(state.token0Amount * 10 ** 18),
+          ],
+        })
+      : (value = BigInt(Math.round(state.token0Amount * 10 ** 18)).toString());
+
+    transactions.push({
+      transaction: routerContract.swap,
+      options: [
+        tokens["token0"].contract.address,
+        tokens["token1"].contract.address,
+        BigInt(Math.round(state.token0Amount * 10 ** 18)).toString(),
+        BigInt(tokens["token0"].contract.address) >
+        BigInt(tokens["token1"].contract.address)
+          ? 887272
+          : -887272,
+        BigInt(
+          Math.round(state.token1Amount * (1 - maxSlippage / 100) * 10 ** 18)
+        ).toString(),
+        { value: value },
+      ],
+    });
+
     let message = `<h3>Swap:</h3> 
     <div style="background-color:rgba(255,255,255,0.3);border-radius:5px;text-align:end;padding:7px;">
      ${new BN(state.token0Amount).toFixed(6)} ${
@@ -417,7 +418,6 @@ export default function Swap({ block, ethersProvider, routerContract }) {
   }
 
   async function getBlockData(loaderVisible = true) {
-    console.log(tokens);
     setFirstLoad(false);
     if (loaderVisible) {
       setLoading(true);
@@ -451,15 +451,13 @@ export default function Swap({ block, ethersProvider, routerContract }) {
           justifyContent: "center",
         }}
       >
-    
-          <LightChart
-            open={advanced}
-            blockData={blockData}
-            onBucketChange={(bucket) => {
-              setTimeBucket(bucket);
-            }}
-          ></LightChart>
-      
+        <LightChart
+          open={advanced}
+          blockData={blockData}
+          onBucketChange={(bucket) => {
+            setTimeBucket(bucket);
+          }}
+        ></LightChart>
 
         <Container>
           <div
@@ -492,6 +490,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                   </td>
                   <td colspan={4}>
                     <LabeledInput
+                      error={state.token0Error}
                       title={`Sell Amount`}
                       name={tokens["token0"].symbol}
                       symbol={tokens["token0"].symbol}
@@ -515,6 +514,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                   <td colSpan={1}></td>
                   <td colSpan={5}>
                     <LabeledInput
+                      error={state.token1Error}
                       title={`Buy Amount`}
                       name={tokens["token1"].symbol}
                       symbol={tokens["token1"].symbol}
@@ -572,15 +572,15 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                   await connect();
                   return;
                 }
-                if (state.poolHop) {
+                if (!state.poolHop) {
                   swapTokens();
                   return;
                 }
-                if (tokens["token0"].contract.address === CONST.WBNB_ADDRESS) {
-                  swapETHToToken();
-                } else {
-                  swapTokenToETH();
-                }
+                //if (tokens["token0"].contract.address === CONST.WBNB_ADDRESS) {
+                //  swapETHToToken();
+                //} else {
+                //  swapTokenToETH();
+                //}
               }}
             >
               Swap <br />
@@ -637,7 +637,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
               }}
             >
               <SmallSecondaryButton onClick={() => setAdvanced(!advanced)}>
-                  {advanced ? "Hide":"Show"} Chart
+                {advanced ? "Hide" : "Show"} Chart
               </SmallSecondaryButton>
               <MaxSlippageSelector
                 maxSlippage={0.5}

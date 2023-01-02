@@ -59,11 +59,13 @@ export default function Build({ block, ethersProvider, routerContract }) {
           <LabeledInput
             name={"Token Name"}
             onChange={(e) => setState({ ...state, name: e.target.value })}
+            type={"text"}
           ></LabeledInput>
 
           <LabeledInput
             name={"Token Symbol"}
             onChange={(e) => setState({ ...state, symbol: e.target.value })}
+            type={"text"}
           ></LabeledInput>
           <LabeledInput
             name={"Total Supply"}

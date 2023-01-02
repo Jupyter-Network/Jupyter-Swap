@@ -83,11 +83,13 @@ export async function fetchBlockData(data) {
 }
 
 async function getTokenBalance(token, ethersProvider, accountAddress) {
-  if (token.contract.address === CONST.WBNB_ADDRESS) {
-    await ethersProvider.getBalance(accountAddress);
+  if(token.address === CONST.WBNB_ADDRESS) {
+    return await ethersProvider.getBalance(accountAddress);
   }
   return await token.contract.balanceOf(accountAddress);
 }
+
+
 export async function fetchBlockDataNew(data) {
   let promises = [];
 
@@ -102,7 +104,6 @@ export async function fetchBlockDataNew(data) {
     );
   }
 
-  console.log(data.tokens);
   console.log("Fetch: ", data);
   data.wallet
     ? promises.push(
@@ -138,11 +139,10 @@ export async function fetchBlockDataNew(data) {
       data.tokens["token1"].contract.address
     )
   );
-  console.log(pool.data)
   pool.data =
     pool.data.length > 0
       ? pool.data
-      : { pool_address: "0xcCA880Cdd57EEDE7b5E974eFC84CF85468212c31" };
+      : [{ pool_address: "0xcCA880Cdd57EEDE7b5E974eFC84CF85468212c31" }];
   data.wallet
     ? promises.push(
         getLiquidityPositionsForAddress(
@@ -190,7 +190,6 @@ export async function fetchBlockDataNew(data) {
     poolBalance0,
     poolBalance1,
   ] = await Promise.all(promises);
-
   return {
     token0Balance: BigInt(t0Balance),
     token1Balance: BigInt(t1Balance),

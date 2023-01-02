@@ -26,17 +26,17 @@ font-size:medium;
 export const ColorFrame = styled.div`
   position: relative;
   width:fit-content;
-  padding:0px 20px;
+  padding:0px 10px;
   color:${highlight};
   margin:1px;
-  font-size:large;
+  font-size:medium;
 &:before {
   content: "";
   position: absolute;
   inset: 0px;
-  border-radius:10px;
+  border-radius:7px;
 
-  padding: 0.09em;
+  padding: 1px;
   background:${highlightGradient}; 
   -webkit-mask: 
      linear-gradient(#fff 0 0) content-box, 

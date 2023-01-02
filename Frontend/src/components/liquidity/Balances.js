@@ -1,7 +1,7 @@
 import { currency, numericFormat } from "../../utils/inputValidations";
 import CurrencyDisplay from "./CurrencyDisplay";
 import BN from "bignumber.js";
-import { secondary } from "../../theme/theme";
+import { background, secondary, tintedBackground } from "../../theme/theme";
 import { _scaleDown } from "../../utils/mathHelper";
 
 
@@ -10,21 +10,22 @@ export default function Balances({blockData,tokens}){
 
         <div
         style={{
-          margin: "0 auto",
+          margin: "2px",
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "center",
           maxWidth: 1200,
         }}
       >
-        <div style={{ padding: 8, textAlign: "start", color: secondary }}>
-          <p style={{ marginBottom: 5 }}>Your Balance:</p>
+        <div style={{margin:10, padding: 8, textAlign: "start", color: secondary }}>
+        <h4 style={{textAlign:"center"}}>Your Balances: </h4>
+
           {blockData ? (
             <div
               style={{
                 display: "flex",
                 flexWrap: "wrap",
-                justifyContent: "start",
+                justifyContent: "center",
               }}
             >
               <CurrencyDisplay

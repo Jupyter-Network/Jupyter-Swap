@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { Container, ContainerTitle } from "../../theme";
 import { LargeButton } from "../../theme/buttons";
-import { numericFormat,currencyFormat, currency } from "../../utils/inputValidations";
+import { tintedBackground } from "../../theme/theme";
+import {
+  numericFormat,
+  currencyFormat,
+  currency,
+} from "../../utils/inputValidations";
 import {
   calcNewPosition,
   priceFromSqrtPrice,
@@ -14,43 +19,50 @@ import {
 import LabeledInput from "../LabeledInput";
 import { Slider } from "./Slider";
 
-export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity,routerContract }) {
+export function AddLpPositionComponent({
+  blockData,
+  tokens,
+  onAddLiquidity,
+  routerContract,
+}) {
   const [lowerBoundary, setLowerBoundary] = useState(10);
   const [upperBoundary, setUpperBoundary] = useState(10);
   const [liquidity, setLiquidity] = useState(100);
   const [lpQuote, setLpQuote] = useState({ amount0: 0, amount1: 0 });
-  const [wait,setWait] = useState(Date.now());
+  const [wait, setWait] = useState(Date.now());
 
   useEffect(() => {
     getQuote();
   }, [lowerBoundary, upperBoundary, liquidity]);
 
   async function getQuote() {
-    
-   let quote = calcNewPosition(
-     Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(lowerBoundary)).toString()/64)*64,
-     Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(upperBoundary)).toString()/64)*64,
-     blockData.currentTick,
-     BigInt(liquidity*10**18),
-     BigInt(blockData.currentSqrtPrice)
-   );
-   //console.log(
-   //  quote
-   //);
-  //if(Date.now() < wait){
-  //  return
-  //}
-  //  quote = await routerContract.addPositionView(
-  //       tokens.token0.address,
-  //       tokens.token1.address,
-  //       Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(lowerBoundary)).toString()/64)*64,
-  //       Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(upperBoundary)).toString()/64)*64,
-  //       BigInt(liquidity * 10**18)
-  //     );
-//
+    let quote = calcNewPosition(
+      Math.round(
+        tickAtSqrtPrice(sqrtPriceFromPrice(lowerBoundary)).toString() / 64
+      ) * 64,
+      Math.round(
+        tickAtSqrtPrice(sqrtPriceFromPrice(upperBoundary)).toString() / 64
+      ) * 64,
+      blockData.currentTick,
+      BigInt(liquidity * 10 ** 18),
+      BigInt(blockData.currentSqrtPrice)
+    );
+    //console.log(
+    //  quote
+    //);
+    //if(Date.now() < wait){
+    //  return
+    //}
+    //  quote = await routerContract.addPositionView(
+    //       tokens.token0.address,
+    //       tokens.token1.address,
+    //       Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(lowerBoundary)).toString()/64)*64,
+    //       Math.round(tickAtSqrtPrice(sqrtPriceFromPrice(upperBoundary)).toString()/64)*64,
+    //       BigInt(liquidity * 10**18)
+    //     );
+    //
     setLpQuote({ amount0: quote[0], amount1: quote[1] });
     setWait(Date.now() + 500);
-
   }
 
   function formattedData() {
@@ -67,7 +79,7 @@ export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity,route
   }
 
   return (
-    <Container style={{height:"fit-content"}}>
+    <Container style={{ height: "fit-content" }}>
       <ContainerTitle>Add Liquidity Position</ContainerTitle>
       <div style={{ display: "flex", justifyContent: "center" }}>
         <Slider
@@ -131,16 +143,30 @@ export function AddLpPositionComponent({ blockData, tokens, onAddLiquidity,route
       </div>
       <p>
         Current Price:{" "}
-        <b>{currency(priceFromSqrtPrice(BigInt(blockData.currentSqrtPrice.toString())))}</b>
+        <b>
+          {currency(
+            priceFromSqrtPrice(BigInt(blockData.currentSqrtPrice.toString()))
+          )}
+        </b>
       </p>
 
       <br />
       <LargeButton
+        style={{ padding: 2 }}
         onClick={() => {
           onAddLiquidity(lpQuote, lowerBoundary, upperBoundary, liquidity);
         }}
       >
-        Add Liquidity
+        <div
+          style={{
+            backgroundColor: tintedBackground,
+            padding: 10,
+            borderRadius: 4,
+            color: "darkgray",
+          }}
+        >
+          Add Liquidity
+        </div>
       </LargeButton>
     </Container>
   );

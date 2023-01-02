@@ -1,6 +1,6 @@
 import { Input } from "../theme/inputs";
 import { Label } from "../theme/outputs";
-import { background } from "../theme/theme";
+import { background, primary, secondary, tintedBackground } from "../theme/theme";
 
 export default function LabeledInput({
   name,
@@ -12,7 +12,9 @@ export default function LabeledInput({
   onFocus = () => {},
   onBlur = () => {},
   loading = false,
-  symbol=""
+  symbol="",
+  error=false,
+  type="tel"
 }) {
   return (
     <div style={{ width: "90%" }}>
@@ -58,6 +60,7 @@ export default function LabeledInput({
       </div>
       {!loading ? (
         <Input
+          style={{backgroundColor:error ? "#6b260d": tintedBackground}}
           title={title}
           placeholder={name}
           value={value}
@@ -70,7 +73,7 @@ export default function LabeledInput({
           onBlur={(e) => {
             onBlur(e);
           }}
-          type={"tel"}
+          type={type}
         ></Input>
       ) : (
         <img style={{ width: 25 }} src="/small_loader.svg"></img>

@@ -8,12 +8,12 @@ export default function CurrencyDisplay({
 }) {
   return (
     <ColorFrame>
-      <div style={{ lineHeight: 2,color:secondary}}>
+      <div style={{ lineHeight: 2,color:secondary,padding:2}}>
           <img
-            style={{ height:25 ,position:"relative",top:6,right:5}}
+            style={{ height:25 ,position:"relative",top:5,right:5}}
             src={"/tokenlogos/" + icon}
           ></img>
-               <span>{amount}</span> {symbol}
+          <span>{amount}</span> {symbol}
 
       </div>
     </ColorFrame>

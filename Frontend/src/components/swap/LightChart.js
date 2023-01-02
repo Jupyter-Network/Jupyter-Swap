@@ -20,7 +20,6 @@ export default function LightChart({ blockData, onBucketChange,open }) {
 
   useEffect(() => {
     if (chartContainerRef.current && blockData.priceHistory) {
-      console.log("Update Price", candleSeries);
       if (chart.current) chart.current.remove();
       chart.current = createChart(chartContainerRef.current, {
         width: chartContainerRef.current.clientWidth,
@@ -66,7 +65,6 @@ export default function LightChart({ blockData, onBucketChange,open }) {
         if (i === 0) {
           let item = history[0];
 
-          console.log("Continued", history[0]);
           priceData.push({
             time: Date.parse(item.bucket) / 1000,
             open: item.open === null ? 0 : item.open,

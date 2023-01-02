@@ -13,7 +13,7 @@ const CONST = {
     process.env.ENV == "production"
       ? "0xAD377EA2D993B09A58261c925C4DE3351D45b07d"
       : devAddresses.router,
-  WBNB_ADDDRESS:
+  WBNB_ADDRESS:
     process.env.ENV == "production"
       ? "0x6356560cEc59Dde1b9A2eDdbaA2c43AE7e6b024B"
       : devAddresses.wbnb,
