@@ -195,6 +195,7 @@ export default function PoolSelector({ onChange, provider, initialTokens }) {
               backgroundColor: tintedBackground,
             }}
           ></Input>
+          <br/>
           {loading ? (
             <>
               <br></br>

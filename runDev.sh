@@ -35,6 +35,7 @@ then
     ./Backend/Database/runDB.sh
 fi
 
+
 echo "Start Backend"
 (cd ./Backend && gnome-terminal -- node index.js)
 

@@ -85,6 +85,7 @@ export function AddLpPositionComponent({
         <Slider
           width={300}
           height={40}
+          currentTick={blockData.currentTick}
           currentPrice={priceFromSqrtPrice(
             BigInt(blockData.currentSqrtPrice.toString())
           )}

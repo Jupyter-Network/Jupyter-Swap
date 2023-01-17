@@ -291,7 +291,7 @@ contract Router is IRouter, IPositionCallback, Lock {
 
         pools[_token0Address][_token1Address] = pool;
 
-        IJupyterSwapPool(pool).initialPosition(msg.sender);
+        //IJupyterSwapPool(pool).initialPosition(msg.sender);
 
         emit Pool_Created(pool, _token0Address, _token1Address);
     }

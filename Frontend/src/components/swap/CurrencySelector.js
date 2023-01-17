@@ -254,6 +254,7 @@ export default function CurrencySelector({ onChange, provider, initialToken }) {
             placeholder={tokens["token1"].symbol}
             style={{ width: "50px", textAlign: "center",backgroundColor:tintedBackground }}
           ></Input>
+          <br/>
           {loading ? (
             <>
               <br></br>

@@ -66,7 +66,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
         if (msg.sender != router) revert NotRouter();
         _;
     }
-    bool initialized = false;
+    //Set this to false to enforce initial position
+    bool initialized = true;
     modifier isInitialized() {
         if (!initialized) revert NotInitialized();
         _;
@@ -107,8 +108,22 @@ contract JupyterSwapPool is IJupyterSwapPool {
             feeGlobal0,
             0
         );
-
+        
         uint256 _currentSqrtPrice = currentSqrtPrice;
+        //Try to fix this problem with the initial tick and maybe otherremoved tick
+        if (_currentSqrtPrice <= Tick.getPriceFromTick(_currentTick)) {
+            //Update fees
+            ticks[_currentTick].feesOutside0 =
+                currentSwap.feeGlobal -
+                ticks[_currentTick].feesOutside0;
+            ticks[_currentTick].feesOutside1 =
+                feeGlobal1 -
+                ticks[_currentTick].feesOutside1;
+            liquidity = uint128(
+                int128(liquidity) - ticks[_currentTick].liquidityNet
+            );
+            _currentTick = getNextWhileNotInitialized(_currentTick);
+        }
         //Swap ZERO TO ONE
         if (_limitTick < _currentTick) {
             while (
@@ -186,6 +201,8 @@ contract JupyterSwapPool is IJupyterSwapPool {
         }
         //Swap ONE TO ZERO
         else {
+
+            ///IMPORTANT TODO TODO COMPARE WITH SWAP QUOTE FOR JUMPING "LIQUIDITY HOLES" !!!!!
             currentSwap.feeGlobal = feeGlobal1;
 
             while (
@@ -304,6 +321,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
                 currentSwap.remainingAmount > 0 && _currentTick >= _limitTick
             ) {
                 _currentTick = getNextWhileNotInitialized(_currentTick);
+     
                 nextPrice = Tick.getPriceFromTick(_currentTick);
 
                 cache = PriceMath.swaps(
@@ -343,7 +361,7 @@ contract JupyterSwapPool is IJupyterSwapPool {
                 currentSwap.remainingAmount > 0 && _currentTick <= _limitTick
             ) {
                 int24 next = getNextWhileNotInitializedFalse(_currentTick);
-
+   
                 nextPrice = Tick.getPriceFromTick(next);
 
                 cache = PriceMath.swaps(

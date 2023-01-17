@@ -9,9 +9,10 @@ import {
   scaleSqrt,
 } from "d3";
 import { numericFormat } from "../../utils/inputValidations";
+import { priceFromTick } from "../../utils/mathHelper";
 
 function scale(currentPrice) {
-  return [currentPrice/1000,currentPrice*1000]
+  return [currentPrice/100,currentPrice*100]
 
 }
 export function Slider(props) {
@@ -67,7 +68,7 @@ export function Slider(props) {
 
   function liquidityProfile() {
     if (props.positions && props.positions.length > 0) {
-      const step = 64;
+      const step = 10;
       let out = [];
       let sum = 0;
       let sums = [];
@@ -142,6 +143,12 @@ export function Slider(props) {
         <rect
           x={myScale(props.currentPrice)}
           style={{ fill: "orange" }}
+          height={props.height}
+          width={2}
+        ></rect>
+                <rect
+          x={myScale(priceFromTick(props.currentTick))}
+          style={{ fill: "purple" }}
           height={props.height}
           width={2}
         ></rect>

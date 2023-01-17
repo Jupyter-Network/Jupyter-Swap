@@ -4,7 +4,7 @@ module.exports = {
   initTokens: (ethers, ethersProvider, erc20Abi) => {
     return {
       token1: {
-        symbol: "ARM",
+        symbol: "IOM",
         contract: new ethers.Contract(
           CONST.TOKEN0_ADDRESS,
           erc20Abi,
@@ -12,7 +12,7 @@ module.exports = {
         ),
         icon: "/placeholder.svg",
         address: CONST.TOKEN0_ADDRESS,
-        name: "Amoirro",
+        name: "Jupyter",
       },
       token0: {
         symbol: "BNB",

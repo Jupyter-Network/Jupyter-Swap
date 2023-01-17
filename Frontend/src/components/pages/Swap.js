@@ -90,7 +90,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
     pool1Balances: [new BN(0), new BN(0)],
     token0Balance: BN(0),
   });
-  let storage = JSON.parse(localStorage.getItem("tokens"));
+  let storage = null//JSON.parse(localStorage.getItem("tokens"));
 
   const [tokens, setTokens] = useState(
     storage
@@ -217,13 +217,7 @@ export default function Swap({ block, ethersProvider, routerContract }) {
       await getBlockData();
       //If pools changed -> recalculate
       handleToken0AmountChange(state.token0Amount.toString());
-      if (
-        storage.token0 &&
-        storage.token0.address !== CONST.WBNB_ADDRESS &&
-        storage.token1.address !== CONST.WBNB_ADDRESS
-      ) {
-        setState({ ...state, poolHop: true });
-      }
+
     }
     if (!loading || firstLoad) {
       setLoading(true);
@@ -572,10 +566,9 @@ export default function Swap({ block, ethersProvider, routerContract }) {
                   await connect();
                   return;
                 }
-                if (!state.poolHop) {
+
                   swapTokens();
-                  return;
-                }
+        
                 //if (tokens["token0"].contract.address === CONST.WBNB_ADDRESS) {
                 //  swapETHToToken();
                 //} else {
